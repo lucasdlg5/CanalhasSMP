@@ -4,6 +4,52 @@ Bem-vindo ao repositório oficial do ecossistema **CanalhasSMP**! Este projeto r
 
 ---
 
+## 🎮 Guia do Jogador — Como Entrar e Jogar no CanalhasSMP
+
+Se você é um jogador e deseja entrar no servidor da firma, siga o passo a passo simples abaixo:
+
+### 1️⃣ Requisitos Básicos
+* **Minecraft:** Versão **1.20.1** (Java Edition).
+* **Launcher Recomendado:** [CurseForge App](https://download.curseforge.com/), [Modrinth App](https://modrinth.com/app) ou [Prism Launcher](https://prismlauncher.org/).
+* **Modpack Base:** **[Prominence II [RPG]](https://www.curseforge.com/minecraft/modpacks/prominence-2-rpg)** (Versão Fabric para Minecraft 1.20.1).
+* **Java:** Java 17 ou Java 21 (64-bit).
+* **Memória RAM:** Recomenda-se alocar entre **6 GB a 8 GB de RAM** nas configurações do seu launcher para carregar os mods e texturas com total fluidez.
+
+> [!NOTE]
+> **Você precisa instalar o mod Senhor Cummins no seu client?**
+> **NÃO!** O mod exclusivo **Senhor Cummins** é 100% *Server-Side*. Isso significa que a inteligência artificial, pets guardiões, correio do malote, almoxarifado cooperativo e comandos funcionam direto no servidor sem que você precise instalar nenhum mod extra no seu computador.
+
+---
+
+### 2️⃣ Como Instalar o Modpack Passo a Passo
+1. Abra o seu launcher de preferência (ex: **CurseForge**).
+2. Na aba de pesquisa de modpacks, procure por **`Prominence II [RPG]`**.
+3. Certifique-se de selecionar a versão compatível com **Minecraft 1.20.1 (Fabric)**.
+4. Clique em **Instalar** e aguarde o download de todos os mods e texturas.
+5. Nas configurações do perfil no launcher, ajuste a memória RAM alocada para pelo menos **6144 MB (6 GB)** ou mais.
+
+---
+
+### 3️⃣ Conectando ao Servidor
+1. **Rede de Conexão:**
+   * **Se estiver jogando pela internet:** Entre na rede oficial da firma no **Radmin VPN** fornecida pelo administrador (Asminn).
+   * **Se estiver na mesma casa (mesmo Wi-Fi):** Utilize o IP local direto da máquina host.
+2. Inicie o jogo pelo modpack **Prominence II**.
+3. No menu principal, vá em **Multijogador (Multiplayer)** > **Adicionar Servidor**.
+4. Digite o endereço IP do servidor fornecido pelo host (porta padrão `25565`).
+5. Clique em **Concluir** e entre no servidor!
+
+---
+
+### 4️⃣ Primeiros Passos e Comandos Úteis no Jogo
+Assim que você entrar no mundo:
+* ☕ **Bateu a fome ou precisa enxergar no escuro?** Digite `/cafe` para pegar o tradicional *Cafézin Preto da Firma* e *Pão na Chapa do Posto*.
+* 🐱 **Encontrou o Senhor Cummins na base?** Dê shift repetidamente (a dança da amizade) para cumprimentá-lo, ou clique com o botão direito para fazer carinho (há 1% de chance de resetar seu cooldown de teleporte!).
+* 💬 **Dúvidas de receitas ou itens?** Converse com o Cummins no chat: *"cummins como faço uma forja?"*, *"cummins onde acho ferro?"* ou *"cummins como esta o lag no servidor?"*.
+* 📦 **Compartilhe recursos:** Use `/almoxarifado` e `/doar` para usar o baú comunitário ou `/malote <amigo>` para mandar ferramentas para quem estiver longe.
+
+---
+
 ## 📌 Visão Geral das Versões
 
 | Componente | Ambiente / Plataforma | Versão Suportada | Notas |
