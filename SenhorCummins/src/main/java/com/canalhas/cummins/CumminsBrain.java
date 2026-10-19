@@ -7,11 +7,15 @@ import com.google.gson.JsonParser;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
@@ -94,6 +98,11 @@ public class CumminsBrain {
     private volatile String activeDiscoveryPlayer = null;
     private volatile String activeDiscoveryTopic = null;
     private volatile long discoveryAskedAt = 0;
+
+    // Estado de conversa privada com o Javidizineo
+    private volatile String lastJavidTalkedWith = null;
+    private volatile long lastJavidTalkedAt = 0;
+    private final AtomicBoolean javidBusy = new AtomicBoolean(false);
 
     // Buffer de mensagens naturais por jogador para aprendizado contínuo em tempo real
     private final Map<String, List<String>> recentPlayerChatBuffer = new ConcurrentHashMap<>();
@@ -335,18 +344,24 @@ public class CumminsBrain {
             return;
         }
 
-        boolean mentionedJavidizineo = lower.contains("javidizineo") || lower.contains("javidinho")
+        boolean isJavidWord = lower.contains("javidizineo") || lower.contains("javidinho")
+                || lower.contains("javid") || lower.contains("shamash")
                 || lower.contains("leaozinho") || lower.contains("leãozinho")
                 || lower.contains("mini leao") || lower.contains("mini leão");
-        if (mentionedJavidizineo && mod.javidizineo() != null) {
+        boolean inJavidConversation = !mentioned && name.equals(lastJavidTalkedWith)
+                && (now() - lastJavidTalkedAt < 120_000L);
+
+        if ((isJavidWord || inJavidConversation) && mod.javidizineo() != null) {
             boolean wasActive = mod.javidizineo().isActiveInSession() && mod.javidizineo().getCat() != null;
             mod.javidizineo().summonOrTeleportTo(player);
             if (!wasActive) {
-                server.execute(() -> server.getPlayerManager().broadcast(
-                        Text.literal("§6* Javidizineo§r §e(Mini Leão)§f surgiu saltitando com a juba estufada e soltou um mini-rugido para proteger §e" + name + "§f! 🦁👑✨"), false));
-            } else {
-                player.sendMessage(Text.literal("§6<Javidizineo>§r §e*rawrrr!* 🦁👑 §7(Javidizineo deu um salto feroz em miniatura ao seu lado!)"), true);
+                server.execute(() -> {
+                    if (player.isAlive()) {
+                        player.sendMessage(Text.literal("§6* Javidizineo§r §e(Mini Leão)§f surgiu saltitando com a juba estufada e soltou um mini-rugido ao seu lado! 🦁👑✨"), false);
+                    }
+                });
             }
+            handleJavidizineoChat(player, text, name);
             return;
         }
 
@@ -2134,6 +2149,10 @@ public class CumminsBrain {
             else if (ll.startsWith("cummins:")) l = l.substring(8).trim();
             else if (ll.startsWith("<vitória>") || ll.startsWith("<vitoria>")) l = l.substring(9).trim();
             else if (ll.startsWith("vitória:") || ll.startsWith("vitoria:")) l = l.substring(8).trim();
+            else if (ll.startsWith("<javidizineo>")) l = l.substring(13).trim();
+            else if (ll.startsWith("javidizineo:")) l = l.substring(12).trim();
+            else if (ll.startsWith("<javid>")) l = l.substring(7).trim();
+            else if (ll.startsWith("javid:")) l = l.substring(6).trim();
             if (l.length() >= 2 && ((l.startsWith("\"") && l.endsWith("\"")) || (l.startsWith("“") && l.endsWith("”")))) {
                 l = l.substring(1, l.length() - 1).trim();
             }
@@ -2259,6 +2278,85 @@ public class CumminsBrain {
         } else {
             mod.discord().relayToDiscord("[Vitória] " + line);
         }
+    }
+
+    public void sendPrivateAsJavidizineo(ServerPlayerEntity player, String line) {
+        if (server == null || player == null || !player.isAlive()) return;
+        MutableText msg = Text.literal("<")
+                .append(Text.literal("Javidizineo").formatted(Formatting.GOLD))
+                .append(Text.literal("> "))
+                .append(Text.literal(line).formatted(Formatting.YELLOW));
+        player.sendMessage(msg, false);
+
+        String name = player.getGameProfile().getName();
+        lastJavidTalkedWith = name;
+        lastJavidTalkedAt = now();
+
+        if (mod.javidizineo() != null) {
+            CatEntity cat = mod.javidizineo().getCat();
+            if (cat != null && cat.isAlive() && cat.getWorld() instanceof ServerWorld sw) {
+                sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_CAT_PURREOW, SoundCategory.NEUTRAL, 0.75f, 1.25f);
+                sw.spawnParticles(ParticleTypes.CRIT, cat.getX(), cat.getY() + 0.5, cat.getZ(), 4, 0.15, 0.15, 0.15, 0.04);
+            }
+        }
+        mod.context().addGame("Javidizineo (privado para " + name + "): " + line, cfg().timing.contextSize);
+    }
+
+    public void handleJavidizineoChat(ServerPlayerEntity player, String text, String playerName) {
+        if (server == null || scheduler == null || player == null) return;
+        String lower = text.toLowerCase(Locale.ROOT);
+
+        // Se a API estiver sem chave configurada, responde imediatamente pela biblioteca offline
+        if (!cfg().hasApiKey()) {
+            String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
+            double typing = cfg().timing.typingBaseSeconds + fallbackReply.length() * cfg().timing.typingSecondsPerChar;
+            long delayMs = Math.min((long) (typing * 1000), 2500L);
+            scheduler.schedule(() -> server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply)), delayMs, TimeUnit.MILLISECONDS);
+            return;
+        }
+
+        if (!javidBusy.compareAndSet(false, true)) {
+            String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
+            server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply));
+            return;
+        }
+
+        scheduler.schedule(() -> {
+            try {
+                String system = JavidizineoDialogueLibrary.buildSystemPrompt();
+                String user = playerName + " acabou de falar com você no chat: \"" + text + "\". "
+                        + "Responda diretamente a ele mantendo sua persona cômica de Juiz do Deserto de Grandis / Shamash (Dislyte) preso no corpinho de um leãozinho laranja, em 1 ou 2 frases curtas!";
+
+                mod.llm().chat(cfg().api, system, user, cfg().api.maxTokens).whenComplete((res, err) -> {
+                    try {
+                        if (err != null || res == null || res.isBlank()) {
+                            String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
+                            server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply));
+                            return;
+                        }
+                        List<String> lines = clean(res);
+                        if (!lines.isEmpty()) {
+                            double delay = 0;
+                            for (String line : lines) {
+                                double typing = cfg().timing.typingBaseSeconds + line.length() * cfg().timing.typingSecondsPerChar;
+                                delay += Math.min(typing, cfg().timing.typingMaxSeconds);
+                                long ms = (long) (delay * 1000);
+                                scheduler.schedule(() -> server.execute(() -> sendPrivateAsJavidizineo(player, line)), ms, TimeUnit.MILLISECONDS);
+                            }
+                        } else {
+                            String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
+                            server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply));
+                        }
+                    } finally {
+                        javidBusy.set(false);
+                    }
+                });
+            } catch (Exception e) {
+                javidBusy.set(false);
+                String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
+                server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply));
+            }
+        }, 100, TimeUnit.MILLISECONDS);
     }
 
     // ------------------------------------------------------------------ memória

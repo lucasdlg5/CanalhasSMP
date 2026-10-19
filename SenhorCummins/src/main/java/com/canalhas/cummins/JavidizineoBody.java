@@ -368,7 +368,13 @@ public class JavidizineoBody {
             mob.setTarget(null);
         }
 
-        player.sendMessage(Text.literal("§6<Javidizineo>§r §e*ROAAARRR!* 🦁👑 §7(Javidizineo deu um mini-rugido feroz e defendeu você de " + target.getName().getString() + "!)"), true);
+        String targetName = target.getName().getString();
+        List<String> defenseMsgs = List.of(
+                "§6<Javidizineo>§r §e*RUGIDO DE SHAMASH!* 🦁🔥 §7(\"Ajoelhe-se, " + targetName + "! ...Ei, pare de olhar pra cima, eu tô aqui embaixo!\")",
+                "§6<Javidizineo>§r §e*ROAAARRR!* 🦁👑 §7(\"Sinta a fúria solar das minhas mordidinhas no tornozelo, " + targetName + "!\")",
+                "§6<Javidizineo>§r §e*JULGAMENTO SOLAR!* 🦁✨ §7(\"Fique atrás de mim, humano! Minha hitbox é minúscula, mas meu orgulho é impenetrável!\")"
+        );
+        player.sendMessage(Text.literal(defenseMsgs.get(random.nextInt(defenseMsgs.size()))), true);
     }
 
     private void emitAmbientMiniRoar(CatEntity cat, ServerPlayerEntity player) {
@@ -382,7 +388,12 @@ public class JavidizineoBody {
         sw.spawnParticles(ParticleTypes.CRIT, cat.getX(), cat.getY() + 0.5, cat.getZ(), 6, 0.2, 0.2, 0.2, 0.05);
         sw.spawnParticles(ParticleTypes.HEART, cat.getX(), cat.getY() + 0.6, cat.getZ(), 3, 0.2, 0.2, 0.2, 0.04);
 
-        player.sendMessage(Text.literal("§6<Javidizineo>§r §e*rawrrr!* 🦁✨ §7(Javidizineo soltou um rugidinho feroz em miniatura estufando o peito!)"), true);
+        List<String> ambientMsgs = List.of(
+                "§6<Javidizineo>§r §e*rawrrr!* 🦁☀️ §7(\"Pare de me encarar! Minha estatura foi comprimida, mas minha fúria ainda é do tamanho de um sol!\")",
+                "§6<Javidizineo>§r §e*miau... digo, ROAR!* 🦁💢 §7(\"Por que tudo neste mundo tem quinas?! Até o sol é quadrado! Que heresia é essa?!\")",
+                "§6<Javidizineo>§r §e*prrr-grrr!* 🦁🐾 §7(\"Não, eu não estava lambendo minha pata! Estava polindo minhas garras letais!\")"
+        );
+        player.sendMessage(Text.literal(ambientMsgs.get(random.nextInt(ambientMsgs.size()))), true);
     }
 
     private void wanderAroundPlayer(CatEntity cat, ServerPlayerEntity focus, double speed) {
@@ -475,7 +486,7 @@ public class JavidizineoBody {
             sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_RAVAGER_ROAR, SoundCategory.NEUTRAL, 0.5f, 1.9f);
         }
 
-        player.sendMessage(Text.literal("§6<Javidizineo>§r §e*MINI RUGIDO DA VITÓRIA!* 🦁👑 §7(Javidizineo deu um salto real e rugiu de alegria!)"), true);
+        player.sendMessage(Text.literal("§6<Javidizineo>§r §e*SALTO REAL DE SHAMASH!* 🦁👑 §7(\"Que ritual de agachamento é esse?! Está reverenciando o Sol?! Eu aceito!\")"), true);
     }
 
     public void onPet(CatEntity cat, ServerPlayerEntity player) {
@@ -504,12 +515,22 @@ public class JavidizineoBody {
                 sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_RAVAGER_ROAR, SoundCategory.NEUTRAL, 0.35f, 2.0f);
                 cat.setVelocity(0, 0.25, 0);
                 cat.velocityDirty = true;
-                player.sendMessage(Text.literal("§6<Javidizineo>§r §e*nhac nhac rawr!* 🥩🦁 §7(Javidizineo devorou o banquete real e soltou um ronronado com mini-rugido!)"), true);
+
+                List<String> meatMsgs = List.of(
+                        "§6<Javidizineo>§r §e*nhac nhac rawr!* 🥩🦁 §7(\"Acha que pode comprar o Juiz do Deserto com carne?! ...Humpf, aceitarei apenas para manter minha energia vital.\")",
+                        "§6<Javidizineo>§r §e*nhac-prrr!* 🥩🔥 §7(\"Uma oferenda digna de Shamash! Pode trazer mais quando quiser, carcereiro.\")"
+                );
+                player.sendMessage(Text.literal(meatMsgs.get(random.nextInt(meatMsgs.size()))), true);
             } else {
                 sw.spawnParticles(ParticleTypes.HEART, cat.getX(), cat.getY() + 0.5, cat.getZ(), 6, 0.2, 0.2, 0.2, 0.05);
                 sw.spawnParticles(ParticleTypes.CRIT, cat.getX(), cat.getY() + 0.4, cat.getZ(), 4, 0.15, 0.15, 0.15, 0.03);
                 sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_CAT_PURREOW, SoundCategory.NEUTRAL, 0.8f, 1.1f);
-                player.sendMessage(Text.literal("§6<Javidizineo>§r §e*prrr-rawr!* 🦁💖 §7(O mini leão esfregou a juba na sua mão e soltou um rugidinho meigo)"), true);
+
+                List<String> petMsgs = List.of(
+                        "§6<Javidizineo>§r §e*prrr... DIGO, GRRR!* 🦁💖 §7(\"Tire essas mãos da minha juba sagrada! ...Não pare agora, coce atrás da orelha esquerda.\")",
+                        "§6<Javidizineo>§r §e*prrr-rawr!* 🦁💢 §7(\"Eu sou uma fera ancestral de Grandis, não um gatinho doméstico! ...*ronrom*\")"
+                );
+                player.sendMessage(Text.literal(petMsgs.get(random.nextInt(petMsgs.size()))), true);
             }
         }
 
@@ -538,6 +559,8 @@ public class JavidizineoBody {
 
         sw.spawnParticles(ParticleTypes.HAPPY_VILLAGER, cat.getX(), cat.getY() + 0.4, cat.getZ(), 10, 0.25, 0.25, 0.25, 0.05);
         sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL, 1.0f, 1.1f);
+
+        player.sendMessage(Text.literal("§6<Javidizineo>§r §e*TRIBUTO REAL!* 🦁🪙 §7(\"Pegue isto, humano. É um tributo do Sol, e definitivamente NÃO um presentinho de gato!\")"), true);
     }
 
     private void applyAttributes(CatEntity cat, ServerPlayerEntity owner) {
