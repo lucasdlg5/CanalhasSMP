@@ -76,6 +76,7 @@ public class JuninhoBody {
     private long petPauseUntil = 0;
     private final Map<UUID, Long> lastBatMilkGiftPerPlayer = new HashMap<>();
     private final Map<UUID, Boolean> drinkingBatMilk = new HashMap<>();
+    private final Map<UUID, Long> batMilkBuffedUntil = new HashMap<>();
     private final Random random = new Random();
 
     public JuninhoBody(CumminsMod mod) {
@@ -93,6 +94,7 @@ public class JuninhoBody {
         this.lastSonarPingAt = 0;
         this.lastBatMilkGiftPerPlayer.clear();
         this.drinkingBatMilk.clear();
+        this.batMilkBuffedUntil.clear();
         String savedUuid = mod.context().juninhoUuid();
         if (savedUuid != null && !savedUuid.isBlank()) {
             try {
@@ -104,6 +106,7 @@ public class JuninhoBody {
     public void stop() {
         this.lastBatMilkGiftPerPlayer.clear();
         this.drinkingBatMilk.clear();
+        this.batMilkBuffedUntil.clear();
         this.server = null;
     }
 
@@ -732,7 +735,7 @@ public class JuninhoBody {
         // Cor branca de leite puro (0xFFFFFF = 16777215)
         stack.getOrCreateNbt().putInt("CustomPotionColor", 0xFFFFFF);
         stack.getOrCreateNbt().putBoolean("BatLeite", true);
-        stack.getOrCreateNbt().putBoolean("BatLeiteSanitizedV2", true);
+        stack.getOrCreateNbt().putBoolean("BatLeiteSanitizedV3", true);
 
         List<StatusEffectInstance> positiveBuffs = getCleanPositiveBuffs();
         PotionUtil.setCustomPotionEffects(stack, positiveBuffs);
@@ -751,6 +754,10 @@ public class JuninhoBody {
                     || effect == StatusEffects.HASTE
                     || effect == StatusEffects.LUCK) {
                 amplifier = 2; // Nível III
+            } else if (effect == StatusEffects.SPEED) {
+                amplifier = 0; // Nível I (Speed I) - velocidade agradável sem perder controle da física
+            } else if (effect == StatusEffects.JUMP_BOOST) {
+                amplifier = 0; // Nível I (Jump Boost I) - pulo leve sem bater violentamente em tetos
             } else if (effect == StatusEffects.NIGHT_VISION
                     || effect == StatusEffects.WATER_BREATHING
                     || effect == StatusEffects.FIRE_RESISTANCE
@@ -785,6 +792,7 @@ public class JuninhoBody {
         if (id == null) return false;
 
         String idStr = id.toString().toLowerCase();
+        String namespace = id.getNamespace().toLowerCase();
         String path = id.getPath().toLowerCase();
 
         // 1. Blacklist cirúrgica de efeitos problemáticos conhecidos por explosão, recuo involuntário ou conflitos
@@ -792,22 +800,31 @@ public class JuninhoBody {
             return false;
         }
 
-        // Palavras-chave no nome do efeito que causam dano, recuo, explosão, ou incapacitação física
-        if (path.contains("explode") || path.contains("explosion") || path.contains("burst")
-                || path.contains("shockwave") || path.contains("repulsion") || path.contains("repulse")
-                || path.contains("detonate") || path.contains("detonation") || path.contains("volatile")
-                || path.contains("combustion") || path.contains("overload") || path.contains("havoc")
-                || path.contains("eruption") || path.contains("concussion") || path.contains("earthquake")
-                || path.contains("tremor") || path.contains("stormveil") || path.contains("chaos")
-                || path.contains("bleed") || path.contains("hemorrhage") || path.contains("stagger")
-                || path.contains("stun") || path.contains("knockback") || path.contains("recoil")
-                || path.contains("gravity") || path.contains("vortex") || path.contains("singularity")
-                || path.contains("implosion") || path.contains("unstable") || path.contains("paralyze")
-                || path.contains("freeze") || path.contains("frozen") || path.contains("root")
-                || path.contains("bind") || path.contains("petrify") || path.contains("warp")
-                || path.contains("teleport") || path.contains("levitation") || path.contains("curse")
-                || path.contains("hex") || path.contains("daze") || path.contains("vertigo")
-                || path.contains("fling") || path.contains("damage")) {
+        // Bewitchment: o efeito wednesday dá dano no tick empurrando violentamente o player. Restringe bewitchment aos puramente utilitários
+        if (namespace.equals("bewitchment")) {
+            if (path.contains("wednesday") || (!path.equals("gills") && !path.equals("purity") && !path.equals("invigorating"))) {
+                return false;
+            }
+        }
+
+        // Palavras-chave no nome do efeito que causam dano, impulso violento, física descontrolada ou recuo
+        if (path.contains("wednesday") || path.contains("momentum") || path.contains("bounce") || path.contains("bouncer")
+                || path.contains("leap") || path.contains("slam") || path.contains("thrust") || path.contains("propel")
+                || path.contains("propulsion") || path.contains("fling") || path.contains("launch") || path.contains("dash")
+                || path.contains("slide") || path.contains("push") || path.contains("pull") || path.contains("recoil")
+                || path.contains("knockback") || path.contains("repel") || path.contains("repulsion") || path.contains("wind")
+                || path.contains("gale") || path.contains("squall") || path.contains("quake") || path.contains("shake")
+                || path.contains("shockwave") || path.contains("burst") || path.contains("blast") || path.contains("explode")
+                || path.contains("explosion") || path.contains("detonate") || path.contains("detonation") || path.contains("volatile")
+                || path.contains("combustion") || path.contains("overload") || path.contains("havoc") || path.contains("eruption")
+                || path.contains("concussion") || path.contains("earthquake") || path.contains("tremor") || path.contains("stormveil")
+                || path.contains("chaos") || path.contains("bleed") || path.contains("hemorrhage") || path.contains("stagger")
+                || path.contains("stun") || path.contains("gravity") || path.contains("vortex") || path.contains("singularity")
+                || path.contains("implosion") || path.contains("unstable") || path.contains("paralyze") || path.contains("freeze")
+                || path.contains("frozen") || path.contains("root") || path.contains("bind") || path.contains("petrify")
+                || path.contains("warp") || path.contains("teleport") || path.contains("levitation") || path.contains("curse")
+                || path.contains("hex") || path.contains("daze") || path.contains("vertigo") || path.contains("damage")
+                || path.contains("harm") || path.contains("pain") || path.contains("dynamo") || path.contains("accelerate")) {
             return false;
         }
 
@@ -840,12 +857,22 @@ public class JuninhoBody {
     }
 
     public static void sanitizeBatMilkStack(ItemStack stack) {
-        if (stack == null || !stack.hasNbt() || !stack.getNbt().getBoolean("BatLeite")) return;
-        if (stack.getNbt().getBoolean("BatLeiteSanitizedV2")) return;
+        if (stack == null || stack.isEmpty() || !stack.hasNbt() || !stack.getNbt().getBoolean("BatLeite")) return;
+        if (stack.getNbt().getBoolean("BatLeiteSanitizedV3")) return;
 
         List<StatusEffectInstance> cleanEffects = getCleanPositiveBuffs();
         PotionUtil.setCustomPotionEffects(stack, cleanEffects);
-        stack.getOrCreateNbt().putBoolean("BatLeiteSanitizedV2", true);
+        stack.getOrCreateNbt().putBoolean("BatLeiteSanitizedV3", true);
+    }
+
+    public static void sanitizePlayerBatMilk(ServerPlayerEntity player) {
+        if (player == null) return;
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack != null && !stack.isEmpty() && stack.hasNbt() && stack.getNbt().getBoolean("BatLeite")) {
+                sanitizeBatMilkStack(stack);
+            }
+        }
     }
 
     public static void purgeNegativeEffectsFromPlayer(ServerPlayerEntity p) {
@@ -861,7 +888,11 @@ public class JuninhoBody {
 
     private void checkBatMilkDrinking() {
         if (server == null) return;
+        long now = System.currentTimeMillis();
+
         for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            sanitizePlayerBatMilk(p);
+
             boolean isDrinkingNow = p.isUsingItem()
                     && p.getActiveItem().hasNbt()
                     && p.getActiveItem().getNbt().getBoolean("BatLeite");
@@ -882,9 +913,19 @@ public class JuninhoBody {
                     }
                     p.sendMessage(Text.literal("§8[Bat Leite]§r §f§lGLUB GLUB! 🦇🥛 §aVocê bebeu o Bat Leite! Todos os buffs positivos ativados por 15s!"), true);
 
-                    // Purga imediatamente qualquer resíduo negativo ou efeito explosivo/recuo que possa ter sido aplicado
+                    // Anula qualquer empurrão ou aceleração cinética residual no exato momento da ingestão
+                    p.setVelocity(Vec3d.ZERO);
+                    p.velocityModified = true;
+
+                    // Purga imediatamente qualquer resíduo negativo ou efeito físico involuntário
                     purgeNegativeEffectsFromPlayer(p);
+                    batMilkBuffedUntil.put(p.getUuid(), now + 16_000L);
                 }
+            }
+
+            // Durante a vigência dos efeitos do Bat Leite, protege o jogador contra efeitos caóticos residuais
+            if (now < batMilkBuffedUntil.getOrDefault(p.getUuid(), 0L)) {
+                purgeNegativeEffectsFromPlayer(p);
             }
 
             if (isDrinkingNow) {
