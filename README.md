@@ -171,6 +171,8 @@ Aplicativo Android moderno construído em **Kotlin com Jetpack Compose** e arqui
 * **Mural da Comunidade:** Acesse o Mural de Novidades oficial da firma onde você estiver.
 * **Cards de Saúde:** Visualize TPS atual, MSPT, RAM utilizada e ping de conexão do host na palma da mão.
 
+> 📖 **Guia Completo:** Para instruções detalhadas de instalação do APK, configuração de IP/porta, liberação de firewall e compilação, consulte o [README do CanalhasMobileApp](CanalhasMobileApp/README.md).
+
 ---
 
 ## 📁 Estrutura de Diretórios
