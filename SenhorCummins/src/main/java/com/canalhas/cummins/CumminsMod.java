@@ -258,11 +258,13 @@ public class CumminsMod implements ModInitializer {
             brain.onLeave(handler.player);
             playtime.onPlayerLeave(handler.player);
             if (networkMonitor != null) networkMonitor.onPlayerDisconnect(handler.player);
-            if (pipira != null) pipira.onPlayerLeave(handler.player);
-            if (juninho != null) juninho.onPlayerLeave(handler.player);
-            if (javidizineo != null) javidizineo.onPlayerLeave(handler.player);
-            if (jinqiuzineo != null) jinqiuzineo.onPlayerLeave(handler.player);
-            checkEndOfTurnOnDisconnect(server);
+            server.execute(() -> {
+                if (pipira != null) pipira.onPlayerLeave(handler.player);
+                if (juninho != null) juninho.onPlayerLeave(handler.player);
+                if (javidizineo != null) javidizineo.onPlayerLeave(handler.player);
+                if (jinqiuzineo != null) jinqiuzineo.onPlayerLeave(handler.player);
+                checkEndOfTurnOnDisconnect(server);
+            });
         });
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (!world.isClient() && hand == Hand.MAIN_HAND) {
