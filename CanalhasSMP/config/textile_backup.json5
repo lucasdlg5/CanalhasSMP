@@ -27,7 +27,7 @@
 	/* 
 	   A path to the backup folder
 	*/
-	"path": "G:/Meu Drive/Servidor Minecreft CanalhasSMP/",
+	"path": "./backups/",
 	/* 
 	   This setting allows you to exclude files form being backed-up.
 	   Be very careful when setting it, as it is easy corrupt your world!
