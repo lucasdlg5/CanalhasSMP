@@ -158,6 +158,8 @@ Aplicativo nativo Windows (.NET 10 / Windows Forms) desenvolvido para monitorar 
 * **Telemetria de Tokens LLM:** Painel visual com consumo total de tokens, custo estimado e média por requisição.
 * **Monitor Host de Ping:** Gráfico contínuo da estabilidade de conexão para o Google DNS (`8.8.8.8`).
 
+> 📖 **Guia Completo:** Para instruções detalhadas de inicialização, atalhos do painel, uso das abas e compilação, consulte o [README do CanalhasServerDashboard](CanalhasServerDashboard/README.md).
+
 ---
 
 ## 📱 3. CanalhasMobileApp (`/CanalhasMobileApp`)
