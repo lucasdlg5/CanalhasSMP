@@ -416,11 +416,12 @@ public class NetworkHealthMonitor {
                     + "A internet aqui do host já estabilizou (ping %.1fms para o Google e 0%% de perda agora). O lag foi do nosso lado sim, desculpa!",
                     playerName, minAgo, stats.avgPingMs);
         } else {
+            double meanMspt = mod.telemetry() != null ? mod.telemetry().getCurrentMeanMspt() : 10.0;
             return String.format(Locale.ROOT,
-                    "Ô %s, a internet do servidor está 100%% LISA e estável agora! 🌐 "
-                    + "(0%% de perda de pacotes, ping cravado em %.1fms para o Google 8.8.8.8 e TPS em %.1f). "
+                    "Ô %s, a estabilidade e internet do servidor estão 100%% LISAS nos últimos minutos! 🌐 "
+                    + "(0%% de perda de pacotes, ping cravado em %.1fms para o Google 8.8.8.8, TPS em %.1f e MSPT em %.1fms). "
                     + "Se você sentiu alguma travada isolada, pode ter sido na sua rota ou momento de backup!",
-                    playerName, stats.avgPingMs, tps);
+                    playerName, stats.avgPingMs, tps, meanMspt);
         }
     }
 

@@ -1210,7 +1210,7 @@ public class CumminsBrain {
         if (mentioned || inConversation) return true;
 
         // Se não foi mencionado diretamente, verifica se tem formato de pergunta
-        return norm.contains("?") || norm.startsWith("como ta") || norm.startsWith("como tá")
+        return norm.contains("?") || norm.startsWith("como ta") || norm.startsWith("como tá") || norm.startsWith("como esta")
                 || norm.contains("relatorio") || norm.contains("relatório");
     }
 
@@ -1296,14 +1296,22 @@ public class CumminsBrain {
                 || norm.contains("ta a net") || norm.contains("esta a net")
                 || norm.contains("como ta o ping") || norm.contains("como esta o ping")
                 || norm.contains("ta o ping") || norm.contains("esta o ping")
+                || norm.contains("como esta o lag no servidor") || norm.contains("como ta o lag no servidor")
+                || norm.contains("como esta o lag do servidor") || norm.contains("como ta o lag do servidor")
+                || norm.contains("como esta o lag no server") || norm.contains("como ta o lag no server")
+                || norm.contains("como esta o lag do server") || norm.contains("como ta o lag do server")
+                || norm.contains("como esta o lag") || norm.contains("como ta o lag")
+                || norm.contains("estabilidade do servidor") || norm.contains("estabilidade do server")
+                || norm.contains("estabilidade nos ultimos minutos") || norm.contains("ultimos minutos em lag")
                 || norm.contains("ping pra 8.8.8.8") || norm.contains("ping pro google")
                 || (norm.contains("8.8.8.8") && (norm.contains("ping") || norm.contains("ms") || norm.contains("rede") || norm.contains("net")));
 
         if (!hasNetTerms) return false;
         if (mentioned || inConversation) return true;
         return norm.contains("?") || norm.contains("caiu") || norm.contains("ou")
-                || norm.contains("como ta") || norm.contains("como tá") || norm.contains("rede")
-                || norm.contains("timeout") || norm.contains("desconect");
+                || norm.contains("como ta") || norm.contains("como tá") || norm.contains("como esta")
+                || norm.contains("rede") || norm.contains("timeout") || norm.contains("desconect")
+                || norm.contains("lag") || norm.contains("estabilidade");
     }
 
     private void handleInternetQuestion(ServerPlayerEntity player, String playerName) {
@@ -1313,22 +1321,38 @@ public class CumminsBrain {
             NetworkHealthMonitor.NetworkStats stats = mod.networkMonitor().get5MinStats();
             double avgPing = stats.avgPingMs > 0 ? stats.avgPingMs : (stats.currentPingMs > 0 ? stats.currentPingMs : 12.0);
             double tps = mod.telemetry() != null ? mod.telemetry().getCurrentTps() : 20.0;
+            double meanMspt = mod.telemetry() != null ? mod.telemetry().getCurrentMeanMspt() : 10.0;
+            double maxMspt = mod.telemetry() != null ? mod.telemetry().getCurrentMaxMspt() : 20.0;
+
+            String stabilityVerdict;
+            if (tps >= 19.5 && meanMspt <= 25.0 && stats.outagesCount == 0 && stats.packetLossPercent == 0.0) {
+                stabilityVerdict = "o servidor esteve 100% liso e estável nos últimos minutos, cravado em 20 TPS e sem nenhuma perda de pacotes ou engasgo de processamento.";
+            } else if (stats.outagesCount > 0 || stats.packetLossPercent > 5.0) {
+                stabilityVerdict = String.format(Locale.ROOT, "houve oscilação de internet no host nos últimos 5 minutos (%d oscilação(ões), %.1f%% perda de pacotes para o 8.8.8.8), mas a rota já normalizou.", stats.outagesCount, stats.packetLossPercent);
+            } else if (tps < 18.0 || meanMspt > 45.0) {
+                stabilityVerdict = String.format(Locale.ROOT, "o processamento do servidor deu uma pesada recente (MSPT médio %.1fms, pico %.1fms, TPS %.1f), mas a conexão de internet continuou firme.", meanMspt, maxMspt, tps);
+            } else {
+                stabilityVerdict = String.format(Locale.ROOT, "servidor bem estável nos últimos minutos com TPS %.1f e oscilação de ping mínima (min %dms / max %dms).", tps, stats.minPingMs, stats.maxPingMs);
+            }
 
             String hostStatus = (stats.outagesCount > 0
-                    ? String.format(Locale.ROOT, "🚨 OCORREU QUEDA DO LADO DO SERVIDOR! Houve %d oscilação(ões) recente(s) de %ds e %.1f%% de perda de pacotes para o 8.8.8.8, mas já normalizou (ping atual: %dms, ping médio: %.1fms).",
+                    ? String.format(Locale.ROOT, "🚨 OCORREU QUEDA/OSCILAÇÃO RECENTE DO LADO DO SERVIDOR! Houve %d oscilação(ões) nos últimos 5 minutos (duração de %ds e %.1f%% de perda de pacotes para o 8.8.8.8), ping atual: %dms, ping médio: %.1fms.",
                             stats.outagesCount, (stats.lastOutage != null ? stats.lastOutage.durationSeconds : 3), stats.packetLossPercent, stats.currentPingMs, avgPing)
                     : stats.multiplePlayersDroppedRecently
                         ? String.format(Locale.ROOT, "🚨 HOUVE ENGASGO NA ROTA DO HOST/RADMIN VPN há cerca de %d minuto(s) que derrubou jogadores juntos! Mas a rede já normalizou agora (ping atual: %dms, ping médio: %.1fms para o 8.8.8.8, 0%% perda).",
                                 Math.max(1, stats.lastBurstDisconnectAgoSec / 60L), stats.currentPingMs, avgPing)
-                        : String.format(Locale.ROOT, "A conexão do host com a internet está 100%% LISA e estável agora: ping médio de %.1fms para o Google DNS (8.8.8.8) com 0%% de perda de pacotes e TPS %.1f. Se alguém tomou timeout, o problema foi na rota isolada do jogador ou do Radmin VPN, não na internet do host.",
-                                avgPing, tps));
+                        : String.format(Locale.ROOT, "A conexão do host com a internet e a estabilidade nos últimos minutos estão 100%% LISAS: ping médio de %.1fms para o Google DNS (8.8.8.8) com 0%% de perda de pacotes (min %dms, max %dms), TPS %.1f/20.0 e MSPT médio %.1fms. Se alguém tomou timeout, o problema foi na rota isolada do jogador ou do Radmin VPN, não na internet do host.",
+                                avgPing, stats.minPingMs, stats.maxPingMs, tps, meanMspt));
 
-            String instruction = playerName + " perguntou sobre o estado da internet / conexão do servidor ou relatou que alguém tomou timeout e desconectou! "
-                    + "DADOS TÉCNICOS OBRIGATÓRIOS DO MONITOR DE REDE DO HOST: " + hostStatus + " "
-                    + "EXIGÊNCIA DE RESPOSTA: Você DEVE OBRIGATORIAMENTE citar o valor numérico do ping médio para o Google 8.8.8.8 (ex: '" + String.format(Locale.ROOT, "%.1f", avgPing) + "ms') "
-                    + "e esclarecer se a queda foi do lado do host ou na rota/provedor do jogador que caiu. "
-                    + "Responda de forma direta, clara, bem-humorada e companheira (máximo 1 ou 2 frases curtas, sem enrolação e sem usar 'tmj').";
-            request(instruction, playerName, true, 200);
+            String instruction = playerName + " perguntou como está o lag / a estabilidade do servidor nos últimos minutos ou o estado da internet e ping! "
+                    + "DADOS TÉCNICOS OBRIGATÓRIOS DO MONITOR DE REDE E TELEMETRIA DOS ÚLTIMOS MINUTOS: " + hostStatus + " "
+                    + "Diagnóstico detalhado de estabilidade: " + stabilityVerdict + " "
+                    + "EXIGÊNCIA DE RESPOSTA COM DETALHES: Você DEVE OBRIGATORIAMENTE responder citando detalhes precisos: "
+                    + "1) Cite o valor exato do ping médio para o Google 8.8.8.8 (ex: '" + String.format(Locale.ROOT, "%.1f", avgPing) + "ms') e perda de pacotes (ex: '0% de perda' ou a % real). "
+                    + "2) Informe o TPS atual (ex: '" + String.format(Locale.ROOT, "%.1f", tps) + "/20') e/ou MSPT ('" + String.format(Locale.ROOT, "%.1f", meanMspt) + "ms'). "
+                    + "3) Explique a estabilidade geral do servidor nos últimos minutos de forma natural, clara e descontraída (confirmando se esteve liso ou se houve oscilação/engasgo). "
+                    + "Responda de forma direta, clara, bem-humorada e companheira (máximo 2 frases curtas, sem enrolação e sem usar 'tmj').";
+            request(instruction, playerName, true, 250);
         } else {
             broadcast(diagnostic, playerName);
         }
@@ -1400,7 +1424,7 @@ public class CumminsBrain {
         String norm = CumminsScanner.normalize(clean);
 
         // Se for claramente uma pergunta sobre o desempenho atual, não é um relato de lag
-        if (norm.startsWith("como ta") || norm.startsWith("como tá") || norm.contains("relatorio") || norm.contains("relatório")) {
+        if (norm.startsWith("como ta") || norm.startsWith("como tá") || norm.startsWith("como esta") || norm.contains("relatorio") || norm.contains("relatório")) {
             return false;
         }
 
