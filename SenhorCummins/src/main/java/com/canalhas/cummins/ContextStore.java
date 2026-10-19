@@ -36,6 +36,7 @@ public class ContextStore {
     private String pipiraUuid = null;
     private String juninhoUuid = null;
     private String javidizineoUuid = null;
+    private String jinqiuzineoUuid = null;
 
     public ContextStore(Path file) {
         this.file = file;
@@ -51,6 +52,8 @@ public class ContextStore {
     public synchronized void setJuninhoUuid(String uuid) { this.juninhoUuid = uuid; }
     public synchronized String javidizineoUuid() { return javidizineoUuid; }
     public synchronized void setJavidizineoUuid(String uuid) { this.javidizineoUuid = uuid; }
+    public synchronized String jinqiuzineoUuid() { return jinqiuzineoUuid; }
+    public synchronized void setJinqiuzineoUuid(String uuid) { this.jinqiuzineoUuid = uuid; }
     public synchronized PlayerRelationshipManager relationships() { return relationships; }
 
     public long getTeleportCooldown(String playerName) {
@@ -135,6 +138,7 @@ public class ContextStore {
             if (o.has("pipiraUuid") && !o.get("pipiraUuid").isJsonNull()) pipiraUuid = o.get("pipiraUuid").getAsString();
             if (o.has("juninhoUuid") && !o.get("juninhoUuid").isJsonNull()) juninhoUuid = o.get("juninhoUuid").getAsString();
             if (o.has("javidizineoUuid") && !o.get("javidizineoUuid").isJsonNull()) javidizineoUuid = o.get("javidizineoUuid").getAsString();
+            if (o.has("jinqiuzineoUuid") && !o.get("jinqiuzineoUuid").isJsonNull()) jinqiuzineoUuid = o.get("jinqiuzineoUuid").getAsString();
             if (o.has("relationships") && o.get("relationships").isJsonObject()) relationships.deserialize(o.getAsJsonObject("relationships"));
             if (o.has("teleportCooldowns") && o.get("teleportCooldowns").isJsonObject()) {
                 JsonObject tc = o.getAsJsonObject("teleportCooldowns");
@@ -168,6 +172,7 @@ public class ContextStore {
             if (pipiraUuid != null) o.addProperty("pipiraUuid", pipiraUuid);
             if (juninhoUuid != null) o.addProperty("juninhoUuid", juninhoUuid);
             if (javidizineoUuid != null) o.addProperty("javidizineoUuid", javidizineoUuid);
+            if (jinqiuzineoUuid != null) o.addProperty("jinqiuzineoUuid", jinqiuzineoUuid);
             o.add("relationships", relationships.serialize());
             JsonObject tc = new JsonObject();
             teleportCooldowns.forEach(tc::addProperty);

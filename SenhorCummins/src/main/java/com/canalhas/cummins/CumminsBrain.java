@@ -104,6 +104,11 @@ public class CumminsBrain {
     private volatile long lastJavidTalkedAt = 0;
     private final AtomicBoolean javidBusy = new AtomicBoolean(false);
 
+    // Estado de conversa privada com o Jinqiuzineo
+    private volatile String lastJinqiuTalkedWith = null;
+    private volatile long lastJinqiuTalkedAt = 0;
+    private final AtomicBoolean jinqiuBusy = new AtomicBoolean(false);
+
     // Buffer de mensagens naturais por jogador para aprendizado contínuo em tempo real
     private final Map<String, List<String>> recentPlayerChatBuffer = new ConcurrentHashMap<>();
     private final Map<String, Long> lastNaturalLearnAt = new ConcurrentHashMap<>();
@@ -362,6 +367,26 @@ public class CumminsBrain {
                 });
             }
             handleJavidizineoChat(player, text, name);
+            return;
+        }
+
+        boolean isJinqiuWord = lower.contains("jinqiuzineo") || lower.contains("jinqiu")
+                || lower.contains("jin qiu") || lower.contains("tigrezinho")
+                || lower.contains("mini tigre") || lower.contains("ru shou") || lower.contains("rushou");
+        boolean inJinqiuConversation = !mentioned && !isJavidWord && name.equals(lastJinqiuTalkedWith)
+                && (now() - lastJinqiuTalkedAt < 120_000L);
+
+        if ((isJinqiuWord || inJinqiuConversation) && mod.jinqiuzineo() != null) {
+            boolean wasActive = mod.jinqiuzineo().isActiveInSession() && mod.jinqiuzineo().getCat() != null;
+            mod.jinqiuzineo().summonOrTeleportTo(player);
+            if (!wasActive) {
+                server.execute(() -> {
+                    if (player.isAlive()) {
+                        player.sendMessage(Text.literal("§5* Jinqiuzineo§r §d(Mini Tigre)§f surgiu das sombras ajeitando o topete para escoltar §e" + name + "§f! 🐯⛓️✨"), false);
+                    }
+                });
+            }
+            handleJinqiuzineoChat(player, text, name);
             return;
         }
 
@@ -2153,6 +2178,12 @@ public class CumminsBrain {
             else if (ll.startsWith("javidizineo:")) l = l.substring(12).trim();
             else if (ll.startsWith("<javid>")) l = l.substring(7).trim();
             else if (ll.startsWith("javid:")) l = l.substring(6).trim();
+            else if (ll.startsWith("<jinqiuzineo>")) l = l.substring(13).trim();
+            else if (ll.startsWith("jinqiuzineo:")) l = l.substring(12).trim();
+            else if (ll.startsWith("<jinqiu>")) l = l.substring(8).trim();
+            else if (ll.startsWith("jinqiu:")) l = l.substring(7).trim();
+            else if (ll.startsWith("<jin qiu>")) l = l.substring(9).trim();
+            else if (ll.startsWith("jin qiu:")) l = l.substring(8).trim();
             if (l.length() >= 2 && ((l.startsWith("\"") && l.endsWith("\"")) || (l.startsWith("“") && l.endsWith("”")))) {
                 l = l.substring(1, l.length() - 1).trim();
             }
@@ -2355,6 +2386,85 @@ public class CumminsBrain {
                 javidBusy.set(false);
                 String fallbackReply = JavidizineoDialogueLibrary.getRandomResponse(lower);
                 server.execute(() -> sendPrivateAsJavidizineo(player, fallbackReply));
+            }
+        }, 100, TimeUnit.MILLISECONDS);
+    }
+
+    public void sendPrivateAsJinqiuzineo(ServerPlayerEntity player, String line) {
+        if (server == null || player == null || !player.isAlive()) return;
+        MutableText msg = Text.literal("<")
+                .append(Text.literal("Jinqiuzineo").formatted(Formatting.DARK_PURPLE))
+                .append(Text.literal("> "))
+                .append(Text.literal(line).formatted(Formatting.LIGHT_PURPLE));
+        player.sendMessage(msg, false);
+
+        String name = player.getGameProfile().getName();
+        lastJinqiuTalkedWith = name;
+        lastJinqiuTalkedAt = now();
+
+        if (mod.jinqiuzineo() != null) {
+            CatEntity cat = mod.jinqiuzineo().getCat();
+            if (cat != null && cat.isAlive() && cat.getWorld() instanceof ServerWorld sw) {
+                sw.playSound(null, cat.getX(), cat.getY(), cat.getZ(), SoundEvents.ENTITY_CAT_PURREOW, SoundCategory.NEUTRAL, 0.75f, 0.9f);
+                sw.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, cat.getX(), cat.getY() + 0.4, cat.getZ(), 4, 0.15, 0.15, 0.15, 0.03);
+            }
+        }
+        mod.context().addGame("Jinqiuzineo (privado para " + name + "): " + line, cfg().timing.contextSize);
+    }
+
+    public void handleJinqiuzineoChat(ServerPlayerEntity player, String text, String playerName) {
+        if (server == null || scheduler == null || player == null) return;
+        String lower = text.toLowerCase(Locale.ROOT);
+
+        // Se a API estiver sem chave configurada, responde imediatamente pela biblioteca offline
+        if (!cfg().hasApiKey()) {
+            String fallbackReply = JinqiuzineoDialogueLibrary.getRandomResponse(lower);
+            double typing = cfg().timing.typingBaseSeconds + fallbackReply.length() * cfg().timing.typingSecondsPerChar;
+            long delayMs = Math.min((long) (typing * 1000), 2500L);
+            scheduler.schedule(() -> server.execute(() -> sendPrivateAsJinqiuzineo(player, fallbackReply)), delayMs, TimeUnit.MILLISECONDS);
+            return;
+        }
+
+        if (!jinqiuBusy.compareAndSet(false, true)) {
+            String fallbackReply = JinqiuzineoDialogueLibrary.getRandomResponse(lower);
+            server.execute(() -> sendPrivateAsJinqiuzineo(player, fallbackReply));
+            return;
+        }
+
+        scheduler.schedule(() -> {
+            try {
+                String system = JinqiuzineoDialogueLibrary.buildSystemPrompt();
+                String user = playerName + " acabou de falar com você no chat: \"" + text + "\". "
+                        + "Responda diretamente a ele mantendo sua persona cômica de carcereiro de Aeterna / Ru Shou (Dislyte) preso no corpinho de um tigre/gatinho rajado, em 1 ou 2 frases curtas!";
+
+                mod.llm().chat(cfg().api, system, user, cfg().api.maxTokens).whenComplete((res, err) -> {
+                    try {
+                        if (err != null || res == null || res.isBlank()) {
+                            String fallbackReply = JinqiuzineoDialogueLibrary.getRandomResponse(lower);
+                            server.execute(() -> sendPrivateAsJinqiuzineo(player, fallbackReply));
+                            return;
+                        }
+                        List<String> lines = clean(res);
+                        if (!lines.isEmpty()) {
+                            double delay = 0;
+                            for (String line : lines) {
+                                double typing = cfg().timing.typingBaseSeconds + line.length() * cfg().timing.typingSecondsPerChar;
+                                delay += Math.min(typing, cfg().timing.typingMaxSeconds);
+                                long ms = (long) (delay * 1000);
+                                scheduler.schedule(() -> server.execute(() -> sendPrivateAsJinqiuzineo(player, line)), ms, TimeUnit.MILLISECONDS);
+                            }
+                        } else {
+                            String fallbackReply = JinqiuzineoDialogueLibrary.getRandomResponse(lower);
+                            server.execute(() -> sendPrivateAsJinqiuzineo(player, fallbackReply));
+                        }
+                    } finally {
+                        jinqiuBusy.set(false);
+                    }
+                });
+            } catch (Exception e) {
+                jinqiuBusy.set(false);
+                String fallbackReply = JinqiuzineoDialogueLibrary.getRandomResponse(lower);
+                server.execute(() -> sendPrivateAsJinqiuzineo(player, fallbackReply));
             }
         }, 100, TimeUnit.MILLISECONDS);
     }

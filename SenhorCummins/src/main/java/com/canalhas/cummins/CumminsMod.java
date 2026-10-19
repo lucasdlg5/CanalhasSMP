@@ -34,6 +34,7 @@ public class CumminsMod implements ModInitializer {
     private PipiraBody pipira;
     private JuninhoBody juninho;
     private JavidizineoBody javidizineo;
+    private JinqiuzineoBody jinqiuzineo;
     private ServerTelemetry telemetry;
     private MuralManager mural;
     private ModSourceBackupManager modBackup;
@@ -66,6 +67,7 @@ public class CumminsMod implements ModInitializer {
     public PipiraBody pipira() { return pipira; }
     public JuninhoBody juninho() { return juninho; }
     public JavidizineoBody javidizineo() { return javidizineo; }
+    public JinqiuzineoBody jinqiuzineo() { return jinqiuzineo; }
     public ServerTelemetry telemetry() { return telemetry; }
     public MuralManager mural() { return mural; }
     public ModSourceBackupManager modBackup() { return modBackup; }
@@ -105,6 +107,7 @@ public class CumminsMod implements ModInitializer {
         pipira = new PipiraBody(this);
         juninho = new JuninhoBody(this);
         javidizineo = new JavidizineoBody(this);
+        jinqiuzineo = new JinqiuzineoBody(this);
         telemetry = new ServerTelemetry(this);
         mural = new MuralManager(dir);
         modBackup = new ModSourceBackupManager();
@@ -133,6 +136,7 @@ public class CumminsMod implements ModInitializer {
             pipira.start(server);
             juninho.start(server);
             javidizineo.start(server);
+            jinqiuzineo.start(server);
             modBackup.syncNow();
             playtime.onServerStarted(server);
             if (config.networkMonitor != null && config.networkMonitor.enabled) {
@@ -166,6 +170,7 @@ public class CumminsMod implements ModInitializer {
             pipira.stop();
             juninho.stop();
             javidizineo.stop();
+            jinqiuzineo.stop();
             telemetry.stop();
             if (playtime != null) playtime.doPeriodicUpdate(server);
             if (pochete != null) pochete.save();
@@ -223,6 +228,10 @@ public class CumminsMod implements ModInitializer {
                 // Javidizineo é 100% imortal e mini-leão guardião
                 return false;
             }
+            if (entity.getCommandTags().contains(JinqiuzineoBody.JINQIUZINEO_TAG)) {
+                // Jinqiuzineo é 100% imortal e mini-tigre guardião
+                return false;
+            }
             return true;
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
@@ -241,6 +250,9 @@ public class CumminsMod implements ModInitializer {
             if (javidizineo != null && handler.player.getGameProfile().getName().equalsIgnoreCase(JavidizineoBody.OWNER_NAME)) {
                 javidizineo.summonOrTeleportTo(handler.player);
             }
+            if (jinqiuzineo != null && handler.player.getGameProfile().getName().equalsIgnoreCase(JinqiuzineoBody.OWNER_NAME)) {
+                jinqiuzineo.summonOrTeleportTo(handler.player);
+            }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             brain.onLeave(handler.player);
@@ -249,6 +261,7 @@ public class CumminsMod implements ModInitializer {
             if (pipira != null) pipira.onPlayerLeave(handler.player);
             if (juninho != null) juninho.onPlayerLeave(handler.player);
             if (javidizineo != null) javidizineo.onPlayerLeave(handler.player);
+            if (jinqiuzineo != null) jinqiuzineo.onPlayerLeave(handler.player);
             checkEndOfTurnOnDisconnect(server);
         });
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
@@ -287,6 +300,12 @@ public class CumminsMod implements ModInitializer {
                     }
                     return ActionResult.SUCCESS;
                 }
+                if (entity instanceof CatEntity cat && cat.getCommandTags().contains(JinqiuzineoBody.JINQIUZINEO_TAG)) {
+                    if (player instanceof ServerPlayerEntity sp) {
+                        jinqiuzineo.onPet(cat, sp);
+                    }
+                    return ActionResult.SUCCESS;
+                }
             }
             return ActionResult.PASS;
         });
@@ -299,6 +318,7 @@ public class CumminsMod implements ModInitializer {
             if (pipira != null) pipira.onTick();
             if (juninho != null) juninho.onTick();
             if (javidizineo != null) javidizineo.onTick();
+            if (jinqiuzineo != null) jinqiuzineo.onTick();
             mural.onTick(server);
             playtime.onTick(server);
             if (mutirao != null) mutirao.tick(server);
@@ -416,7 +436,10 @@ public class CumminsMod implements ModInitializer {
                 "com.canalhas.cummins.VitoriaBody",
                 "com.canalhas.cummins.PipiraBody",
                 "com.canalhas.cummins.JuninhoBody",
-                "com.canalhas.cummins.JavidizineoBody"
+                "com.canalhas.cummins.JavidizineoBody",
+                "com.canalhas.cummins.JavidizineoDialogueLibrary",
+                "com.canalhas.cummins.JinqiuzineoBody",
+                "com.canalhas.cummins.JinqiuzineoDialogueLibrary"
         );
 
         int loaded = 0;
