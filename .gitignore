@@ -96,4 +96,5 @@ $RECYCLE.BIN/
 *.txt
 *.tmp
 *.log
+spark_report*.json
 !README.md
