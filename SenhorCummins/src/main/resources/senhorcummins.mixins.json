@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.canalhas.cummins.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "EntityStepSoundMixin",
+    "WolfStepSoundMixin",
+    "KoboldNpeFixMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

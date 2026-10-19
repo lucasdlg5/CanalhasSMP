@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "senhorcummins",
+  "version": "${version}",
+  "name": "Senhor Cummins da Silva",
+  "description": "NPC anfitrião server-side movido a LLM que zoa, conversa e lembra das piadas internas do servidor. Lê o Discord como contexto.",
+  "authors": ["Asminn"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.canalhas.cummins.CumminsMod"]
+  },
+  "mixins": [
+    "senhorcummins.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "minecraft": "1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
