@@ -1,0 +1,147 @@
+{
+  "TECHNICAL": {
+    "VERSION_DO_NOT_EDIT": 1.7,
+    "FORCE_RESET": false
+  },
+
+  // This config file uses a custom defined parser. That's why there are comments here, they wouldn't be valid in any other .json file.
+  //    To add a comment yourself, just start a line with // like I did here
+  //    (although their main use is explaining you what the entries do)
+
+  // CATEGORY: ENCHANTING
+  "enchantments": {
+    "enchant_limiter": {
+      // Limits how many enchantments can be added to an item. Set it to -1 to disable the limiter,
+      //    and to 0 to disable enchanting as a whole
+      "default": 6,
+      // Should curses add enchantment slots instead of using them
+      "curses_add_slots": false,
+      // Override modes include "relative" and "absolute".
+      //    If set to "relative", the overrides defined below will be added onto the default limit.
+      //    If set to "absolute", they'll replace the default limits.
+      "override_mode": "absolute",
+      // Overrides to the amount of enchantments an item can have. Must be of the form "modid:itemid": value
+      "overrides": {
+        "#prominent:limit_8": 8,
+        "#prominent:limit_10": 10
+      },
+      // Should an item's maximum enchantments be displayed even when it is not enchanted
+      "always_show_limit": false,
+      "limitite": {
+        // Should Limitite have an enchantment glint
+        "is_foil": true,
+        // 1 in X chance for Limitite to spawn as loot in chests. Set to 0 or lower to disable it
+        "loot_weight": 0,
+        // How many Limitites can be applied to a single item
+        "max_limit_break": 0
+      }
+    },
+
+    "enchant_catalyst": {
+      // Should Enchanted Books be usable as catalysts to increase the odds of getting their enchantments
+      // If this is set to false and no catalyst is loaded from datapacks, the module will be disabled
+      "allow_books": false,
+      // Chance (0 - 1) for non book catalysts to activate for each option in the enchanting table
+      "catalyst_activation_chance": 0.0
+    },
+
+    // Allow using Enchanted Books on items in inventory
+    "allow_inventory_enchanting": false,
+
+    // Should the Magic Protection enchantment be compatible with vanilla Protection enchantments
+    "magic_protection_protection_compatibility": false,
+    // Feather Falling at this level completely negates fall damage (should be set to the maximum if enabled, or higher if disabled)
+    "better_feather_falling": 99,
+    // Unbreaking at this level makes an item completely unbreakable (should be set to the maximum if enabled, or higher if disabled)
+    "better_unbreaking": 100,
+    // Should Magic Protection also give a level*5 chance to dodge any attack
+    "better_magic_protection": false,
+    // Should Fire Protection at this level on every armor slot at once grant fire immunity
+    "better_fire_protection": 99,
+    // Should Bane of Arthropods apply a 0.5*(level + 1) seconds of slowness on hit
+    "better_bane_of_arthropods": false
+  },
+
+  // CATEGORY: EXPERIENCE
+  "experience": {
+    "witch_hat": {
+      // Should the Witch Hat be registered as an item
+      "enable": false,
+      // Chance for the Witch Hat to drop when killing a Witch. Set to 0 to disable the drop
+      "drop_chance": 0.0,
+      // How many extra experience points should drop when killing a monster with the Witch Hat equipped
+      "xp_bonus": 3
+    },
+    // Should enchanting in an enchanting table cost more xp than the default 1 2 3 levels
+    "increased_enchant_costs": false,
+    // If the above is true, defines the new costs to replace 1 2 3
+    "costs": [1, 3, 7],
+    // If increased_enchant_costs is true, defines the required xp levels to enchants
+    "needed": [5, 10, 15],
+    // Should Anvils never cost experience
+    "no_xp_anvil": false,
+    // Maximum experience level a player can have before it can't increase anymore. Set to -1 to disable the limit,
+    //    and to 0 to disable experience
+    "level_cap": 750,
+    // How much xp points are needed to level up, in place of the exponential formula vanilla has.
+    //    Set to 0 or lower to use vanilla's formula
+    "linear_xp_requirement": 0,
+    // Should monsters have a chance to give a bunch of extra experience points when killed
+    "xp_bounty": {
+      // Should the sortilege:bounties tag act as a whitelist instead of a blacklist. It defines which mobs can drop bounties
+      "tag_is_whitelist": false,
+      // Amount of xp points bounties drop
+      "value": 0,
+      // Chance for a bounty to happen
+      "chance": 0.0
+    },
+
+    // Locks certain recipes behind experience levels or advancements.
+    //    Each entry must be of the form "modid:recipeid": minimalxplevel or "modid:recipeid": "advancementid"
+    //    The default config locks the crafting of Ender Eyes behind level 30 and the Beacon behind summoning the Wither, as an example
+    "recipe_locks": {
+      "minecraft:beacon": "minecraft:nether/summon_wither"
+    }
+  },
+
+  // CATEGORY: DEATH
+  "death": {
+    // Enable a balanced keepInventory only for experience
+    "xp_keeping": {
+      "enable": false,
+      // Should players killed by players drop their xp or give it to their assassin directly
+      "allow_stealing_from_players": true,
+      // Ratio of xp kept on death
+      "self_ratio": 0.3,
+      // Ratio of xp stolen by the attacker, and dropped back when it's killed
+      "attacker_ratio": 0.6,
+      // Ratio of xp dropped on the ground on death
+      "drop_ratio": 0.1
+    },
+    // Keep equipped items (armor and hotbar) on death
+    "keep_equipped": false,
+    // Should the Soulbound enchantment be removed on use
+    "consume_soulbound": false,
+    // Display death coordinates instead of the score from vanilla on the death screen
+    "show_coordinates_on_death": true
+  },
+
+  // CATEGORY: BREWING
+  "brewing": {
+    // Should Antidotes be registered as items
+    "enable": false,
+    // A list of potion effects for which Antidotes don't get registered
+    "antidote_blacklist": [
+    ],
+    "antidote_stack_size": 4
+  },
+
+  // CATEGORY: STAFFS
+  "staffs": {
+    // Amount of xp points needed to use a staff, if not set
+    "default_xp_cost": 0,
+    // Time staffs need to be held down (in ticks) before shooting, if not set
+    "default_charge_time": 1,
+    "entries": []
+  }
+}

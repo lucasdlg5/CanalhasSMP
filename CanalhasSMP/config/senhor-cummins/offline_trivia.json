@@ -1,0 +1,98 @@
+{
+  "charadas": [
+    {
+      "question": "O que é o que é: tem olhos mas não vê, tem água mas não bebe, e se você cavar reto pra baixo você cai nele?",
+      "answer": "Lava"
+    },
+    {
+      "question": "O que é o que é: quanto mais você tira de mim no Minecraft, maior eu fico?",
+      "answer": "Buraco"
+    },
+    {
+      "question": "Qual é o mob do Minecraft que sempre chega explodindo de alegria na sua base?",
+      "answer": "Creeper"
+    },
+    {
+      "question": "O que é que corre o mapa inteiro sem ter pernas e se você pisar sem bota afunda na alma?",
+      "answer": "Areia das almas"
+    },
+    {
+      "question": "Por que o esqueleto não brigou com ninguém na mina?",
+      "answer": "Porque ele não tem estômago pra isso kkkk"
+    },
+    {
+      "question": "O que é que você pode quebrar com a mão, mas se você não tiver picareta de ferro você chora na frente dele?",
+      "answer": "Diamante"
+    },
+    {
+      "question": "O que é o que é: nasce grande e morre pequeno, e quanto mais você trabalha mais ele diminui?",
+      "answer": "Picareta"
+    },
+    {
+      "question": "Qual é o carro favorito dos moradores da vila do Minecraft? O meu Peugeot 206 rebaixado!",
+      "answer": "Peugeot"
+    },
+    {
+      "question": "O que é o que é: passa a noite inteira voando na sua cabeça só porque você esqueceu de deitar 3 noites seguidas?",
+      "answer": "Phantom"
+    },
+    {
+      "question": "O que é que entra na água e não se molha, mas se você der shift na cerca ele te derruba?",
+      "answer": "Gato"
+    }
+  ],
+  "piadasECausos": [
+    "Sabe o que o Shrek falou pro Burro quando viu essa base? 'O que você tá fazendo no meu pântano?!' kkkk clássico demais",
+    "Esses dias fui dar ré no Peugeot ali perto da mina, quase atropelei um zumbi de armadura de ouro slk",
+    "A vida é igual picareta sem Remendo: uma hora a durabilidade acaba, então aproveita enquanto tá minerando diamante!",
+    "Quem inventou o cascalho caindo na cabeça quando a gente tá minerando não tinha amor no coração não, namoral",
+    "E nessa loucura de dizer que não te quero... vou minerando Netherita até o sol raiar slk!",
+    "Calma calabreso! Não gasta esse ferro todo em trilho que a gente precisa de funil pra farm!",
+    "Receba! Melhor companheiro felino desse servidor, graças a Deus pai!",
+    "Se um dia eu for embora desse servidor, deixo meu Peugeot de herança pra quem tiver mais mortes no log kkkk"
+  ],
+  "desculpasGamer": [
+    "Peraí rapidão rapaziada, tocaram o interfone / o entregador chegou com o rango, já volto!",
+    "Caiu café no meu teclado aqui mds kkkkk espera aí que tô secando o switch!",
+    "Minha mãe mandou tirar o lixo rapidão senão ela desliga o disjuntor da casa kkkk 1 min!",
+    "O Discord deu uma crashada monstra aqui do nada, pera que tô reiniciando a chamada!",
+    "Fui ali esquentar o almoço que já tava congelando aqui rapaziada, segura a base aí!",
+    "Deu um estalo na espinha aqui agora que tive que esticar o lombo senão eu travo na cadeira, slk!",
+    "Engasguei com o pão de queijo aqui kkkk pera aí meu consagrado!",
+    "O mouse desconectou do nada aqui, peraí que tô procurando a pilha reserva!"
+  ],
+  "zoomiesFrases": [
+    "Ataque de zoomies ativado slk, segura o homem!",
+    "Fui ali beber água e voltei a 200 por hora kkkkk sai da frente!",
+    "O motor do Peugeot deu a partida aqui rapaziada, vrum vrummm!",
+    "Bateria 100% carregada, ninguém me segura agora nesse mapa!",
+    "Energia acumulada nas 4 patas, partiu fazer parkour na base!"
+  ],
+  "presenteFrases": [
+    "Ó {player}, achei essa peça solta perto da oficina. Vê se não caiu de alguma máquina sua!",
+    "Caiu isso aqui do parachoque do Peugeot 206 quando dei ré kkkk toma aí {player}, guarda na caixa de ferramentas!",
+    "{player}, tava inspecionando o chão da fábrica e descolei essa peça pra você não pisar descalço.",
+    "Tava farejando a bancada e achei isso dando sopa. Na firma nada se perde, tudo vira recurso, toma aí {player}!",
+    "{player}, você tá minerando e construindo há horas sem comer nada direito! Come isso aqui antes que desmaie, pô!",
+    "Pausa pro café da firma, {player}! Pega esse rango reforçado pra aguentar a maratona.",
+    "Fui na beira do rio dar uma pescada rápida e trouxe essa iguaria fresca pro meu trabalhador favorito!",
+    "Toma esse petisco caprichado, {player}! Saco vazio não para em pé e obra não anda sem sustento.",
+    "Tava cavando com as unhas perto da caverna e olha o que eu desenterrei brilhando pra você, {player}!",
+    "Achei essa pedrinha reluzente entocada numa fenda escura. Lembrei na hora de você, meu consagrado!",
+    "Olha o que as garras afiadas do Tio Cummins acharam no fundo da terra! É todinho seu, {player}.",
+    "Tava brincando na cascalheira e achei esse brilho aqui. Guarda aí no inventário que dá sorte!",
+    "Parceria é parceria, {player}! Você cuida de mim, me dá carinho e o Tio Cummins descola os mimos da firma!",
+    "O Tio Cummins reconhece quem é parceiro de verdade nesse servidor. Receba esse agrado da diretoria!",
+    "Você me deu tanto carinho hoje que meu coração felino amoleceu. Toma esse presente aqui, {player}!",
+    "Um agrado especial pro meu sócio mais dedicado desse mundo de blocos! Tamo junto nessa caminhada.",
+    "Segura isso bem guardado na mochila, {player}! Se a barra pesar lá fora na escuridão, isso pode salvar sua pele!",
+    "Achei uma relíquia bruta escondida no cofre da firma! Só tô te passando porque nossa amizade não tem preço!",
+    "Presente de peso do Tio Cummins pra você não passar perrengue contra os monstros da noite, {player}!"
+  ],
+  "tbagFrases": [
+    "Agachando em sincronia kkkk o famoso código de honra sagrado dos gamers!",
+    "T-bag de amizade reconhecido com sucesso! 🤝 Parceria fechada!",
+    "Agacha agacha, tá fazendo agachamento pra fortalecer os joelho é? kkkk",
+    "Respeito máximo entre cavalheiros do bloco! Tamo junto!"
+  ]
+}

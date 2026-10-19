@@ -1,0 +1,258 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "diamond"
+	filename: "to_the_end"
+	group: "3E586F2160161EEA"
+	icon: "minecraft:end_portal_frame"
+	id: "5AAF050CB8F14B0C"
+	images: [{
+		height: 4.0d
+		image: "prominent:textures/text/the_end.png"
+		rotation: 0.0d
+		width: 8.0d
+		x: 0.0d
+		y: -6.0d
+	}]
+	order_index: 5
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: [
+				"263D24D35E699557"
+				"7F0434CFE9CAEF07"
+				"6AD07DC2ED3C734D"
+				"3DE8FE441A0B051C"
+				"1B9101B42DCED261"
+				"35B7FDB1000EEAF9"
+				"4E969D7F19948E4A"
+				"49EFA88FEABB1195"
+				"2BC3AA0B480C6828"
+				"62536E37C53A9260"
+				"7A601E36B70D975C"
+				"72EFFD1039B48784"
+				"6A9C9E7ADB45F1BE"
+				"6F658E35279100C8"
+				"3239B2CDB852E1C6"
+				"64E302C442B729B8"
+			]
+			dependency_requirement: "one_started"
+			icon: "minecraft:end_portal_frame"
+			id: "45D9C9CD7B2568A0"
+			min_required_dependencies: 1
+			rewards: [{
+				id: "0A7247778B088F39"
+				type: "xp_levels"
+				xp_levels: 3
+			}]
+			shape: "octagon"
+			size: 1.25d
+			subtitle: "&eEnter The End Portal using twelve of the unique eyes."
+			tasks: [{
+				dimension: "minecraft:the_end"
+				icon: "minecraft:ender_eye"
+				id: "126F26CCB046CD5D"
+				title: "Entering The End"
+				type: "dimension"
+			}]
+			title: "&dThe End?"
+			x: 0.0d
+			y: -2.5d
+		}
+		{
+			id: "4E969D7F19948E4A"
+			optional: true
+			subtitle: "&7Dropped by Elder Guardians (33%)"
+			tasks: [{
+				id: "2B0F03865A9E31B9"
+				item: "endrem:guardian_eye"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -3.0d
+		}
+		{
+			id: "2BC3AA0B480C6828"
+			optional: true
+			subtitle: "&7Dropped by Evokers (5%)"
+			tasks: [{
+				id: "5B03491401B0489E"
+				item: "endrem:magical_eye"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -3.5d
+		}
+		{
+			id: "3239B2CDB852E1C6"
+			optional: true
+			subtitle: "&7Dropped by the Wither."
+			tasks: [{
+				id: "51D9182AB02AE780"
+				item: "endrem:wither_eye"
+				type: "item"
+			}]
+			x: -0.5d
+			y: -4.0d
+		}
+		{
+			id: "6F658E35279100C8"
+			optional: true
+			subtitle: "&7Crafted using the Witch Pupil"
+			tasks: [{
+				id: "3E473BEA23E8C1FE"
+				item: "endrem:witch_eye"
+				type: "item"
+			}]
+			x: -2.0d
+			y: -2.5d
+		}
+		{
+			id: "6A9C9E7ADB45F1BE"
+			optional: true
+			subtitle: "&7Created using an Undead Soul."
+			tasks: [{
+				id: "278B4A1FD0493FD0"
+				item: "endrem:undead_eye"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -2.0d
+		}
+		{
+			id: "35B7FDB1000EEAF9"
+			optional: true
+			subtitle: "&7Crafted using acuatic items"
+			tasks: [{
+				id: "788EEC3D5D81C3AF"
+				item: "endrem:exotic_eye"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -3.5d
+		}
+		{
+			id: "263D24D35E699557"
+			optional: true
+			shape: "diamond"
+			subtitle: "&7Found in Buried Chests"
+			tasks: [{
+				id: "1F9EF219BAB85A92"
+				item: "endrem:black_eye"
+				type: "item"
+			}]
+			x: 0.5d
+			y: -4.0d
+		}
+		{
+			id: "7F0434CFE9CAEF07"
+			optional: true
+			subtitle: "&7Found in Igloos."
+			tasks: [{
+				id: "2CC6D9A1017107EB"
+				item: "endrem:cold_eye"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -3.0d
+		}
+		{
+			id: "6AD07DC2ED3C734D"
+			optional: true
+			shape: "diamond"
+			subtitle: "&7Found in Pillager Outposts"
+			tasks: [{
+				id: "6D325AC3E295E65A"
+				item: "endrem:corrupted_eye"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -4.5d
+		}
+		{
+			id: "49EFA88FEABB1195"
+			optional: true
+			subtitle: "&7Found in Mineshafts."
+			tasks: [{
+				id: "25DDD301B747C01E"
+				item: "endrem:lost_eye"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -2.5d
+		}
+		{
+			id: "62536E37C53A9260"
+			optional: true
+			subtitle: "&7Found in Nether Fortresses"
+			tasks: [{
+				id: "1C3BD6942EC2E46D"
+				item: "endrem:nether_eye"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -0.5d
+		}
+		{
+			id: "7A601E36B70D975C"
+			optional: true
+			subtitle: "&7Found in Desert Pyramids. "
+			tasks: [{
+				id: "1628A0166F3301FF"
+				item: "endrem:old_eye"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -1.5d
+		}
+		{
+			id: "72EFFD1039B48784"
+			optional: true
+			subtitle: "&7Found in Jungle Pyramids"
+			tasks: [{
+				id: "1239D763D441A4BF"
+				item: "endrem:rogue_eye"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -2.0d
+		}
+		{
+			description: ["&eOnce the trade is unlocked, it will not have stock until a day passes."]
+			id: "1B9101B42DCED261"
+			optional: true
+			subtitle: "&7Bought from a master Cleric."
+			tasks: [{
+				id: "7B812622B4A52172"
+				item: "endrem:evil_eye"
+				type: "item"
+			}]
+			x: -0.5d
+			y: -1.0d
+		}
+		{
+			id: "3DE8FE441A0B051C"
+			optional: true
+			subtitle: "&7Found in Bastions"
+			tasks: [{
+				id: "04E8914428590507"
+				item: "endrem:cursed_eye"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -1.5d
+		}
+		{
+			id: "64E302C442B729B8"
+			optional: true
+			subtitle: "&7Infusable in an Enchanting Table."
+			tasks: [{
+				id: "685E4965B8364BEC"
+				item: "endrem:cryptic_eye"
+				type: "item"
+			}]
+			x: 0.5d
+			y: -1.0d
+		}
+	]
+	title: " &dThe End"
+}

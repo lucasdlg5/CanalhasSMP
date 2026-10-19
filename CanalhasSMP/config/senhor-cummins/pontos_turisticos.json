@@ -1,0 +1,28 @@
+{
+  "waypoints": {
+    "spawn": {
+      "name": "Spawn",
+      "dimension": "minecraft:overworld",
+      "x": 0,
+      "y": 70,
+      "z": 0,
+      "creator": "Servidor"
+    },
+    "forja": {
+      "name": "Forja",
+      "dimension": "minecraft:overworld",
+      "x": 100,
+      "y": 70,
+      "z": 100,
+      "creator": "Servidor"
+    },
+    "peugeot": {
+      "name": "Peugeot",
+      "dimension": "minecraft:overworld",
+      "x": 50,
+      "y": 70,
+      "z": 50,
+      "creator": "Servidor"
+    }
+  }
+}

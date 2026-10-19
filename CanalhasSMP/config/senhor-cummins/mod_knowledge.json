@@ -1,0 +1,140 @@
+{
+  "entries": [
+    {
+      "id": "netherite_upgrade_template",
+      "modName": "Minecraft 1.20+",
+      "matchRules": [
+        ["netherita", "molde"],
+        ["netherita", "template"],
+        ["upar", "diamante", "netherita"],
+        ["upgrade", "netherita"],
+        ["melhorar", "netherita"],
+        ["duplicar", "molde"]
+      ],
+      "answer": "No 1.20 pra upar diamante pra netherita precisa do Molde de Aprimoramento (Smithing Template). Ele spawna nos baús de Bastiões dos Piglins no Nether (100% na sala do tesouro). Com 1 molde, duplique na bancada usando: 1 Molde + 7 Diamantes + 1 Netherrack!"
+    },
+    {
+      "id": "ancient_debris_location",
+      "modName": "Minecraft",
+      "matchRules": [
+        ["onde", "debris"],
+        ["camada", "debris"],
+        ["achar", "debris"],
+        ["camada", "netherita"],
+        ["onde", "netherita"]
+      ],
+      "answer": "Debris Ancestrais spawnam no Nether entre as camadas Y=8 e Y=22, sendo a camada Y=15 a mais recheada! A melhor tática é cavar retão na Y=15 e ir explodindo camas ou dinamites em linha reta."
+    },
+    {
+      "id": "backpack_upgrades",
+      "modName": "Beans Backpacks / Traveler's",
+      "matchRules": [
+        ["mochila", "upgrade"],
+        ["upar", "mochila"],
+        ["evoluir", "mochila"],
+        ["mochila", "netherita"],
+        ["melhorar", "mochila"]
+      ],
+      "answer": "A evolução das mochilas segue a ordem dos minérios: Couro -> Cobre -> Ferro -> Ouro -> Diamante -> Netherita. Coloque a mochila atual no centro da bancada ou mesa de ferraria rodeada pelas barras do próximo nível!"
+    },
+    {
+      "id": "create_mechanical_mixer",
+      "modName": "Create",
+      "matchRules": [
+        ["misturador"],
+        ["mixer"],
+        ["create", "misturar"]
+      ],
+      "answer": "O Misturador Mecânico do Create precisa de uma Bacia (Basin) exatamente 1 bloco abaixo dele e rotação entrando por cima ou lados. Pra receitas avançadas (ligas, latão, poções), coloque um Blaze Burner aceso com carvão embaixo da bacia!"
+    },
+    {
+      "id": "create_mechanical_press",
+      "modName": "Create",
+      "matchRules": [
+        ["prensa"],
+        ["press", "create"]
+      ],
+      "answer": "A Prensa Mecânica precisa de rotação entrando por cima ou pelas laterais e de um Depósito (Depot) ou Esteira logo abaixo dela. Basta jogar os lingotes ou canas no depósito que ela esmaga automaticamente!"
+    },
+    {
+      "id": "create_overstressed",
+      "modName": "Create",
+      "matchRules": [
+        ["overstressed"],
+        ["create", "parou"],
+        ["create", "nao gira"],
+        ["create", "não gira"],
+        ["create", "sem forca"],
+        ["create", "sem força"],
+        ["create", "estresse"]
+      ],
+      "answer": "Overstressed significa que as máquinas estão consumindo mais estresse (SU) do que seus geradores produzem! Soluções: adicione mais Rodas d'Água / Moinhos de Vento, ou use engrenagens pra diminuir a velocidade da rede (menos RPM consome menos estresse)!"
+    },
+    {
+      "id": "create_wrench",
+      "modName": "Create",
+      "matchRules": [
+        ["wrench"],
+        ["chave", "create"],
+        ["chave inglesa"]
+      ],
+      "answer": "A Chave Inglesa (Wrench) do Create é indispensável: botão direito nela gira o eixo dos blocos, e Shift + botão direito desmonta qualquer máquina ou engrenagem na hora sem quebrar nada!"
+    },
+    {
+      "id": "zenith_enchanting",
+      "modName": "Zenith / Apotheosis",
+      "matchRules": [
+        ["eterna"],
+        ["quanta"],
+        ["arcana"],
+        ["altar", "zenith"],
+        ["encantamento", "zenith"],
+        ["zenith", "estante"]
+      ],
+      "answer": "No Zenith o altar usa 3 estatísticas: Eterna aumenta o nível máximo (até 100), Quanta aumenta a aleatoriedade dos encantamentos, e Arcana aumenta a chance de encantamentos raros! Use estantes marítimas, estantes do nether e velas pra equilibrar."
+    },
+    {
+      "id": "zenith_reforging",
+      "modName": "Zenith / Apotheosis",
+      "matchRules": [
+        ["reforja"],
+        ["reforging"],
+        ["gem dust"],
+        ["gemas", "zenith"],
+        ["soquete"]
+      ],
+      "answer": "Na Mesa de Reforja (Reforging Table), você usa Pó de Gema (triture gemas jogando bigorna em cima delas) e Materiais de Raridade pra adicionar afixos míticos e soquetes a armas e armaduras!"
+    },
+    {
+      "id": "artifacts_location",
+      "modName": "Artifacts",
+      "matchRules": [
+        ["onde", "artefatos"],
+        ["onde", "artifacts"],
+        ["como acho", "artefatos"],
+        ["mimic", "artefato"],
+        ["acampamento", "artefato"]
+      ],
+      "answer": "Os itens do mod Artifacts são encontrados explorando cavernas profundas: dentro de baús em Acampamentos Subterrâneos (estruturas com fogueira) ou derrotando Mímicos (baús falsos com boca e dentes)!"
+    },
+    {
+      "id": "water_elevator",
+      "modName": "Minecraft",
+      "matchRules": [
+        ["elevador", "agua"],
+        ["elevador", "água"]
+      ],
+      "answer": "Elevador de água que sobe: coloque Areia das Almas (Soul Sand) no chão e encha TODOS os blocos acima com água de fonte (coloque algas até o topo pra virar fonte). Pra descer, coloque Bloco de Magma no fundo!"
+    },
+    {
+      "id": "simply_swords_runes",
+      "modName": "Simply Swords",
+      "matchRules": [
+        ["simply swords"],
+        ["runa", "espada"],
+        ["espadas", "runas"]
+      ],
+      "answer": "No Simply Swords, você encontra Runas em baús de masmorras e vilas. Use a Mesa de Ferraria pra fundir uma runa numa espada de diamante ou netherita e forjar armas com habilidades ativas e efeitos especiais únicos!"
+    }
+  ]
+}

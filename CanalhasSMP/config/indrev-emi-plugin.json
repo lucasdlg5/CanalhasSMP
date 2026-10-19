@@ -1,0 +1,8 @@
+{
+  "addMachineRecipes": true,
+  "addMiningRigRecipes": true,
+  "addChargedVersions": true,
+  "hideNotImplementedItems": true,
+  "addMissingItems": true,
+  "disableExtraModIntegration": true
+}

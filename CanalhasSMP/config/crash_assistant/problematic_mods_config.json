@@ -1,0 +1,30 @@
+{
+	"tlskincape": {
+		"should_crash_on_startup": true,
+		"msg": "It seems that you are using <strong>TLauncher</strong>! This modpack has been done with a lot of sweat, blood and tears. Downloading this modpack from a pirated copy of minecraft, that also has spyware integrated into it, neither helps us improve this modpack, nor does it keep your files and passwords safe. We strongly suggest you get rid of TlLauncher and get a proper copy of minecraft."
+	},
+	"epicfight": {
+		"should_crash_on_startup": true,
+		"msg": "It appears you have added <strong>Epic Fight</strong> to the Modpack. <strong>Epic Fight</strong> is incompatible with Prominence's core mod and the mods inside as the main combat system is Better Combat. You cannot remove Better Combat to make <strong>Epic Fight</strong> work. This will break the game."
+	},
+	"valkyrienskies": {
+		"should_crash_on_startup": false,
+		"msg": "It appears you have added <strong>Valkyrienskies</strong> to the modpack. <strong>Valkyrienskies</strong> is incompatible with Sodium and the current version of create. Use at your own risk."
+	},
+	"optifine": {
+		"should_crash_on_startup": true,
+		"msg": "It appears you have added <strong>Optifine</strong> to the Modpack. <strong>Optifine mod</strong> is incompatible with the pack as it is not necessary at all, Prominence uses Sodium and Iris, which do the same as Optifine, but better. If you have Performance issues please visit https://rpg.prominence.wiki/performance-guide as well as https://github.com/Mukul1127/Minecraft-Java-Flags"
+	},
+	"memoryleakfix": {
+		"should_crash_on_startup": true,
+		"msg": "It appears you have added <strong>Memoryleakfix</strong> to the Modpack. <strong>Memoryleakfix</strong> is incompatible with the pack as it causes a ton of Problems with Prominence's Chunkloading and will make Chunks not load properly or at all. It decreases your Performance more than anything."
+	},
+	"opac-fabric-create-support": {
+		"should_crash_on_startup": true,
+		"msg": "It appears you have added <strong>Create Support for Open Parties and Claims</strong> to the Modpack. <strong>Create Support for Open Parties and Claims</strong> is obsolete. If this is still in your Modpack you most likely didnt update the game properly."
+	},
+	"mc-betterstats": {
+		"should_crash_on_startup": true,
+		"msg": "It appears you have added <strong>Betterstats</strong> to the Modpack. <strong>Betterstats</strong> is incompatible with the pack as it sends giant packets to anyone on the server, which makes any server crash or disconnects/crashes its players."
+	}
+}
