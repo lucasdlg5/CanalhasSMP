@@ -57,6 +57,7 @@ public class CumminsBody {
     private final List<Long> sneakHistory = new ArrayList<>();
     private long lastTbagAt = 0;
     private long petPauseUntil = 0;
+    private boolean manuallyDismissed = false;
     private final Random random = new Random();
 
     // Estado do Modo Scanner (guiar dentro de um raio perto do player até o ponto mais próximo possível e sentar olhando pra direção por até 2 minutos)
@@ -325,8 +326,24 @@ public class CumminsBody {
         return primary;
     }
 
+    public void dismiss() {
+        this.manuallyDismissed = true;
+        despawnIfPresent();
+    }
+
+    public void despawnIfPresent() {
+        CatEntity cat = getCat();
+        if (cat != null) {
+            if (cat.hasVehicle()) cat.stopRiding();
+            if (cat.getWorld() instanceof ServerWorld sw) {
+                sw.spawnParticles(ParticleTypes.POOF, cat.getX(), cat.getY() + 0.3, cat.getZ(), 10, 0.2, 0.2, 0.2, 0.05);
+            }
+            cat.discard();
+        }
+    }
+
     public void onTick() {
-        if (server == null || !mod.config().body.enabled) return;
+        if (server == null || !mod.config().body.enabled || manuallyDismissed) return;
         tickCounter++;
 
         // Se algum jogador estiver segurando o Cummins na mão (CarryOn), não spawna nem teleporta!
@@ -1154,6 +1171,7 @@ public class CumminsBody {
     }
 
     public CatEntity spawnNear(ServerPlayerEntity player) {
+        this.manuallyDismissed = false;
         releaseFromCarryOn(BODY_TAG);
         CatEntity existing = getCat();
         if (existing != null) {
@@ -1183,6 +1201,7 @@ public class CumminsBody {
     }
 
     public void teleportToPlayer(CatEntity cat, ServerPlayerEntity player) {
+        this.manuallyDismissed = false;
         releaseFromCarryOn(BODY_TAG);
         if (cat.hasVehicle()) {
             cat.stopRiding();

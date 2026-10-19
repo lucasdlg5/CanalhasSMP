@@ -59,6 +59,7 @@ public class VitoriaBody {
     private long lastTbagAt = 0;
     private long petPauseUntil = 0;
     private long lastStalkerAlertAt = 0;
+    private boolean manuallyDismissed = false;
     private final Random random = new Random();
 
     public VitoriaBody(CumminsMod mod) {
@@ -149,6 +150,7 @@ public class VitoriaBody {
     public WolfEntity summonOrTeleportTo(ServerPlayerEntity player) {
         if (server == null || player == null) return null;
         this.activeInSession = true;
+        this.manuallyDismissed = false;
         this.lastFocusPlayerName = player.getGameProfile().getName();
 
         if (mod.body() != null) {
@@ -163,6 +165,12 @@ public class VitoriaBody {
             applyAttributes(dog, player);
         }
         return dog;
+    }
+
+    public void dismiss() {
+        this.manuallyDismissed = true;
+        this.activeInSession = false;
+        despawnIfPresent();
     }
 
     public void despawnIfPresent() {
@@ -192,7 +200,7 @@ public class VitoriaBody {
 
         // Se ArzanLion estiver online, garante que a Vitória esteja ativa automaticamente
         ServerPlayerEntity arzan = server.getPlayerManager().getPlayer(OWNER_NAME);
-        if (arzan != null && !activeInSession) {
+        if (arzan != null && !activeInSession && !manuallyDismissed) {
             activeInSession = true;
             lastFocusPlayerName = arzan.getGameProfile().getName();
         }

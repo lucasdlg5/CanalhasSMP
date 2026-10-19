@@ -61,6 +61,7 @@ public class JavidizineoBody {
     private long lastRoarAt = 0;
     private long lastDefenseAt = 0;
     private long petPauseUntil = 0;
+    private boolean manuallyDismissed = false;
     private final Random random = new Random();
 
     public JavidizineoBody(CumminsMod mod) {
@@ -147,6 +148,7 @@ public class JavidizineoBody {
     public CatEntity summonOrTeleportTo(ServerPlayerEntity player) {
         if (server == null || player == null) return null;
         this.activeInSession = true;
+        this.manuallyDismissed = false;
         this.lastFocusPlayerName = player.getGameProfile().getName();
 
         if (mod.body() != null) {
@@ -161,6 +163,12 @@ public class JavidizineoBody {
             applyAttributes(cat, player);
         }
         return cat;
+    }
+
+    public void dismiss() {
+        this.manuallyDismissed = true;
+        this.activeInSession = false;
+        despawnIfPresent();
     }
 
     public void despawnIfPresent() {
@@ -201,7 +209,7 @@ public class JavidizineoBody {
         for (ServerPlayerEntity sp : onlinePlayers) {
             if (sp.getGameProfile().getName().equalsIgnoreCase(OWNER_NAME)) {
                 ownerOnline = true;
-                if (!activeInSession) {
+                if (!activeInSession && !manuallyDismissed) {
                     activeInSession = true;
                     lastFocusPlayerName = sp.getGameProfile().getName();
                 }
@@ -209,7 +217,7 @@ public class JavidizineoBody {
             }
         }
 
-        if (!activeInSession && !ownerOnline) {
+        if (!activeInSession && (!ownerOnline || manuallyDismissed)) {
             if (tickCounter % 40 == 0) {
                 CatEntity stray = getCat();
                 if (stray != null) {

@@ -74,6 +74,7 @@ public class JuninhoBody {
     private long lastWanderAt = 0;
     private long lastStepAsideAt = 0;
     private long petPauseUntil = 0;
+    private boolean manuallyDismissed = false;
     private final Map<UUID, Long> lastBatMilkGiftPerPlayer = new HashMap<>();
     private final Map<UUID, Boolean> drinkingBatMilk = new HashMap<>();
     private final Map<UUID, Long> batMilkBuffedUntil = new HashMap<>();
@@ -174,6 +175,7 @@ public class JuninhoBody {
     public BatEntity summonOrTeleportTo(ServerPlayerEntity player) {
         if (server == null || player == null) return null;
         this.activeInSession = true;
+        this.manuallyDismissed = false;
         this.lastFocusPlayerName = player.getGameProfile().getName();
 
         if (mod.body() != null) {
@@ -188,6 +190,12 @@ public class JuninhoBody {
             applyAttributes(bat, player);
         }
         return bat;
+    }
+
+    public void dismiss() {
+        this.manuallyDismissed = true;
+        this.activeInSession = false;
+        despawnIfPresent();
     }
 
     public void despawnIfPresent() {
@@ -230,7 +238,7 @@ public class JuninhoBody {
         for (ServerPlayerEntity sp : onlinePlayers) {
             if (sp.getGameProfile().getName().equalsIgnoreCase(OWNER_NAME)) {
                 jodevilOnline = true;
-                if (!activeInSession) {
+                if (!activeInSession && !manuallyDismissed) {
                     activeInSession = true;
                     lastFocusPlayerName = sp.getGameProfile().getName();
                 }
@@ -238,7 +246,7 @@ public class JuninhoBody {
             }
         }
 
-        if (!activeInSession && !jodevilOnline) {
+        if (!activeInSession && (!jodevilOnline || manuallyDismissed)) {
             if (tickCounter % 40 == 0) {
                 BatEntity stray = getBat();
                 if (stray != null) {

@@ -261,6 +261,21 @@ public final class CumminsCommands {
                             send(c.getSource(), "§6[Cummins]§r Corpo felino do Senhor Cummins invocado perto de " + player.getGameProfile().getName() + "!");
                             return 1;
                         }))
+                        .then(CommandManager.literal("despawn").executes(c -> {
+                            mod.body().dismiss();
+                            send(c.getSource(), "§6[Cummins]§r Corpo felino do Senhor Cummins recolhido!");
+                            return 1;
+                        }))
+                        .then(CommandManager.literal("recolher").executes(c -> {
+                            mod.body().dismiss();
+                            send(c.getSource(), "§6[Cummins]§r Corpo felino do Senhor Cummins recolhido!");
+                            return 1;
+                        }))
+                        .then(CommandManager.literal("dismiss").executes(c -> {
+                            mod.body().dismiss();
+                            send(c.getSource(), "§6[Cummins]§r Corpo felino do Senhor Cummins recolhido!");
+                            return 1;
+                        }))
                 )
                 .then(buildVitoriaLiteral("vitoria", mod))
                 .then(buildVitoriaLiteral("Vitoria", mod))
@@ -274,6 +289,10 @@ public final class CumminsCommands {
                 .then(buildJavidizineoLiteral("Javidizineo", mod))
                 .then(buildJavidizineoLiteral("javidinho", mod))
                 .then(buildJavidizineoLiteral("leaozinho", mod))
+                .then(buildJinqiuzineoLiteral("jinqiuzineo", mod))
+                .then(buildJinqiuzineoLiteral("Jinqiuzineo", mod))
+                .then(buildJinqiuzineoLiteral("jinqiu", mod))
+                .then(buildJinqiuzineoLiteral("tigrezinho", mod))
                 .then(CommandManager.literal("mural")
                         .executes(c -> {
                             ServerPlayerEntity sender = c.getSource().getPlayer();
@@ -570,11 +589,19 @@ public final class CumminsCommands {
         d.register(CommandManager.literal("net").executes(c -> sendConnectionDiagnostic(c.getSource(), mod)));
         d.register(CommandManager.literal("ping").executes(c -> sendConnectionDiagnostic(c.getSource(), mod)));
 
-        // Comandos públicos de invocação dos mascotes (/juninho, /pipira, /javidizineo)
+        // Comandos públicos dos mascotes (/vitoria, /juninho, /pipira, /javidizineo, /jinqiuzineo)
+        d.register(buildVitoriaLiteral("vitoria", mod));
+        d.register(buildVitoriaLiteral("cadela", mod));
         d.register(buildJuninhoLiteral("juninho", mod));
+        d.register(buildJuninhoLiteral("morcego", mod));
         d.register(buildPipiraLiteral("pipira", mod));
+        d.register(buildPipiraLiteral("magikarp", mod));
         d.register(buildJavidizineoLiteral("javidizineo", mod));
         d.register(buildJavidizineoLiteral("javidinho", mod));
+        d.register(buildJavidizineoLiteral("leaozinho", mod));
+        d.register(buildJinqiuzineoLiteral("jinqiuzineo", mod));
+        d.register(buildJinqiuzineoLiteral("jinqiu", mod));
+        d.register(buildJinqiuzineoLiteral("tigrezinho", mod));
 
         // Café da Madrugada (/cafe)
         d.register(CommandManager.literal("cafe")
@@ -634,6 +661,9 @@ public final class CumminsCommands {
                 .executes(c -> summonVitoriaCommand(c.getSource(), mod))
                 .then(CommandManager.literal("tp").executes(c -> summonVitoriaCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("summon").executes(c -> summonVitoriaCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("despawn").executes(c -> despawnVitoriaCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("recolher").executes(c -> despawnVitoriaCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("dismiss").executes(c -> despawnVitoriaCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("ligado").executes(c -> toggleVitoriaAi(c.getSource(), mod, true)))
                 .then(CommandManager.literal("Ligado").executes(c -> toggleVitoriaAi(c.getSource(), mod, true)))
                 .then(CommandManager.literal("desligado").executes(c -> toggleVitoriaAi(c.getSource(), mod, false)))
@@ -650,6 +680,13 @@ public final class CumminsCommands {
         String targetName = player.getGameProfile().getName();
         send(src, "§d[Vitória]§r A cachorrinha §dVitória§r (Fox Paulistinha tricolor do ArzanLion) apareceu abanando o rabinho perto de §e" + targetName + "§r!");
         mod.brain().onVitoriaSummoned(player);
+        return 1;
+    }
+
+    private static int despawnVitoriaCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.vitoria() == null) return 0;
+        mod.vitoria().dismiss();
+        send(src, "§d[Vitória]§r A cachorrinha §dVitória§r foi recolhida com carinho! 🐾");
         return 1;
     }
 
@@ -690,7 +727,10 @@ public final class CumminsCommands {
         return CommandManager.literal(literalName)
                 .executes(c -> summonPipiraCommand(c.getSource(), mod))
                 .then(CommandManager.literal("tp").executes(c -> summonPipiraCommand(c.getSource(), mod)))
-                .then(CommandManager.literal("summon").executes(c -> summonPipiraCommand(c.getSource(), mod)));
+                .then(CommandManager.literal("summon").executes(c -> summonPipiraCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("despawn").executes(c -> despawnPipiraCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("recolher").executes(c -> despawnPipiraCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("dismiss").executes(c -> despawnPipiraCommand(c.getSource(), mod)));
     }
 
     private static int summonPipiraCommand(ServerCommandSource src, CumminsMod mod) {
@@ -702,6 +742,13 @@ public final class CumminsCommands {
         mod.pipira().summonOrTeleportTo(player);
         String targetName = player.getGameProfile().getName();
         send(src, "§6[Pipira]§r O lendário peixe terrestre §6Pipira§r §c(Magikarp do Kikkawa)§r apareceu dando saltinhos perto de §e" + targetName + "§r! 🐟💦");
+        return 1;
+    }
+
+    private static int despawnPipiraCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.pipira() == null) return 0;
+        mod.pipira().dismiss();
+        send(src, "§6[Pipira]§r O peixe Pipira foi recolhido de volta para a água! 🐟💦");
         return 1;
     }
 
@@ -720,6 +767,9 @@ public final class CumminsCommands {
                 .executes(c -> summonJuninhoCommand(c.getSource(), mod))
                 .then(CommandManager.literal("tp").executes(c -> summonJuninhoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("summon").executes(c -> summonJuninhoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("despawn").executes(c -> despawnJuninhoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("recolher").executes(c -> despawnJuninhoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("dismiss").executes(c -> despawnJuninhoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("batleite").executes(c -> giveBatMilkCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("leite").executes(c -> giveBatMilkCommand(c.getSource(), mod)));
     }
@@ -751,6 +801,13 @@ public final class CumminsCommands {
         return 1;
     }
 
+    private static int despawnJuninhoCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.juninho() == null) return 0;
+        mod.juninho().dismiss();
+        send(src, "§8[Juninho]§r Juninho recolheu as asas e voltou para as sombras! 🦇");
+        return 1;
+    }
+
     private static ServerPlayerEntity resolveJuninhoTargetPlayer(ServerCommandSource src) {
         ServerPlayerEntity p = src.getPlayer();
         if (p != null) return p;
@@ -765,7 +822,10 @@ public final class CumminsCommands {
         return CommandManager.literal(literalName)
                 .executes(c -> summonJavidizineoCommand(c.getSource(), mod))
                 .then(CommandManager.literal("tp").executes(c -> summonJavidizineoCommand(c.getSource(), mod)))
-                .then(CommandManager.literal("summon").executes(c -> summonJavidizineoCommand(c.getSource(), mod)));
+                .then(CommandManager.literal("summon").executes(c -> summonJavidizineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("despawn").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("recolher").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("dismiss").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)));
     }
 
     private static int summonJavidizineoCommand(ServerCommandSource src, CumminsMod mod) {
@@ -781,11 +841,58 @@ public final class CumminsCommands {
         return 1;
     }
 
+    private static int despawnJavidizineoCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.javidizineo() == null) return 0;
+        mod.javidizineo().dismiss();
+        send(src, "§6[Javidizineo]§r Javidizineo retornou temporariamente ao seu templo solar! 🦁☀️");
+        return 1;
+    }
+
     private static ServerPlayerEntity resolveJavidizineoTargetPlayer(ServerCommandSource src) {
         ServerPlayerEntity p = src.getPlayer();
         if (p != null) return p;
         for (ServerPlayerEntity sp : src.getServer().getPlayerManager().getPlayerList()) {
             if (sp.getGameProfile().getName().equalsIgnoreCase(JavidizineoBody.OWNER_NAME)) return sp;
+        }
+        List<ServerPlayerEntity> list = src.getServer().getPlayerManager().getPlayerList();
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> buildJinqiuzineoLiteral(String literalName, CumminsMod mod) {
+        return CommandManager.literal(literalName)
+                .executes(c -> summonJinqiuzineoCommand(c.getSource(), mod))
+                .then(CommandManager.literal("tp").executes(c -> summonJinqiuzineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("summon").executes(c -> summonJinqiuzineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("despawn").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("recolher").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("dismiss").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)));
+    }
+
+    private static int summonJinqiuzineoCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.jinqiuzineo() == null) return 0;
+        ServerPlayerEntity player = resolveJinqiuzineoTargetPlayer(src);
+        if (player == null) {
+            send(src, "§5[Jinqiuzineo]§r §cNenhum jogador online no momento para o Jinqiuzineo aparecer!");
+            return 0;
+        }
+        mod.jinqiuzineo().summonOrTeleportTo(player);
+        String targetName = player.getGameProfile().getName();
+        send(src, "§5[Jinqiuzineo]§r O mini-tigre carcereiro §5Jinqiuzineo§r §d(guardião de Azarasquel)§r estalou suas correntes perto de §e" + targetName + "§r! 🐯⛓️");
+        return 1;
+    }
+
+    private static int despawnJinqiuzineoCommand(ServerCommandSource src, CumminsMod mod) {
+        if (mod.jinqiuzineo() == null) return 0;
+        mod.jinqiuzineo().dismiss();
+        send(src, "§5[Jinqiuzineo]§r Jinqiuzineo recolheu suas correntes e se retirou para a prisão de Aeterna! 🐯⛓️");
+        return 1;
+    }
+
+    private static ServerPlayerEntity resolveJinqiuzineoTargetPlayer(ServerCommandSource src) {
+        ServerPlayerEntity p = src.getPlayer();
+        if (p != null) return p;
+        for (ServerPlayerEntity sp : src.getServer().getPlayerManager().getPlayerList()) {
+            if (sp.getGameProfile().getName().equalsIgnoreCase(JinqiuzineoBody.OWNER_NAME)) return sp;
         }
         List<ServerPlayerEntity> list = src.getServer().getPlayerManager().getPlayerList();
         return list.isEmpty() ? null : list.get(0);

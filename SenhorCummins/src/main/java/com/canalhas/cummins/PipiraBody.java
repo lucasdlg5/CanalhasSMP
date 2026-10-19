@@ -52,6 +52,7 @@ public class PipiraBody {
     private long lastWanderAt = 0;
     private long lastStepAsideAt = 0;
     private long petPauseUntil = 0;
+    private boolean manuallyDismissed = false;
     private final Random random = new Random();
 
     public PipiraBody(CumminsMod mod) {
@@ -146,6 +147,7 @@ public class PipiraBody {
     public SalmonEntity summonOrTeleportTo(ServerPlayerEntity player) {
         if (server == null || player == null) return null;
         this.activeInSession = true;
+        this.manuallyDismissed = false;
         this.lastFocusPlayerName = player.getGameProfile().getName();
 
         if (mod.body() != null) {
@@ -160,6 +162,12 @@ public class PipiraBody {
             applyAttributes(fish, player);
         }
         return fish;
+    }
+
+    public void dismiss() {
+        this.manuallyDismissed = true;
+        this.activeInSession = false;
+        despawnIfPresent();
     }
 
     public void despawnIfPresent() {
@@ -202,7 +210,7 @@ public class PipiraBody {
         for (ServerPlayerEntity sp : onlinePlayers) {
             if (sp.getGameProfile().getName().equalsIgnoreCase(OWNER_NAME)) {
                 kikkawaOnline = true;
-                if (!activeInSession) {
+                if (!activeInSession && !manuallyDismissed) {
                     activeInSession = true;
                     lastFocusPlayerName = sp.getGameProfile().getName();
                 }
@@ -210,8 +218,8 @@ public class PipiraBody {
             }
         }
 
-        // Se ninguém chamou e o Kikkawa não está online, recolhe duplicatas ou o pet
-        if (!activeInSession && !kikkawaOnline) {
+        // Se ninguém chamou e o Kikkawa não está online (ou foi dispensado), recolhe duplicatas ou o pet
+        if (!activeInSession && (!kikkawaOnline || manuallyDismissed)) {
             if (tickCounter % 40 == 0) {
                 SalmonEntity stray = getFish();
                 if (stray != null) {
