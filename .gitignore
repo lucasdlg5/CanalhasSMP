@@ -43,6 +43,7 @@ CanalhasSMP/config/senhor-cummins/memoria.json
 CanalhasSMP/config/senhor-cummins/token_usage.json
 CanalhasSMP/config/senhor-cummins/playtime*.json
 CanalhasSMP/config/senhor-cummins/network_outages.log
+CanalhasSMP/config/spark/activity.json
 CanalhasSMP/config/senhor-cummins/lag_reports.*
 
 # ------------------------------------------------------------------------------

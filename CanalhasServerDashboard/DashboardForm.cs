@@ -221,8 +221,9 @@ namespace CanalhasServerDashboard
             var btnMural = CreateHeaderButton("📜 Mural", 80, (s, e) => _server.SendCommand("cummins mural todos"));
             var btnCumminsPerola = CreateHeaderButton("🎲 Pérola", 80, (s, e) => _server.SendCommand("cummins perola"));
             var btnGc = CreateHeaderButton("🧹 GC", 60, (s, e) => _server.SendCommand("spark gc"));
+            var btnFirewall = CreateHeaderButton("🛡️ Firewall", 86, (s, e) => LiberarFirewallDoCelular());
 
-            topButtonsFlow.Controls.AddRange(new Control[] { _btnSpark, btnBackup, btnChunky, btnCumminsGato, btnVitoria, _btnVitoriaAi, btnMural, btnCumminsPerola, btnGc });
+            topButtonsFlow.Controls.AddRange(new Control[] { _btnSpark, btnBackup, btnChunky, btnCumminsGato, btnVitoria, _btnVitoriaAi, btnMural, btnCumminsPerola, btnGc, btnFirewall });
             topBar.Controls.AddRange(new Control[] { picServerIcon, lblTitle, _lblStatusBadge, topButtonsFlow });
 
             // 2. Banner de Alertas (GC / Travamento)
@@ -2826,6 +2827,29 @@ namespace CanalhasServerDashboard
             {
                 _btnVitoriaAi.Text = "🧠 Vitória: OFF";
                 _btnVitoriaAi.BackColor = Color.FromArgb(45, 45, 45);
+            }
+        }
+
+        private void LiberarFirewallDoCelular()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/c netsh advfirewall firewall delete rule name=\"CanalhasSMP Telemetria HTTP\" >nul 2>&1 & netsh advfirewall firewall add rule name=\"CanalhasSMP Telemetria HTTP\" dir=in action=allow protocol=TCP localport=25588 profile=any & netsh advfirewall firewall delete rule name=\"CanalhasSMP Minecraft Server\" >nul 2>&1 & netsh advfirewall firewall add rule name=\"CanalhasSMP Minecraft Server\" dir=in action=allow protocol=TCP localport=25565 profile=any",
+                    Verb = "runas",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+                var proc = Process.Start(psi);
+                proc?.WaitForExit();
+
+                MessageBox.Show("Portas 25588 (App Celular) e 25565 (Minecraft) liberadas com sucesso no Firewall do Windows!\n\nAgora seu celular poderá se conectar no IP 192.168.18.20.", "Firewall Liberado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Não foi possível liberar o firewall automaticamente:\n" + ex.Message + "\n\nVocê também pode executar o arquivo 'LIBERAR_FIREWALL_APP.bat' na pasta do servidor como Administrador.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }
