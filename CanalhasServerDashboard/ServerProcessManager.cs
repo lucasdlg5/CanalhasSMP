@@ -114,6 +114,7 @@ namespace CanalhasServerDashboard
                 {
                     StopLogTailer();
                     _process = proc;
+                    _isAttached = true;
                     _lastShutdownCause = ShutdownCause.Unknown;
                     _lastExceptionDetail = "";
                     _stopCommandIssued = false;
@@ -415,6 +416,10 @@ namespace CanalhasServerDashboard
                     CheckAndNotifyConsoleChat(command);
                     return;
                 }
+                catch (InvalidOperationException)
+                {
+                    _isAttached = true;
+                }
                 catch (Exception ex)
                 {
                     OnRawLogReceived?.Invoke("[DASHBOARD/AVISO] StandardInput indisponível (" + ex.Message + "). Tentando via Bridge...");
@@ -449,7 +454,7 @@ namespace CanalhasServerDashboard
                 var resp = await client.PostAsync("http://127.0.0.1:25588/command", content);
                 if (resp.IsSuccessStatusCode)
                 {
-                    OnRawLogReceived?.Invoke("[CONSOLE/BRIDGE] > " + command);
+                    OnRawLogReceived?.Invoke("[CONSOLE COMANDO] > " + command);
                     CheckAndNotifyConsoleChat(command);
                     return true;
                 }
@@ -461,7 +466,7 @@ namespace CanalhasServerDashboard
             {
                 string queueFile = Path.Combine(_serverDirectory, "server_command.queue");
                 await File.AppendAllTextAsync(queueFile, command + Environment.NewLine, Encoding.UTF8);
-                OnRawLogReceived?.Invoke("[CONSOLE/QUEUE] > " + command);
+                OnRawLogReceived?.Invoke("[CONSOLE COMANDO] > " + command);
                 CheckAndNotifyConsoleChat(command);
                 return true;
             }
