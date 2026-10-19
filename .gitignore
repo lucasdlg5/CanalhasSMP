@@ -1,0 +1,99 @@
+# ==============================================================================
+# CanalhasSMP - .gitignore Inteligente
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Servidor Minecraft em Execução & Mundos Gigantes
+# ------------------------------------------------------------------------------
+CanalhasSMP/world/
+CanalhasSMP/world_*/
+CanalhasSMP/backup/
+CanalhasSMP/backups/
+CanalhasSMP/logs/
+CanalhasSMP/crash-reports/
+CanalhasSMP/.fabric/
+CanalhasSMP/.mixin.out/
+CanalhasSMP/modernfix/
+CanalhasSMP/essential/
+CanalhasSMP/fancymenu_data/
+CanalhasSMP/stackdeobf_mappings/
+CanalhasSMP/libraries/
+CanalhasSMP/versions/
+CanalhasSMP/att-debug/
+CanalhasSMP/*.jar
+!CanalhasSMP/mods/senhor-cummins-*.jar
+CanalhasSMP/mods/*.jar
+!CanalhasSMP/mods/senhor-cummins-*.jar
+CanalhasSMP/usercache.json
+CanalhasSMP/usernamecache.json
+CanalhasSMP/whitelist.json
+CanalhasSMP/whitelist.txt
+CanalhasSMP/ops.json
+CanalhasSMP/banned-players.json
+CanalhasSMP/banned-ips.json
+CanalhasSMP/server_telemetry.json
+CanalhasSMP/server_command.queue
+CanalhasSMP/session.lock
+CanalhasSMP/.previousrun
+
+# Protege dados confidenciais do servidor (chaves de API)
+CanalhasSMP/config/senhor-cummins/config.json
+CanalhasSMP/config/senhor-cummins/*.dat
+CanalhasSMP/config/senhor-cummins/memoria.json
+CanalhasSMP/config/senhor-cummins/token_usage.json
+CanalhasSMP/config/senhor-cummins/network_outages.log
+CanalhasSMP/config/senhor-cummins/lag_reports.*
+
+# ------------------------------------------------------------------------------
+# 2. Senhor Cummins (Mod Fabric) - Build & Cache
+# ------------------------------------------------------------------------------
+SenhorCummins/.gradle/
+SenhorCummins/build/
+SenhorCummins/.tools/
+SenhorCummins/bin/
+SenhorCummins/out/
+SenhorCummins/*.log
+
+# ------------------------------------------------------------------------------
+# 3. CanalhasServerDashboard (.NET Windows Forms) - Build & Cache
+# ------------------------------------------------------------------------------
+CanalhasServerDashboard/bin/
+CanalhasServerDashboard/obj/
+CanalhasServerDashboard/publish/
+CanalhasServerDashboard/publish_staged/
+CanalhasServerDashboard/*.user
+CanalhasServerDashboard/*.suo
+
+# ------------------------------------------------------------------------------
+# 4. CanalhasMobileApp (Android / Kotlin / Jetpack Compose)
+# ------------------------------------------------------------------------------
+CanalhasMobileApp/.gradle/
+CanalhasMobileApp/build/
+CanalhasMobileApp/*/build/
+CanalhasMobileApp/.idea/
+CanalhasMobileApp/local.properties
+CanalhasMobileApp/*.apk
+CanalhasMobileApp/*.aab
+
+# ------------------------------------------------------------------------------
+# 5. IDEs, Editores & Sistema Operacional
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.orig
+
+# ------------------------------------------------------------------------------
+# 6. Scripts Temporários de Análise / Debug
+# ------------------------------------------------------------------------------
+*.py
+*.html
+*.txt
+*.tmp
+*.log
+!README.md
