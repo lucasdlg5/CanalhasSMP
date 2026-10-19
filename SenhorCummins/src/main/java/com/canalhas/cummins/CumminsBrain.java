@@ -298,8 +298,11 @@ public class CumminsBrain {
                 return;
             } else {
                 if (!wasActive) {
-                    server.execute(() -> server.getPlayerManager().broadcast(
-                            Text.literal("§d* Vitória§r §fchegou correndo e abanando o rabinho tricolor para fazer companhia a §e" + name + "§f! 🐾💖"), false));
+                    server.execute(() -> {
+                        if (player.isAlive()) {
+                            player.sendMessage(Text.literal("§d* Vitória§r §fchegou correndo e abanando o rabinho tricolor para fazer companhia a §e" + name + "§f! 🐾💖"), false);
+                        }
+                    });
                 }
             }
         }
@@ -651,8 +654,11 @@ public class CumminsBrain {
                     + "Você é a cachorrinha Vitória (Fox Paulistinha tricolor do ArzanLion). Reaja com muita fofura canina ('au au!', abanando o rabinho, lambendo a mão dele, agradecendo o cafuné com muito amor)! No máximo 1 ou 2 frases curtas.";
             requestAsVitoria(instruction, name, true, 800);
         } else {
-            server.execute(() -> server.getPlayerManager().broadcast(
-                    Text.literal("§d* Vitória§r §fabana o rabinho tricolor bem rápido e dá uma lambidinha carinhosa em §e" + name + "§f! 🐾💖"), false));
+            server.execute(() -> {
+                if (player.isAlive()) {
+                    player.sendMessage(Text.literal("§d* Vitória§r §fabana o rabinho tricolor bem rápido e dá uma lambidinha carinhosa em §e" + name + "§f! 🐾💖"), false);
+                }
+            });
         }
     }
 
@@ -2230,7 +2236,16 @@ public class CumminsBrain {
                 .append(Text.literal("> " + line));
         sendingSelf = true;
         try {
-            server.getPlayerManager().broadcast(msg, false);
+            if (target != null && !target.isBlank()) {
+                ServerPlayerEntity targetPlayer = server.getPlayerManager().getPlayer(target);
+                if (targetPlayer != null && targetPlayer.isAlive()) {
+                    targetPlayer.sendMessage(msg, false);
+                } else {
+                    server.getPlayerManager().broadcast(msg, false);
+                }
+            } else {
+                server.getPlayerManager().broadcast(msg, false);
+            }
             mod.vitoria().emoteSpeaking();
         } finally {
             sendingSelf = false;
@@ -2241,8 +2256,9 @@ public class CumminsBrain {
             lastTalkedWith = target;
             lastTalkedAt = now();
             mod.context().relationships().recordBotDirectedMessage(target);
+        } else {
+            mod.discord().relayToDiscord("[Vitória] " + line);
         }
-        mod.discord().relayToDiscord("[Vitória] " + line);
     }
 
     // ------------------------------------------------------------------ memória
