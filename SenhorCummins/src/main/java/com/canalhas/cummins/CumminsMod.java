@@ -52,6 +52,7 @@ public class CumminsMod implements ModInitializer {
     private CumminsAlmoxarifadoManager almoxarifado;
     private CumminsMutiraoManager mutirao;
     private CumminsCafeManager cafe;
+    private CumminsTvManager tvManager;
     private LlmTokenTracker tokenTracker;
     private net.minecraft.server.MinecraftServer server;
     private String lastShiftReportDate = "";
@@ -85,6 +86,7 @@ public class CumminsMod implements ModInitializer {
     public CumminsAlmoxarifadoManager almoxarifado() { return almoxarifado; }
     public CumminsMutiraoManager mutirao() { return mutirao; }
     public CumminsCafeManager cafe() { return cafe; }
+    public CumminsTvManager tvManager() { return tvManager; }
     public net.minecraft.server.MinecraftServer server() { return server; }
 
     @Override
@@ -125,6 +127,7 @@ public class CumminsMod implements ModInitializer {
         almoxarifado = new CumminsAlmoxarifadoManager(this, dir);
         mutirao = new CumminsMutiraoManager(this);
         cafe = new CumminsCafeManager(this);
+        tvManager = new CumminsTvManager(this, dir);
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             this.server = server;
@@ -253,16 +256,19 @@ public class CumminsMod implements ModInitializer {
             if (jinqiuzineo != null && handler.player.getGameProfile().getName().equalsIgnoreCase(JinqiuzineoBody.OWNER_NAME)) {
                 jinqiuzineo.summonOrTeleportTo(handler.player);
             }
+            if (tvManager != null) tvManager.onPlayerJoin(handler.player);
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             brain.onLeave(handler.player);
             playtime.onPlayerLeave(handler.player);
             if (networkMonitor != null) networkMonitor.onPlayerDisconnect(handler.player);
+            if (tvManager != null) tvManager.onPlayerLeave(handler.player);
             server.execute(() -> {
                 if (pipira != null) pipira.onPlayerLeave(handler.player);
                 if (juninho != null) juninho.onPlayerLeave(handler.player);
                 if (javidizineo != null) javidizineo.onPlayerLeave(handler.player);
                 if (jinqiuzineo != null) jinqiuzineo.onPlayerLeave(handler.player);
+                if (mutirao != null) mutirao.onPlayerLeave(handler.player);
                 checkEndOfTurnOnDisconnect(server);
             });
         });
@@ -326,6 +332,7 @@ public class CumminsMod implements ModInitializer {
             if (mutirao != null) mutirao.tick(server);
             if (nightHunter != null) nightHunter.onTick(body.getCat());
             if (tourGuide != null) tourGuide.onTick(body.getCat(), server);
+            if (tvManager != null) tvManager.onTick(server);
             if (modBackup != null) modBackup.checkPeriodicSync();
             checkShiftReport(server);
         });
@@ -411,6 +418,10 @@ public class CumminsMod implements ModInitializer {
                 "com.canalhas.cummins.CumminsTourGuide",
                 "com.canalhas.cummins.CumminsTourGuide$TourLocation",
                 "com.canalhas.cummins.CumminsTourGuide$TourStore",
+                "com.canalhas.cummins.CumminsTvManager",
+                "com.canalhas.cummins.CumminsTvManager$TvCameraMode",
+                "com.canalhas.cummins.CumminsTvManager$TvConfig",
+                "com.canalhas.cummins.CumminsTvManager$SpectatorSession",
                 "com.canalhas.cummins.DiscordPoller",
                 "com.canalhas.cummins.LagReport",
                 "com.canalhas.cummins.LagReportManager",
