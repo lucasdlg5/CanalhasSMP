@@ -407,7 +407,7 @@ public class JinqiuzineoBody {
 
         List<String> ambientMsgs = List.of(
                 "§5<Jinqiuzineo>§r §d*rawr-hiss!* 🐯🚬 §7(\"Daria metade do meu poder de Ru Shou por um charuto agora... mas só tem trigo quadrado neste lugar!\")",
-                "§5<Jinqiuzineo>§r §d*grrr-miau!* 🐯💢 §7(\"Olha bem pras minhas listras, humano. Isso é marca de Tigre Branco, não de gatinho de vó!\")"
+                "§5<Jinqiuzineo>§r §d*grrr-miau!* 🐯❄️ §7(\"Olha bem pra minha pelagem branca, humano. Isso é marca do lendário Tigre Branco de Ru Shou, não de gatinho de vó!\")"
         );
         player.sendMessage(Text.literal(ambientMsgs.get(random.nextInt(ambientMsgs.size()))), true);
     }
@@ -580,14 +580,17 @@ public class JinqiuzineoBody {
     }
 
     private void applyAttributes(CatEntity cat, ServerPlayerEntity owner) {
-        cat.setCustomName(Text.literal("§5Jinqiuzineo §d(Mini Tigre)§r"));
+        cat.setCustomName(Text.literal("§5Jinqiuzineo §f(Mini Tigre Branco)§r"));
         cat.setCustomNameVisible(true);
         cat.setInvulnerable(true);
         cat.setPersistent();
         cat.setCollarColor(DyeColor.PURPLE);
 
-        // Pelagem rajada de tigre (Tabby)
-        CatVariant variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "tabby"));
+        // Pelagem de Tigre Branco (White Cat puro com heterocromia)
+        CatVariant variant = Registries.CAT_VARIANT.get(CatVariant.WHITE);
+        if (variant == null) {
+            variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "white"));
+        }
         if (variant != null) {
             cat.setVariant(variant);
         }

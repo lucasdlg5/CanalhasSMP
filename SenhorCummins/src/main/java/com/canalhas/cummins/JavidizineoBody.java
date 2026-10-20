@@ -578,8 +578,11 @@ public class JavidizineoBody {
         cat.setPersistent();
         cat.setCollarColor(DyeColor.ORANGE);
 
-        // Pelagem alaranjada/dourada (Red Tabby) estilo leão
-        CatVariant variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "red"));
+        // Pelagem alaranjada/dourada (Red Tabby) estilo mini leão de Shamash — diferente de Cummins (cinza Jellie)
+        CatVariant variant = Registries.CAT_VARIANT.get(CatVariant.RED);
+        if (variant == null) {
+            variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "red"));
+        }
         if (variant != null) {
             cat.setVariant(variant);
         }
