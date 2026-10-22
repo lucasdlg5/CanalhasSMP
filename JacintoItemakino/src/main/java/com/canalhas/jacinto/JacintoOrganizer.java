@@ -1,6 +1,8 @@
 package com.canalhas.jacinto;
 
-import net.minecraft.block.Block;
+import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.entity.projectile.ProjectileUtil;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.WallSignBlock;
@@ -25,6 +27,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
@@ -211,6 +214,50 @@ public class JacintoOrganizer {
         PT_DICT.put("frasco", Items.GLASS_BOTTLE);
     }
 
+    private BlockPos findChestFromItemFrame(ServerWorld world, ItemFrameEntity frame) {
+        BlockPos decPos = frame.getDecorationBlockPos();
+        if (decPos != null && getInventoryAtPos(world, decPos) != null) {
+            return decPos;
+        }
+
+        Direction facing = frame.getHorizontalFacing();
+        if (facing != null) {
+            BlockPos behindPos = frame.getBlockPos().offset(facing.getOpposite());
+            if (getInventoryAtPos(world, behindPos) != null) {
+                return behindPos;
+            }
+        }
+
+        for (Direction dir : Direction.values()) {
+            BlockPos p = frame.getBlockPos().offset(dir);
+            if (getInventoryAtPos(world, p) != null) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private ItemFrameEntity findAttachedItemFrame(ServerWorld world, BlockPos chestPos) {
+        ItemFrameEntity frame = scanItemFrames(world, chestPos);
+        if (frame != null) return frame;
+
+        BlockPos otherHalf = getDoubleChestOtherHalf(world, chestPos);
+        if (otherHalf != null) {
+            frame = scanItemFrames(world, otherHalf);
+            if (frame != null) return frame;
+        }
+        return null;
+    }
+
+    private ItemFrameEntity scanItemFrames(ServerWorld world, BlockPos pos) {
+        List<ItemFrameEntity> list = world.getEntitiesByClass(
+                ItemFrameEntity.class,
+                new Box(pos).expand(1.25),
+                f -> !f.getHeldItemStack().isEmpty()
+        );
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     public JacintoOrganizer(JacintoMod mod) {
         this.mod = mod;
     }
@@ -248,43 +295,84 @@ public class JacintoOrganizer {
             mod.getMiner().stopMining(player);
         }
 
-        HitResult hit = player.raycast(6.0, 0, false);
-        if (hit.getType() != HitResult.Type.BLOCK) {
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para uma placa na frente ou para o baú que deseja organizar e tente novamente!"), false);
-            return false;
-        }
-
-        BlockHitResult blockHit = (BlockHitResult) hit;
-        BlockPos hitPos = blockHit.getBlockPos();
         ServerWorld serverWorld = player.getServerWorld();
-        BlockEntity hitBe = serverWorld.getBlockEntity(hitPos);
-
         BlockPos foundChestPos = null;
+        Item identifiedItem = null;
+        String identificationSource = "";
         List<String> rawLines = new ArrayList<>();
 
-        // 1. Caso tenha mirado diretamente na Placa
-        if (hitBe instanceof SignBlockEntity signBe) {
-            collectSignLines(signBe, rawLines);
-            foundChestPos = findAttachedChest(serverWorld, hitPos);
+        // 1. PRIMEIRO: Raycast de Entidade (detecta se o jogador está mirando diretamente em uma Moldura com item)
+        Vec3d cameraPos = player.getCameraPosVec(1.0F);
+        Vec3d rot = player.getRotationVec(1.0F);
+        Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
+        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
+                e -> (e instanceof ItemFrameEntity), 36.0);
+
+        if (entityHit != null && entityHit.getEntity() instanceof ItemFrameEntity frame) {
+            ItemStack held = frame.getHeldItemStack();
+            if (held.isEmpty()) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cEssa moldura está vazia! Coloque o item que deseja guardar dentro da moldura para eu usar como referência."), false);
+                return false;
+            }
+            foundChestPos = findChestFromItemFrame(serverWorld, frame);
+            if (foundChestPos == null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão encontrei nenhum baú ou barril conectado a esta moldura!"), false);
+                return false;
+            }
+            identifiedItem = held.getItem();
+            identificationSource = "Moldura";
         }
-        // 2. Caso tenha mirado diretamente no Baú (ou barril)
-        else if (getInventoryAtPos(serverWorld, hitPos) != null) {
-            foundChestPos = hitPos;
-            SignBlockEntity nearbySign = findNearbySign(serverWorld, hitPos);
-            if (nearbySign != null) {
-                collectSignLines(nearbySign, rawLines);
+
+        // 2. SE NÃO MIROU EM MOLDURA: Raycast de Blocos (Placa ou Baú)
+        if (identifiedItem == null) {
+            HitResult hit = player.raycast(6.0, 0, false);
+            if (hit.getType() != HitResult.Type.BLOCK) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para a §6Moldura§c com o item, para uma §ePlaca§c ou diretamente para o §6Baú§c e tente novamente!"), false);
+                return false;
+            }
+
+            BlockHitResult blockHit = (BlockHitResult) hit;
+            BlockPos hitPos = blockHit.getBlockPos();
+            BlockEntity hitBe = serverWorld.getBlockEntity(hitPos);
+
+            // 2.1 Caso tenha mirado diretamente na Placa
+            if (hitBe instanceof SignBlockEntity signBe) {
+                collectSignLines(signBe, rawLines);
+                foundChestPos = findAttachedChest(serverWorld, hitPos);
+            }
+            // 2.2 Caso tenha mirado diretamente no Baú (ou barril)
+            else if (getInventoryAtPos(serverWorld, hitPos) != null) {
+                foundChestPos = hitPos;
+                SignBlockEntity nearbySign = findNearbySign(serverWorld, hitPos);
+                if (nearbySign != null) {
+                    collectSignLines(nearbySign, rawLines);
+                }
+            }
+
+            if (foundChestPos == null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão encontrei nenhum baú ou barril onde você está olhando!"), false);
+                return false;
+            }
+
+            // Verifica se este baú possui uma Moldura com item afixada nele
+            ItemFrameEntity attachedFrame = findAttachedItemFrame(serverWorld, foundChestPos);
+            if (attachedFrame != null && !attachedFrame.getHeldItemStack().isEmpty()) {
+                identifiedItem = attachedFrame.getHeldItemStack().getItem();
+                identificationSource = "Moldura";
+            } else {
+                // Tenta descobrir o item através do texto da placa ou do conteúdo existente no baú
+                identifiedItem = identifyItemFromSignOrChest(serverWorld, foundChestPos, rawLines);
+                if (identifiedItem != null && !rawLines.isEmpty()) {
+                    identificationSource = "Placa";
+                } else if (identifiedItem != null) {
+                    identificationSource = "Baú";
+                }
             }
         }
 
-        if (foundChestPos == null) {
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão encontrei nenhum baú ou barril conectado a esta placa!"), false);
-            return false;
-        }
-
-        // Tenta descobrir o item alvo através do texto da placa ou do conteúdo existente no baú
-        Item identifiedItem = identifyItemFromSignOrChest(serverWorld, foundChestPos, rawLines);
         if (identifiedItem == null || identifiedItem == Items.AIR) {
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item guardar nesta placa! Escreva o nome do item na placa (ex: §eDiamante§c, §eFerro§c, §eAndesito§c) ou coloque ao menos um exemplar dentro do baú."), false);
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item guardar! Coloque um item na §6Moldura§c, escreva o nome na §ePlaca§c ou coloque um exemplar dentro do §6Baú§c."), false);
             return false;
         }
 
@@ -323,8 +411,13 @@ public class JacintoOrganizer {
         scanSourceChests(serverWorld, foundChestPos, 24);
 
         // Confirmação para o jogador
+        String sourceLabel = switch (identificationSource) {
+            case "Moldura" -> "na §6Moldura";
+            case "Placa" -> "na §ePlaca";
+            default -> "através do exemplo no §6Baú";
+        };
         player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fOpa, patrão §b" + player.getGameProfile().getName() +
-                "§f! Identifiquei o item: §b§l[" + targetItemDisplayName + "]§f.\n§7Revistando " + sourceChests.size() +
+                "§f! Identifiquei o item " + sourceLabel + "§f: §b§l[" + targetItemDisplayName + "]§f.\n§7Revistando " + sourceChests.size() +
                 " baús vizinhos para concentrar tudo aqui..."), false);
 
         if (sourceChests.isEmpty()) {

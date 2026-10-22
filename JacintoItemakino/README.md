@@ -122,20 +122,25 @@ Para resolver isso de forma 100% confiável no Jacinto:
 
 ## 📦 Como Usar a Organização de Baús (Passo a Passo)
 
-### Passo 1: Preparar o Baú e a Placa
-1. Coloque o baú (simples ou duplo) ou barril no local desejado.
-2. Coloque uma placa **na frente**, **em cima** ou **grudada na lateral** do baú.
-3. Escreva na placa o nome do item que aquele baú deve armazenar (ex: `Diamante`, `Ferro`, `Ouro`, `Redstone`, `Madeira`, etc.).
-   - Se o baú já contiver o item dentro, o Jacinto detecta automaticamente mesmo com placa decorada!
+O Jacinto oferece **3 formas intuitivas** para você definir qual item aquele baú deve receber:
 
-### Passo 2: Executar o Comando
-Mire a mira do jogo diretamente para a placa e digite:
-```minecraft
-/organizar
-```
+### Opção A: 🖼️ Usando uma Moldura com o Item (Mais Fácil e Prático!)
+1. Coloque uma **Moldura** (normal ou brilhante) diretamente na frente, em cima ou ao lado do seu baú.
+2. Coloque o **item de referência** dentro da moldura (ex: Andesito, Diamante, Barra de Ferro, etc.).
+3. Mire a mira do jogo diretamente na **Moldura** (ou no próprio baú com a moldura) e digite:
+   ```minecraft
+   /organizar
+   ```
+4. O Jacinto lê o item exato contido na moldura na hora e traz todos os itens correspondentes dos baús vizinhos!
 
-### Passo 3: Confirmação e Trabalho
-O Jacinto responde no chat privado e transfere todos os itens correspondentes dos baús em até **24 blocos**, com **proteção total contra loops infinitos** (o baú alvo e sua metade dupla são estritamente ignorados na coleta).
+### Opção B: 🪧 Usando uma Placa com o Nome do Item
+1. Coloque uma placa grudada no baú ou no chão em frente a ele.
+2. Escreva o nome do item (ex: `Andesito`, `Diamante`, `Ferro`, `Pedra`, etc.).
+3. Mire na placa e digite `/organizar`.
+
+### Opção C: 📦 Usando um Item Exemplo dentro do Baú
+1. Se você já tiver colocado ao menos um exemplar do item dentro do baú (suporta **Baús Duplos grandes** em qualquer um dos 54 slots).
+2. Mire no baú e digite `/organizar`. O Jacinto usará o item do baú como gabarito automático!
 
 ---
 
@@ -184,10 +189,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.1.1.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.2.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.1.1.jar` para a pasta `mods/` do servidor.
+1. Copie o arquivo `jacinto-itemakino-1.2.0.jar` para a pasta `mods/` do servidor.
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 
