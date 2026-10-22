@@ -3,16 +3,21 @@ package com.canalhas.jacinto;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageTypes;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
 import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,11 +63,22 @@ public class JacintoMod implements ModInitializer {
             return ActionResult.PASS;
         });
 
+        // Jogadores NÃO PODEM bater no Jacinto (cancela o ataque na origem e impede farm de XP)
+        AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (entity != null && entity.getCommandTags().contains(JacintoNpc.JACINTO_TAG)) {
+                if (!world.isClient()) {
+                    player.sendMessage(Text.literal("§6[Jacinto Itemakino Baú] §eEi patrão §b" + player.getName().getString() + "§e, sem fogo amigo! Sou da firma, não me bata! 📦👷"), true);
+                }
+                return ActionResult.FAIL;
+            }
+            return ActionResult.PASS;
+        });
+
         // Controle de Dano e Proteção
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             Entity attacker = source.getAttacker();
 
-            // O Jacinto NUNCA causa dano a jogadores, aldeões ou animais pacíficos!
+            // 1. O Jacinto NUNCA causa dano a jogadores, aldeões ou animais pacíficos!
             if (attacker != null && attacker.getCommandTags().contains(JacintoNpc.JACINTO_TAG)) {
                 if (entity instanceof PlayerEntity || entity instanceof PassiveEntity) {
                     if (attacker instanceof HuskEntity husk) {
@@ -72,6 +88,46 @@ public class JacintoMod implements ModInitializer {
                     return false;
                 }
             }
+
+            // 2. Proteção do Jacinto contra ataques de Players, Aliados (Vitoria/Companions) e Sufocamento:
+            if (entity != null && entity.getCommandTags().contains(JacintoNpc.JACINTO_TAG)) {
+                // Jogadores e projéteis de jogadores NUNCA dão dano no Jacinto
+                if (attacker instanceof PlayerEntity || source.getSource() instanceof PlayerEntity) {
+                    return false;
+                }
+
+                // Pets e animais domesticados NUNCA atacam Jacinto
+                if (attacker instanceof TameableEntity) {
+                    return false;
+                }
+
+                // Companheiros/NPCs amigos (ex: Vitoria, Guard Villagers, Golens) NUNCA atacam Jacinto
+                if (attacker != null) {
+                    String name = attacker.getName().getString().toLowerCase();
+                    if (name.contains("vitoria") || name.contains("vitória") || name.contains("guard") || name.contains("companion")) {
+                        if (attacker instanceof MobEntity mob) {
+                            mob.setTarget(null);
+                        }
+                        return false;
+                    }
+                    // Apenas Monstros Hostis reais (zumbi, esqueleto, creeper, etc.) podem danificar Jacinto
+                    if (!(attacker instanceof Monster) || attacker.getCommandTags().contains(JacintoNpc.JACINTO_TAG)) {
+                        if (attacker instanceof MobEntity mob) {
+                            mob.setTarget(null);
+                        }
+                        return false;
+                    }
+                } else {
+                    // Previne morte acidental por sufocamento em baús/blocos ou arbustos
+                    if (source.isOf(DamageTypes.IN_WALL) ||
+                        source.isOf(DamageTypes.CACTUS) ||
+                        source.isOf(DamageTypes.SWEET_BERRY_BUSH) ||
+                        source.isOf(DamageTypes.DROWN)) {
+                        return false;
+                    }
+                }
+            }
+
             return true;
         });
 

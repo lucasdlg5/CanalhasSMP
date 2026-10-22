@@ -4,20 +4,31 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.ai.goal.ActiveTargetGoal;
+import net.minecraft.entity.ai.goal.LookAroundGoal;
+import net.minecraft.entity.ai.goal.LookAtEntityGoal;
+import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.item.ShieldItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.MiningToolItem;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.scoreboard.AbstractTeam;
+import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -92,7 +103,18 @@ public class JacintoNpc {
             return;
         }
 
+        // A cada 40 ticks (2 segundos), executa varredura para eliminar clones/órfãos
+        if (server.getTicks() % 40 == 0) {
+            cleanupDuplicateJacintos(server);
+        }
+
         HuskEntity entity = getEntity();
+        if (entity == null) {
+            // Tenta encontrar um Jacinto já existente nos mundos antes de criar outro
+            cleanupDuplicateJacintos(server);
+            entity = getEntity();
+        }
+
         if (entity == null) {
             // Se o Jacinto ainda não está no mundo e tem jogadores online, tenta invocá-lo na base
             if (server.getTicks() % 100 == 0 && !server.getPlayerManager().getPlayerList().isEmpty()) {
@@ -101,10 +123,165 @@ public class JacintoNpc {
             return;
         }
 
+        // Garante que Jacinto NUNCA tenha jogadores ou entidades pacíficas como alvo e mantenha braços relaxados
+        if (entity.getTarget() instanceof PlayerEntity || entity.getTarget() instanceof PassiveEntity) {
+            entity.setTarget(null);
+            entity.setAttacking(false);
+        }
+        if (entity.getTarget() == null && entity.isAttacking()) {
+            entity.setAttacking(false);
+        }
+
         // Comportamento quando está Ocioso (Idle): Defesa da base e patrulha
         if (!mod.getOrganizer().isBusy() && !mod.getMiner().isMining()) {
             tickIdleCombat(entity);
             tickIdleWander(entity);
+        }
+    }
+
+    /**
+     * Varre todos os mundos do servidor e elimina cópias órfãs ou duplicadas do Jacinto.
+     * Mantém apenas 1 Jacinto ativo e reconecta a referência se necessário.
+     */
+    public int cleanupDuplicateJacintos(MinecraftServer server) {
+        if (server == null) return 0;
+        int purged = 0;
+        JacintoData data = mod.getData();
+
+        HuskEntity primary = (jacintoEntity != null && !jacintoEntity.isRemoved() && jacintoEntity.isAlive()) ? jacintoEntity : null;
+        UUID savedUuid = null;
+        if (data.jacintoUuid != null && !data.jacintoUuid.isEmpty()) {
+            try {
+                savedUuid = UUID.fromString(data.jacintoUuid);
+            } catch (Exception ignored) {}
+        }
+
+        for (ServerWorld world : server.getWorlds()) {
+            for (Entity e : world.iterateEntities()) {
+                if (e instanceof HuskEntity husk) {
+                    boolean isJacintoTag = husk.getCommandTags().contains(JACINTO_TAG);
+                    boolean isJacintoName = husk.getCustomName() != null && husk.getCustomName().getString().contains("Jacinto");
+                    if (isJacintoTag || isJacintoName) {
+                        if (primary == null && (savedUuid == null || husk.getUuid().equals(savedUuid)) && husk.isAlive()) {
+                            // Reconecta o Jacinto principal
+                            primary = husk;
+                            this.jacintoEntity = husk;
+                            data.jacintoUuid = husk.getUuidAsString();
+                            configureJacintoAI(husk);
+                        } else if (husk == primary) {
+                            // É a única entidade principal válida
+                            continue;
+                        } else {
+                            // É uma duplicata/clone do Jacinto! Descarta imediatamente
+                            husk.discard();
+                            purged++;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (primary != null && this.jacintoEntity == null) {
+            this.jacintoEntity = primary;
+        }
+
+        return purged;
+    }
+
+    /**
+     * Configura a IA e propriedades do Jacinto para agir como trabalhador amigável:
+     * - Não ataca jogadores nem aldeões (arms down)
+     * - Defende a base atacando monstros hostis
+     * - Sem colisão com players (não bloqueia portas nem empurra ninguém)
+     * - Não dropa XP ao morrer
+     * - Usa uniforme de operário se não houver armadura
+     */
+    public void configureJacintoAI(HuskEntity husk) {
+        if (husk == null) return;
+
+        husk.addCommandTag(JACINTO_TAG);
+        husk.setCustomName(Text.literal(NPC_NAME));
+        husk.setCustomNameVisible(true);
+        husk.setPersistent();
+        husk.setSilent(true);
+        husk.setBaby(false);
+        husk.setCanPickUpLoot(false);
+        husk.disableExperienceDropping();
+
+        var maxHpAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH);
+        if (maxHpAttr != null) maxHpAttr.setBaseValue(20.0);
+        if (husk.getHealth() > 20.0f) husk.setHealth(20.0f);
+
+        var speedAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+        if (speedAttr != null) speedAttr.setBaseValue(0.28);
+
+        var attackAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+        if (attackAttr != null) attackAttr.setBaseValue(4.0);
+
+        // Limpa TODOS os alvos e objetivos de zumbi vanilla (removendo ActiveTargetGoal<PlayerEntity>)
+        husk.targetSelector.clear(goal -> true);
+        husk.goalSelector.clear(goal -> true);
+
+        // Registra IA amigável
+        husk.goalSelector.add(0, new SwimGoal(husk));
+        husk.goalSelector.add(2, new MeleeAttackGoal(husk, 1.25, false));
+        husk.goalSelector.add(5, new WanderAroundFarGoal(husk, 0.9));
+        husk.goalSelector.add(6, new LookAtEntityGoal(husk, PlayerEntity.class, 8.0f));
+        husk.goalSelector.add(7, new LookAroundGoal(husk));
+
+        // Foco de combate APENAS em monstros hostis verdadeiros
+        husk.targetSelector.add(1, new ActiveTargetGoal<>(husk, HostileEntity.class, 10, true, false,
+                target -> target != null && target.isAlive() && !target.getCommandTags().contains(JACINTO_TAG)));
+
+        husk.setAttacking(false);
+
+        // Adiciona ao scoreboard com colisão desligada
+        applyScoreboardTeam(husk);
+
+        // Uniforme de trabalho
+        ensureWorkerAttire(husk);
+    }
+
+    public void ensureWorkerAttire(HuskEntity husk) {
+        if (husk == null) return;
+        if (husk.getEquippedStack(EquipmentSlot.HEAD).isEmpty()) {
+            husk.equipStack(EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
+            husk.setEquipmentDropChance(EquipmentSlot.HEAD, 0.0f);
+        }
+        if (husk.getEquippedStack(EquipmentSlot.CHEST).isEmpty()) {
+            husk.equipStack(EquipmentSlot.CHEST, new ItemStack(Items.LEATHER_CHESTPLATE));
+            husk.setEquipmentDropChance(EquipmentSlot.CHEST, 0.0f);
+        }
+        if (husk.getEquippedStack(EquipmentSlot.LEGS).isEmpty()) {
+            husk.equipStack(EquipmentSlot.LEGS, new ItemStack(Items.LEATHER_LEGGINGS));
+            husk.setEquipmentDropChance(EquipmentSlot.LEGS, 0.0f);
+        }
+        if (husk.getEquippedStack(EquipmentSlot.FEET).isEmpty()) {
+            husk.equipStack(EquipmentSlot.FEET, new ItemStack(Items.LEATHER_BOOTS));
+            husk.setEquipmentDropChance(EquipmentSlot.FEET, 0.0f);
+        }
+        if (husk.getMainHandStack().isEmpty()) {
+            husk.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_PICKAXE));
+            husk.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
+        }
+    }
+
+    public void applyScoreboardTeam(HuskEntity husk) {
+        if (husk == null) return;
+        MinecraftServer server = husk.getServer();
+        if (server == null) return;
+        try {
+            ServerScoreboard scoreboard = server.getScoreboard();
+            Team team = scoreboard.getTeam("jacinto_team");
+            if (team == null) {
+                team = scoreboard.addTeam("jacinto_team");
+                team.setDisplayName(Text.literal("Equipe Jacinto"));
+                team.setCollisionRule(AbstractTeam.CollisionRule.NEVER);
+                team.setFriendlyFireAllowed(false);
+            }
+            scoreboard.addPlayerToTeam(husk.getEntityName(), team);
+        } catch (Exception e) {
+            LOG.warn("Falha ao registrar equipe scoreboard para Jacinto: " + e.getMessage());
         }
     }
 
@@ -200,6 +377,14 @@ public class JacintoNpc {
             spawnPos = Vec3d.ofBottomCenter(world.getSpawnPos());
         }
 
+        // 3. Limpa duplicatas e verifica se já existe um Jacinto ativo
+        cleanupDuplicateJacintos(server);
+        if (this.jacintoEntity != null && this.jacintoEntity.isAlive()) {
+            this.jacintoEntity.refreshPositionAndAngles(spawnPos.x, spawnPos.y + 0.1, spawnPos.z, 0f, 0f);
+            configureJacintoAI(this.jacintoEntity);
+            return this.jacintoEntity;
+        }
+
         // Remove entidade antiga se houver
         if (jacintoEntity != null && !jacintoEntity.isRemoved()) {
             jacintoEntity.discard();
@@ -209,23 +394,6 @@ public class JacintoNpc {
         if (husk == null) return null;
 
         husk.refreshPositionAndAngles(spawnPos.x, spawnPos.y + 0.1, spawnPos.z, 0f, 0f);
-        husk.addCommandTag(JACINTO_TAG);
-        husk.setCustomName(Text.literal(NPC_NAME));
-        husk.setCustomNameVisible(true);
-        husk.setPersistent();
-        husk.setSilent(true); // Silencioso para não ficar rosnando como zumbi
-        husk.setCanPickUpLoot(false);
-
-        // Atributos de Player Normal
-        var maxHpAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH);
-        if (maxHpAttr != null) maxHpAttr.setBaseValue(20.0);
-        husk.setHealth(20.0f);
-
-        var speedAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-        if (speedAttr != null) speedAttr.setBaseValue(0.28);
-
-        var attackAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE);
-        if (attackAttr != null) attackAttr.setBaseValue(4.0);
 
         // Restaura armaduras e armas salvas
         for (EquipmentSlot slot : EquipmentSlot.values()) {
@@ -235,6 +403,9 @@ public class JacintoNpc {
                 husk.setEquipmentDropChance(slot, 0.0f); // 0% de chance de dropar no chão
             }
         }
+
+        // Aplica IA, tags, sem colisão e uniforme de operário
+        configureJacintoAI(husk);
 
         world.spawnEntity(husk);
         this.jacintoEntity = husk;

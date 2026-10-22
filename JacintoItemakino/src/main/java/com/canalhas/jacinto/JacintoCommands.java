@@ -51,6 +51,7 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("status").executes(c -> handleOrganizarStatus(c.getSource(), mod)))
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
                 .then(CommandManager.literal("base").executes(c -> handleJacintoSetBase(c.getSource(), mod)))
+                .then(CommandManager.literal("limpar").executes(c -> handleJacintoLimpar(c.getSource(), mod)))
         );
 
         // Comando de Mineração Passiva /minerar <item>
@@ -93,6 +94,7 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
                 .then(CommandManager.literal("base").executes(c -> handleJacintoSetBase(c.getSource(), mod)))
                 .then(CommandManager.literal("status").executes(c -> handleOrganizarStatus(c.getSource(), mod)))
+                .then(CommandManager.literal("limpar").executes(c -> handleJacintoLimpar(c.getSource(), mod)))
                 .then(CommandManager.literal("respawn").requires(s -> s.hasPermissionLevel(2))
                         .executes(c -> handleJacintoForceRespawn(c.getSource(), mod)))
         );
@@ -293,6 +295,16 @@ public final class JacintoCommands {
     private static int handleJacintoForceRespawn(ServerCommandSource src, JacintoMod mod) {
         mod.getNpc().spawnOrRespawn(src.getServer(), true);
         src.sendFeedback(() -> Text.literal("§a[Jacinto] Jacinto reinvocado com sucesso!"), true);
+        return 1;
+    }
+
+    private static int handleJacintoLimpar(ServerCommandSource src, JacintoMod mod) {
+        int purged = mod.getNpc().cleanupDuplicateJacintos(src.getServer());
+        if (purged > 0) {
+            src.sendFeedback(() -> Text.literal("§a[Jacinto] Varredura concluída! §e" + purged + "§a cópia(s) duplicada(s) ou órfã(s) foram removidas do mundo."), true);
+        } else {
+            src.sendFeedback(() -> Text.literal("§a[Jacinto] Varredura concluída! Nenhum clone duplicado encontrado. Apenas 1 Jacinto ativo na firma."), false);
+        }
         return 1;
     }
 }

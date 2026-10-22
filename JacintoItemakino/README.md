@@ -12,6 +12,7 @@ O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e mul
 1. **📦 Organização Inteligente de Baús**: Lê a placa de um baú e varre recipientes vizinhos em 24 blocos, concentrando os itens com **proteção total contra loops infinitos**.
 2. **⛏️ Mineração Passiva e Autônoma**: Você pede um item/minério para ele e ele ativa seu **scanner geológico de 32 blocos**, caminha pelo trajeto mais acessível e começa a escavar os veios de minério sem parar!
 3. **⚔️ Proteção da Base e Persistência**: Pode ser equipado com quaisquer armas/armaduras de jogador, patrulha a base atacando monstros hostis e **nunca despawna** — graças a um sistema dinâmico de **3x3 Chunks Forçados**, continuando seu trabalho mesmo quando nenhum jogador está por perto! Se morrer, respawna em 5 segundos e retoma a tarefa imediatamente!
+4. **👷 Postura Pacífica e Status de Aliado da Firma (v1.6.0)**: Jacinto não persegue e nem agarra jogadores (braços baixados), possui colisão desativada para players passarem através dele sem travar portas/baús, é **100% imune a ataques de jogadores e NPCs companheiros (como a Vitória)** e **não dropa XP**, prevenindo qualquer tipo de farm indevido! Apenas monstros hostis podem atacá-lo.
 
 ---
 
@@ -171,10 +172,14 @@ Você pode personalizar individualmente como o Jacinto interage com cada baú da
 | Característica | Detalhes |
 | :--- | :--- |
 | **Vida Máxima** | **20 HP** (10 corações normais de jogador). |
-| **Aparência** | Humanóide operário (Husk) — não queima sob o sol e renderiza todas as armaduras. |
-| **Comportamento Passivo** | Patrulha a base num raio de 16 blocos enquanto ocioso. |
-| **Combate** | Ao avistar monstros hostis em até 14 blocos, parte para o ataque com sua arma equipada. |
-| **Segurança Absoluta** | **Nunca ataca jogadores**, animais domesticados ou aldeões. |
+| **Aparência de Operário** | Veste uniforme completo de operário (Capacete/Gorro, Peitoral, Calça jeans, Botas de trabalho e Picareta de Ferro). Caso o jogador dê armaduras melhores (Diamante/Netherita), ele mantém as peças do jogador! |
+| **Postura Humana** | Braços relaxados para baixo (não anda de braços levantados como zumbi). |
+| **Sem Colisão (No-Clip)** | Membro da equipe `jacinto_team` com regra `CollisionRule.NEVER`: jogadores atravessam o Jacinto livremente, sem empurrões nem bloqueios em portas ou baús. |
+| **Combate e Defesa** | Ao avistar monstros hostis (creepers, zumbis, esqueletos) em até 14 blocos, parte para o ataque com sua ferramenta/arma. |
+| **Proteção Contra Fogo Amigo** | **100% Imune a dano de jogadores**: cliques de espada, flechas e sweeps não conectam, exibindo aviso no action bar. |
+| **Proteção Contra Aliados** | NPCs companheiros (como a **Vitória** do Prominence II), guardas aldeões, golens e pets de jogadores não atacam o Jacinto. Se tentarem, o alvo é desativado imediatamente. |
+| **Anti-Farm de XP** | **Não dropa absolutamente nada de XP ao morrer** (`experienceDroppingDisabled`), impossibilitando exploração indevida de experiência. |
+| **Danos Sofridos** | Apenas monstros hostis de verdade causam dano ao Jacinto. Se derrotado em combate, seus itens ficam 100% seguros e ele renasce em 5 segundos! |
 
 ### 🦺 Como Dar Equipamentos para o Jacinto:
 - **Equipar:** Basta **clicar com o botão direito** no Jacinto segurando armadura (Capacete, Peitoral, Calça, Bota), Picareta, Espada ou Escudo.
@@ -204,6 +209,7 @@ Você pode personalizar individualmente como o Jacinto interage com cada baú da
 | `/jacinto parar` / `/jacinto stop` | Para qualquer tarefa ativa (mineração ou organização). | Todos |
 | `/jacinto chamar` | Teleporta o Jacinto imediatamente para a sua posição. | Todos |
 | `/jacinto base` | Define a sua localização atual como base de repouso oficial do Jacinto. | Todos |
+| `/jacinto limpar` | Executa varredura e expurga instantaneamente cópias/clones duplicados do Jacinto. | Todos |
 | `/jacinto respawn` | Força a reinvocação do Jacinto caso necessário. | OP (Nível 2) |
 
 ---
@@ -218,10 +224,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.5.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.6.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.5.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
+1. Copie o arquivo `jacinto-itemakino-1.6.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 
