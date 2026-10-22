@@ -65,7 +65,10 @@ public class JacintoMiner {
     private BlockPos targetOrePos = null;
     private BlockPos navigationTarget = null;
     private final Set<BlockPos> ignoredOres = new HashSet<>();
+    private final Set<BlockPos> sessionBlacklist = new HashSet<>();
+    private final Deque<BlockPos> positionHistory = new ArrayDeque<>();
     private final Set<ChunkPos> forcedChunks = new HashSet<>();
+    private boolean isAwaitingTool = false;
 
     private Direction explorationDirection = Direction.NORTH;
     private int scanCooldown = 0;
@@ -108,6 +111,31 @@ public class JacintoMiner {
 
     public BlockPos getTargetChestPos() {
         return targetChestPos;
+    }
+
+    public boolean isAwaitingTool() {
+        return isAwaitingTool;
+    }
+
+    public void onToolReceived(net.minecraft.entity.player.PlayerEntity player, ItemStack newPick) {
+        this.isAwaitingTool = false;
+        this.sessionBlacklist.clear();
+        this.ignoredOres.clear();
+        int tier = JacintoMiningCompatibility.getPickaxeMiningLevel(newPick);
+        String tierName = JacintoMiningCompatibility.getTierName(tier);
+
+        HuskEntity entity = mod.getNpc().getEntity();
+        if (entity != null && entity.getWorld() instanceof ServerWorld sw) {
+            sw.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    SoundEvents.ENTITY_VILLAGER_YES, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+            sw.spawnParticles(ParticleTypes.HAPPY_VILLAGER,
+                    entity.getX(), entity.getY() + 1.2, entity.getZ(), 10, 0.3, 0.3, 0.3, 0.05);
+        }
+
+        if (player != null) {
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aShow de bola, patrão §b" + player.getName().getString() +
+                    "§a! Com essa §b" + newPick.getName().getString() + " §7(Tier " + tierName + ")§a os minérios vão virar pó! Retomando a extração imediatamente! ⛏️🔥"), false);
+        }
     }
 
     public boolean isConstructionOrStoneTarget() {
@@ -202,6 +230,9 @@ public class JacintoMiner {
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.ignoredOres.clear();
+        this.sessionBlacklist.clear();
+        this.positionHistory.clear();
+        this.isAwaitingTool = false;
         this.sessionBlocksMined = 0;
         this.digProgressTicks = 0;
         this.stuckTicks = 0;
@@ -374,6 +405,9 @@ public class JacintoMiner {
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.ignoredOres.clear();
+        this.sessionBlacklist.clear();
+        this.positionHistory.clear();
+        this.isAwaitingTool = false;
         this.sessionBlocksMined = 0;
         this.digProgressTicks = 0;
         this.stuckTicks = 0;
@@ -455,6 +489,9 @@ public class JacintoMiner {
         }
 
         this.isMining = false;
+        this.isAwaitingTool = false;
+        this.sessionBlacklist.clear();
+        this.positionHistory.clear();
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.hologram.remove();
@@ -530,7 +567,37 @@ public class JacintoMiner {
 
         this.world = (ServerWorld) entity.getWorld();
 
-        // 1. Manutenção de Persistência e Chunks Forçados
+        // Cancela distrações de combate durante o expediente de mineração
+        if (entity.getTarget() != null) {
+            entity.setTarget(null);
+            entity.setAttacking(false);
+        }
+
+        // Detector Cognitivo de Oscilação / Loop Ping-Pong a cada 10 ticks
+        if (world.getServer().getTicks() % 10 == 0) {
+            BlockPos currentPos = entity.getBlockPos();
+            positionHistory.addLast(currentPos);
+            if (positionHistory.size() > 8) {
+                positionHistory.removeFirst();
+            }
+
+            if (isOscillating(positionHistory)) {
+                LOG.warn("[JacintoMiner] Detectada oscilação entre blocos (ping-pong)! Resetando alvo atual e aplicando rota de escape.");
+                if (targetOrePos != null) {
+                    sessionBlacklist.add(targetOrePos);
+                    ignoredOres.add(targetOrePos);
+                    targetHighlight.clear();
+                    targetOrePos = null;
+                    navigationTarget = null;
+                }
+                positionHistory.clear();
+                entity.getNavigation().stop();
+                Direction escapeDir = entity.getHorizontalFacing().getOpposite();
+                BlockPos escapePos = currentPos.offset(escapeDir, 2);
+                entity.getNavigation().startMovingTo(escapePos.getX() + 0.5, escapePos.getY(), escapePos.getZ() + 0.5, 1.2);
+                return;
+            }
+        }
         if (world.getServer().getTicks() % 20 == 0) {
             updateForcedChunks(world, entity);
             if (!entity.isPersistent()) {
@@ -682,6 +749,39 @@ public class JacintoMiner {
         checkAndContainNearbyLava(world, entity);
 
         ItemStack heldPick = entity.getMainHandStack();
+        BlockState targetState = world.getBlockState(targetOrePos);
+
+        // Validação Ativa da Ferramenta vs Nível do Bloco
+        JacintoMiningCompatibility.CompatibilityResult comp = JacintoMiningCompatibility.checkBlock(heldPick, targetState);
+        if (!comp.canMine) {
+            if (!isAwaitingTool) {
+                isAwaitingTool = true;
+                entity.getNavigation().stop();
+                faceBlock(entity, targetOrePos);
+
+                String needToolMsg = "§6==================================================\n" +
+                        "§e[Jacinto Itemakino Baú] §c⚠️ Ei patrão! Encontrei §6§l[" + comp.targetName + "]§c!\n" +
+                        "§fMotivo: " + comp.explanation + "\n" +
+                        "§aMe entregue uma picareta de §b" + comp.requiredTierName + "§a ou superior (botão direito em mim) para eu continuar minerando sem esfarelar!\n" +
+                        "§7(Consulte a tabela com §e/minerar compatibilidade§7).\n" +
+                        "§6==================================================";
+
+                world.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+
+                ServerPlayerEntity p = requestingPlayerUuid != null && world.getServer() != null
+                        ? world.getServer().getPlayerManager().getPlayer(requestingPlayerUuid) : null;
+                if (p != null) {
+                    p.sendMessage(Text.literal(needToolMsg), false);
+                } else if (world.getServer() != null) {
+                    world.getServer().getPlayerManager().broadcast(Text.literal(needToolMsg), false);
+                }
+            }
+            return;
+        } else {
+            isAwaitingTool = false;
+        }
+
         int efficiency = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, heldPick);
         int ticksNeeded = Math.max(3, 12 - (efficiency * 2)); // Issue #1: Eficiência acelera a mineração
 
@@ -800,7 +900,7 @@ public class JacintoMiner {
             for (int dz = -radius; dz <= radius; dz += 2) {
                 for (int y = minY; y <= maxY; y += 2) {
                     BlockPos pos = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
-                    if (ignoredOres.contains(pos)) continue;
+                    if (ignoredOres.contains(pos) || sessionBlacklist.contains(pos)) continue;
 
                     // Ignora veios em chunks protegidos por Claims (OPAC / FTB)
                     if (JacintoClaimHelper.isPosClaimed(world, pos)) {
@@ -808,13 +908,19 @@ public class JacintoMiner {
                         continue;
                     }
 
-                    // Ignora rochas/andesito em superfície
-                    if (isStone && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                    // Ignora rochas/construções sob o céu aberto ou acima do teto subterrâneo
+                    if (isStone && (world.isSkyVisible(pos.up()) || pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y)) {
                         ignoredOres.add(pos);
                         continue;
                     }
 
                     BlockState state = world.getBlockState(pos);
+                    // Ignora blocos de construção civil manufaturados por jogadores
+                    if (JacintoClaimHelper.isPlayerConstructionBlock(state)) {
+                        ignoredOres.add(pos);
+                        continue;
+                    }
+
                     if (isTargetBlock(state, pos)) {
                         // Verifica se não está completamente imerso em lava
                         if (isSurroundedByLava(world, pos)) {
@@ -1068,14 +1174,22 @@ public class JacintoMiner {
             return false;
         }
 
-        // 2. Proteção do Baú de Destino e suporte adjacente
-        if (hasMiningChest && targetChestPos != null && pos.isWithinDistance(targetChestPos, 2.5)) {
+        // 2. Proteção do Baú de Destino e suporte adjacente (Santuário do Baú)
+        if (hasMiningChest && targetChestPos != null && pos.isWithinDistance(targetChestPos, 3.5)) {
             return false;
         }
 
-        // 3. Regra Subterrânea para Andesito e Rochas: NUNCA quebra blocos de pedra acima de Y=40
-        if (isConstructionOrStoneTarget() && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+        // 3. NUNCA quebra blocos de construção civil de jogadores (tijolos, madeira, azulejos, vidros, máquinas)
+        if (JacintoClaimHelper.isPlayerConstructionBlock(state)) {
             return false;
+        }
+
+        // 4. Regra Subterrânea para Rochas (Andesito, Granito, Pedra, Pedregulho):
+        // Se for rocha/pedra, protege construções na superfície (sob o céu aberto ou acima de Y=55)
+        if (isConstructionOrStoneTarget()) {
+            if (world.isSkyVisible(pos.up()) || pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                return false;
+            }
         }
 
         return state.getHardness(world, pos) >= 0;
@@ -1303,9 +1417,16 @@ public class JacintoMiner {
     public boolean isTargetBlock(BlockState state, BlockPos pos) {
         if (state == null || state.isAir()) return false;
 
-        // Proteção de Construções: NUNCA considera blocos de pedra/construção acima de Y=40
-        if (pos != null && isConstructionOrStoneTarget() && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+        // Proteção de Construções Manufaturadas: NUNCA considera tijolos, madeira, azulejos, vidros, máquinas
+        if (JacintoClaimHelper.isPlayerConstructionBlock(state)) {
             return false;
+        }
+
+        // Proteção de Construções na Superfície: NUNCA considera rochas/construções sob céu aberto ou acima do teto subterrâneo
+        if (pos != null && world != null && isConstructionOrStoneTarget()) {
+            if (world.isSkyVisible(pos.up()) || pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                return false;
+            }
         }
 
         // Proteção de Claims: NUNCA considera blocos em chunks protegidos por Claims
@@ -1535,6 +1656,20 @@ public class JacintoMiner {
                 entity.getServer().getPlayerManager().broadcast(Text.literal(quote), false);
             }
         }
+    }
+
+    private boolean isOscillating(Deque<BlockPos> history) {
+        if (history.size() < 6) return false;
+        List<BlockPos> list = new ArrayList<>(history);
+        int n = list.size();
+        BlockPos p0 = list.get(n - 1);
+        BlockPos p1 = list.get(n - 2);
+        if (p0.equals(p1)) return false;
+
+        return list.get(n - 3).equals(p0) &&
+               list.get(n - 4).equals(p1) &&
+               list.get(n - 5).equals(p0) &&
+               list.get(n - 6).equals(p1);
     }
 
     private static String normalize(String s) {

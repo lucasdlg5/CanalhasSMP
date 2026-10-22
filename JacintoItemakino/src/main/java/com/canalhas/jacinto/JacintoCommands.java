@@ -283,7 +283,11 @@ public final class JacintoCommands {
         JacintoMiner miner = mod.getMiner();
         src.sendFeedback(() -> Text.literal("§6=== ⛏️ STATUS DA MINERAÇÃO DO JACINTO ==="), false);
         if (miner.isMining()) {
-            src.sendFeedback(() -> Text.literal("§fStatus: §aAtivo minerando §6§l[" + miner.getTargetDisplayName() + "]"), false);
+            if (miner.isAwaitingTool()) {
+                src.sendFeedback(() -> Text.literal("§fStatus: §c⚠️ AGUARDANDO PICARETA MELHOR! §7(Clique com o botão direito nele com a picareta adequada)"), false);
+            } else {
+                src.sendFeedback(() -> Text.literal("§fStatus: §aAtivo minerando §6§l[" + miner.getTargetDisplayName() + "]"), false);
+            }
             if (miner.hasMiningChest() && miner.getTargetChestPos() != null) {
                 BlockPos cp = miner.getTargetChestPos();
                 src.sendFeedback(() -> Text.literal("§fBaú de Destino: §eX: " + cp.getX() + ", Y: " + cp.getY() + ", Z: " + cp.getZ() + " §7(enche até lotar)"), false);

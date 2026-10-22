@@ -79,6 +79,28 @@ public final class JacintoMiningCompatibility {
     }
 
     /**
+     * Valida se a picareta fornecida consegue quebrar o bloco específico no mundo sem esfarelar
+     */
+    public static CompatibilityResult checkBlock(ItemStack pickaxe, BlockState state) {
+        int currentTier = getPickaxeMiningLevel(pickaxe);
+        int requiredTier = getRequiredMiningLevel(state);
+
+        String pickName = (pickaxe == null || pickaxe.isEmpty()) ? "Mão Vazia" : pickaxe.getName().getString();
+        String currentTierName = getTierName(currentTier);
+        String requiredTierName = getTierName(requiredTier);
+        String blockName = (state != null && state.getBlock() != null) ? state.getBlock().getName().getString() : "Minério";
+
+        if (currentTier < requiredTier) {
+            String explanation = "O bloco [" + blockName + "] exige no mínimo uma picareta de " +
+                    requiredTierName + " (Nível " + requiredTier + "), mas estou com uma " +
+                    pickName + " (" + currentTierName + ", Nível " + currentTier + ")!";
+            return new CompatibilityResult(false, currentTier, requiredTier, currentTierName, requiredTierName, pickName, blockName, explanation);
+        }
+
+        return new CompatibilityResult(true, currentTier, requiredTier, currentTierName, requiredTierName, pickName, blockName, "Compatível");
+    }
+
+    /**
      * Retorna o nível de mineração (0 a 4) da picareta
      */
     public static int getPickaxeTier(ItemStack pickaxe) {

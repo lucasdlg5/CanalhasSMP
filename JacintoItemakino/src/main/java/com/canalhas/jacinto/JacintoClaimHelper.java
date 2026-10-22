@@ -1,6 +1,9 @@
 package com.canalhas.jacinto;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -9,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Locale;
 
 /**
  * Integração inteligente de proteção de blocos e claims para o modpack Prominence II:
@@ -20,9 +24,8 @@ import java.lang.reflect.Method;
 public final class JacintoClaimHelper {
     private static final Logger LOG = LoggerFactory.getLogger("JacintoClaimHelper");
 
-    // Camada máxima de mineração subterrânea segura para rochas (Andesito, Granito, Pedra, etc.)
-    // Castelos e edificações de jogadores são construídos na superfície (Y >= 60).
-    public static final int SAFE_SUBTERRANEAN_MAX_Y = 40;
+    // Camada máxima de mineração subterrânea segura para rochas (cavernas até a transição da superfície Y=55)
+    public static final int SAFE_SUBTERRANEAN_MAX_Y = 55;
 
     // Cache de reflexão para Open Parties and Claims (OPAC)
     private static boolean opacChecked = false;
@@ -86,6 +89,46 @@ public final class JacintoClaimHelper {
                q.contains("blackstone") || d.contains("blackstone") ||
                q.contains("arenito") || d.contains("arenito") ||
                q.contains("sandstone") || d.contains("sandstone");
+    }
+
+    /**
+     * Identifica blocos de construção civil manufaturados por jogadores que NUNCA devem
+     * ser minerados ou quebrados pelo Jacinto (preservando paredes, pisos e edificações).
+     */
+    public static boolean isPlayerConstructionBlock(BlockState state) {
+        if (state == null || state.isAir()) return false;
+
+        // Blocos que guardam dados, inventário ou energia (chests, fornalhas, máquinas)
+        if (state.hasBlockEntity()) {
+            return true;
+        }
+
+        Block block = state.getBlock();
+        Identifier id = Registries.BLOCK.getId(block);
+        String path = id.getPath().toLowerCase(Locale.ROOT);
+
+        return path.contains("brick") || path.contains("tijolo") ||
+               path.contains("plank") || path.contains("tabua") ||
+               path.contains("tile") || path.contains("azulejo") ||
+               path.contains("slab") || path.contains("degrau") ||
+               path.contains("stair") || path.contains("escada") ||
+               path.contains("door") || path.contains("porta") ||
+               path.contains("glass") || path.contains("vidro") ||
+               path.contains("pane") || path.contains("painel") ||
+               path.contains("wall") || path.contains("muro") ||
+               path.contains("fence") || path.contains("cerca") ||
+               path.contains("gate") || path.contains("portao") ||
+               path.contains("lantern") || path.contains("lanterna") ||
+               path.contains("torch") || path.contains("tocha") ||
+               path.contains("polished") || path.contains("polido") ||
+               path.contains("cut_") || path.contains("entalhado") ||
+               path.contains("chiseled") || path.contains("esculpido") ||
+               path.contains("smooth_stone") || path.contains("pedra_lisa") ||
+               path.contains("concrete") || path.contains("concreto") ||
+               path.contains("terracotta") || path.contains("argila") ||
+               path.contains("wool") || path.contains("la_") ||
+               path.contains("carpet") || path.contains("tapete") ||
+               path.contains("pillar") || path.contains("pilar");
     }
 
     /* =========================================================================

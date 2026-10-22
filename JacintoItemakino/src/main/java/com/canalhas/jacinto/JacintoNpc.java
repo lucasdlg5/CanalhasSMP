@@ -575,6 +575,7 @@ public class JacintoNpc {
 
             if (mod.getMiner().isMining()) {
                 jacinto.equipStack(EquipmentSlot.MAINHAND, toEquip.copy());
+                mod.getMiner().onToolReceived(player, toEquip);
             }
 
             if (!oldPick.isEmpty() && !JacintoData.isDefaultTool(oldPick)) {
