@@ -4,7 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -12,6 +15,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 
 public final class JacintoCommands {
     private JacintoCommands() {}
@@ -56,8 +60,8 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("cancelar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                 .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
                 .then(CommandManager.argument("item", StringArgumentType.greedyString())
-                        .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
-                .executes(c -> handleMinerarNoArgs(c.getSource(), mod))
+                        .executes(c -> handleMinerarWithChest(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
+                .executes(c -> handleMinerarWithChest(c.getSource(), mod, null))
         );
 
         // Alias e centralizador /jacinto
@@ -82,8 +86,8 @@ public final class JacintoCommands {
                         .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                         .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
                         .then(CommandManager.argument("item", StringArgumentType.greedyString())
-                                .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
-                        .executes(c -> handleMinerarNoArgs(c.getSource(), mod)))
+                                .executes(c -> handleMinerarWithChest(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
+                        .executes(c -> handleMinerarWithChest(c.getSource(), mod, null)))
                 .then(CommandManager.literal("parar").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("stop").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
@@ -124,13 +128,60 @@ public final class JacintoCommands {
         return 1;
     }
 
-    private static int handleMinerarStart(ServerCommandSource src, JacintoMod mod, String item) {
+    private static int handleMinerarWithChest(ServerCommandSource src, JacintoMod mod, String itemArg) {
         ServerPlayerEntity player = src.getPlayer();
         if (player == null) {
             src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
             return 0;
         }
-        mod.getMiner().tryStartMining(player, item);
+
+        // 1. Validação obrigatória: o player DEVE estar olhando diretamente para um baú ou barril!
+        BlockPos chestPos = mod.getOrganizer().findTargetChestFromPlayerLook(player);
+        if (chestPos == null) {
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, você precisa estar olhando diretamente para um baú (ou barril) para que eu possa iniciar a mineração e saber onde guardar os itens!"), false);
+            return 0;
+        }
+
+        // 2. Determina o item pretendido
+        Item targetItem = null;
+        String query = itemArg;
+        String displayName = null;
+
+        if (query != null && !query.isBlank()) {
+            targetItem = JacintoOrganizer.matchItemName(query);
+            if (targetItem != null && targetItem != Items.AIR) {
+                displayName = new ItemStack(targetItem).getName().getString();
+            } else {
+                displayName = query.trim();
+            }
+        } else {
+            // Se rodou sem argumentos (/minerar), tenta ler a moldura afixada no baú mirado
+            ItemFrameEntity frame = mod.getOrganizer().findAttachedItemFrame(player.getServerWorld(), chestPos);
+            if (frame != null && !frame.getHeldItemStack().isEmpty()) {
+                targetItem = frame.getHeldItemStack().getItem();
+                displayName = frame.getHeldItemStack().getName().getString();
+                query = JacintoMiner.resolveQueryFromItem(targetItem);
+            } else {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, especifique o que deseja minerar para guardar neste baú (ex: §e/minerar Andesito§c) ou coloque uma moldura com o item nele!"), false);
+                return 0;
+            }
+        }
+
+        if (targetItem == null && (query == null || query.isBlank())) {
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item minerar!"), false);
+            return 0;
+        }
+
+        // 3. Verifica se o baú já está cheio deste item
+        Inventory inv = JacintoOrganizer.getInventoryAtPos(player.getServerWorld(), chestPos);
+        if (inv != null && targetItem != null && JacintoOrganizer.isInventoryFullOfItem(inv, targetItem)) {
+            String name = displayName != null ? displayName : "este item";
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §ePatrão, este baú já está completamente CHEIO de [" + name + "]! Esvazie um pouco ou aponte para outro baú antes de iniciar a mineração."), false);
+            return 0;
+        }
+
+        // 4. Inicia mineração passiva com baú de destino
+        mod.getMiner().startMiningWithChest(player, targetItem, displayName, query, chestPos);
         return 1;
     }
 
@@ -140,36 +191,13 @@ public final class JacintoCommands {
         return 1;
     }
 
-    private static int handleMinerarNoArgs(ServerCommandSource src, JacintoMod mod) {
-        ServerPlayerEntity player = src.getPlayer();
-        if (player == null) {
-            src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
-            return 0;
-        }
-
-        // Tenta detectar Moldura (mirando diretamente nela ou no Baú/Barril com moldura afixada)
-        ItemFrameEntity frame = mod.getOrganizer().findTargetItemFrameFromPlayerLook(player);
-        if (frame != null) {
-            ItemStack held = frame.getHeldItemStack();
-            if (held.isEmpty()) {
-                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cEssa moldura está vazia! Coloque o item ou minério que deseja minerar dentro da moldura e use §e/minerar§c novamente."), false);
-                return 0;
-            }
-            mod.getMiner().tryStartMiningFromFrame(player, held);
-            return 1;
-        }
-
-        // Caso não esteja mirando em baú com moldura nem em moldura, exibe ajuda ilustrativa
-        return handleMinerarHelp(src, mod);
-    }
-
     private static int handleMinerarHelp(ServerCommandSource src, JacintoMod mod) {
         src.sendFeedback(() -> Text.literal("§6=== ⛏️ JACINTO ITEMAKINO - MINERAÇÃO PASSIVA ==="), false);
-        src.sendFeedback(() -> Text.literal("§fVocê pode iniciar a mineração de duas formas:"), false);
-        src.sendFeedback(() -> Text.literal("§61. Moldura no Baú: §fColoque o item na moldura, olhe para ela (ou para o baú) e digite §e/minerar"), false);
-        src.sendFeedback(() -> Text.literal("§62. Comando Direto: §e/minerar <minério ou item> §7(ex: /minerar diamante, /minerar ferro, /minerar ancient_debris)"), false);
+        src.sendFeedback(() -> Text.literal("§fComo usar: Olhe diretamente para o baú onde deseja guardar e use:"), false);
+        src.sendFeedback(() -> Text.literal("§61. Com argumento: §e/minerar <item> §7(ex: /minerar Andesito, /minerar Diamante, /minerar Ferro)"), false);
+        src.sendFeedback(() -> Text.literal("§62. Com Moldura: §fColoque a moldura com o item no baú, olhe para ele e digite §e/minerar"), false);
+        src.sendFeedback(() -> Text.literal("§7(O Jacinto minerará passivamente e guardará no baú até enchê-lo; ao ficar cheio, entra em IDLE!)"), false);
         src.sendFeedback(() -> Text.literal("§fOutros comandos: §e/minerar stop§7 | §e/minerar status"), false);
-        src.sendFeedback(() -> Text.literal("§7(O Jacinto usa scanner geológico de 32 blocos, mantém chunks forçados e nunca despawna mesmo longe!)"), false);
         return 1;
     }
 
@@ -178,10 +206,14 @@ public final class JacintoCommands {
         src.sendFeedback(() -> Text.literal("§6=== ⛏️ STATUS DA MINERAÇÃO DO JACINTO ==="), false);
         if (miner.isMining()) {
             src.sendFeedback(() -> Text.literal("§fStatus: §aAtivo minerando §6§l[" + miner.getTargetDisplayName() + "]"), false);
+            if (miner.hasMiningChest() && miner.getTargetChestPos() != null) {
+                BlockPos cp = miner.getTargetChestPos();
+                src.sendFeedback(() -> Text.literal("§fBaú de Destino: §eX: " + cp.getX() + ", Y: " + cp.getY() + ", Z: " + cp.getZ() + " §7(enche até lotar)"), false);
+            }
             src.sendFeedback(() -> Text.literal("§fMinerados nesta sessão: §e" + miner.getSessionBlocksMined() + " blocos"), false);
             src.sendFeedback(() -> Text.literal("§fChunks Carregados (3x3 Forçados): §b" + miner.getForcedChunks().size() + " chunks"), false);
         } else {
-            src.sendFeedback(() -> Text.literal("§fStatus: §7Inativo / Ocioso. Use §e/minerar <item>§7 para ativá-lo!"), false);
+            src.sendFeedback(() -> Text.literal("§fStatus: §7Inativo / Ocioso. Olhe para um baú e use §e/minerar <item>§7 para ativá-lo!"), false);
         }
         src.sendFeedback(() -> Text.literal("§fTotal de Minérios na Carreira: §b" + mod.getData().totalBlocksMined + " blocos"), false);
         return 1;

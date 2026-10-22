@@ -214,24 +214,47 @@ public class JacintoOrganizer {
         PT_DICT.put("frasco", Items.GLASS_BOTTLE);
     }
 
-    private BlockPos findChestFromItemFrame(ServerWorld world, ItemFrameEntity frame) {
+    public static BlockPos findChestFromItemFrame(ServerWorld world, ItemFrameEntity frame) {
+        if (world == null || frame == null) return null;
+
+        // 1. Posição de fixação direta da moldura
         BlockPos decPos = frame.getDecorationBlockPos();
         if (decPos != null && getInventoryAtPos(world, decPos) != null) {
             return decPos;
         }
 
-        Direction facing = frame.getHorizontalFacing();
-        if (facing != null) {
-            BlockPos behindPos = frame.getBlockPos().offset(facing.getOpposite());
+        // 2. Bloco imediatamente atrás da moldura baseado em getHorizontalFacing()
+        Direction hFacing = frame.getHorizontalFacing();
+        if (hFacing != null) {
+            BlockPos behindPos = frame.getBlockPos().offset(hFacing.getOpposite());
             if (getInventoryAtPos(world, behindPos) != null) {
                 return behindPos;
             }
         }
 
+        // 4. Se a moldura estiver no chão ou no teto
+        BlockPos downPos = frame.getBlockPos().down();
+        if (getInventoryAtPos(world, downPos) != null) {
+            return downPos;
+        }
+
+        // 5. Varredura em todas as 6 direções vizinhas ao bloco da moldura
         for (Direction dir : Direction.values()) {
             BlockPos p = frame.getBlockPos().offset(dir);
             if (getInventoryAtPos(world, p) != null) {
                 return p;
+            }
+        }
+
+        // 6. Varredura em raio 1 em torno de frame.getBlockPos()
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos p = frame.getBlockPos().add(dx, dy, dz);
+                    if (getInventoryAtPos(world, p) != null) {
+                        return p;
+                    }
+                }
             }
         }
         return null;
@@ -288,7 +311,7 @@ public class JacintoOrganizer {
         Vec3d cameraPos = player.getCameraPosVec(1.0F);
         Vec3d rot = player.getRotationVec(1.0F);
         Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
-        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        Box searchBox = new Box(cameraPos, reachVec).expand(2.0);
         EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
                 e -> (e instanceof ItemFrameEntity), 36.0);
 
@@ -325,7 +348,7 @@ public class JacintoOrganizer {
         Vec3d cameraPos = player.getCameraPosVec(1.0F);
         Vec3d rot = player.getRotationVec(1.0F);
         Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
-        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        Box searchBox = new Box(cameraPos, reachVec).expand(2.0);
         EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
                 e -> (e instanceof ItemFrameEntity), 36.0);
 
@@ -445,7 +468,7 @@ public class JacintoOrganizer {
         Vec3d cameraPos = player.getCameraPosVec(1.0F);
         Vec3d rot = player.getRotationVec(1.0F);
         Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
-        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        Box searchBox = new Box(cameraPos, reachVec).expand(2.0);
         EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
                 e -> (e instanceof ItemFrameEntity), 36.0);
 
@@ -732,7 +755,7 @@ public class JacintoOrganizer {
     /**
      * Insere item no inventário respeitando regras de empilhamento de slots existentes
      */
-    private ItemStack insertItemIntoInventory(Inventory inv, ItemStack stack) {
+    public static ItemStack insertItemIntoInventory(Inventory inv, ItemStack stack) {
         if (stack.isEmpty()) return ItemStack.EMPTY;
 
         // Primeiro tenta mesclar em pilhas existentes do mesmo item
@@ -771,7 +794,7 @@ public class JacintoOrganizer {
         return stack;
     }
 
-    private boolean isInventoryFullOfItem(Inventory inv, Item item) {
+    public static boolean isInventoryFullOfItem(Inventory inv, Item item) {
         for (int i = 0; i < inv.size(); i++) {
             ItemStack cur = inv.getStack(i);
             if (cur.isEmpty()) return false;
@@ -958,7 +981,7 @@ public class JacintoOrganizer {
         return null;
     }
 
-    private Item matchItemName(String input) {
+    public static Item matchItemName(String input) {
         if (input == null || input.isBlank()) return null;
         String clean = normalize(input);
 

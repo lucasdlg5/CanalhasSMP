@@ -6,6 +6,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -48,7 +50,15 @@ public class JacintoMiner {
     private boolean isMining = false;
     private String rawQuery = "diamante";
     private String targetDisplayName = "Diamante";
+    private Item targetItem = null;
     private UUID requestingPlayerUuid = null;
+
+    // Baú de destino para encher e finalizar
+    private boolean hasMiningChest = false;
+    private BlockPos targetChestPos = null;
+    private String targetChestDim = "minecraft:overworld";
+    private int carriedItemCount = 0;
+    private boolean isReturningToChest = false;
 
     private BlockPos targetOrePos = null;
     private BlockPos navigationTarget = null;
@@ -82,6 +92,91 @@ public class JacintoMiner {
 
     public Set<ChunkPos> getForcedChunks() {
         return forcedChunks;
+    }
+
+    public boolean hasMiningChest() {
+        return hasMiningChest;
+    }
+
+    public BlockPos getTargetChestPos() {
+        return targetChestPos;
+    }
+
+    /**
+     * Inicia a mineração passiva com baú de destino para encher
+     */
+    public boolean startMiningWithChest(ServerPlayerEntity player, Item item, String displayName, String query, BlockPos chestPos) {
+        if (chestPos == null) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, você precisa estar olhando diretamente para um baú (ou barril) para que eu possa iniciar a mineração e saber onde guardar os itens!"), false);
+            }
+            return false;
+        }
+
+        // Se estava organizando baús, interrompe a organização para focar na mineração
+        if (mod.getOrganizer().isBusy()) {
+            mod.getOrganizer().stopOrganizing(player);
+        }
+
+        HuskEntity entity = mod.getNpc().getEntity();
+        if (entity == null || !entity.isAlive()) {
+            MinecraftServer server = player != null ? player.getServer() : null;
+            entity = mod.getNpc().spawnOrRespawn(server, false);
+        }
+
+        this.rawQuery = query != null ? query.trim() : "andesito";
+        this.targetItem = item != null ? item : JacintoOrganizer.matchItemName(this.rawQuery);
+        this.targetDisplayName = displayName != null ? displayName : resolveDisplayName(this.rawQuery);
+        this.isMining = true;
+        this.hasMiningChest = true;
+        this.targetChestPos = chestPos;
+        this.targetChestDim = player != null ? player.getServerWorld().getRegistryKey().getValue().toString() : "minecraft:overworld";
+        this.carriedItemCount = 0;
+        this.isReturningToChest = false;
+        this.requestingPlayerUuid = player != null ? player.getUuid() : null;
+        this.targetOrePos = null;
+        this.navigationTarget = null;
+        this.ignoredOres.clear();
+        this.sessionBlocksMined = 0;
+        this.digProgressTicks = 0;
+        this.stuckTicks = 0;
+
+        if (player != null) {
+            this.world = player.getServerWorld();
+            this.explorationDirection = Direction.fromRotation(player.getYaw());
+            if (explorationDirection.getAxis() == Direction.Axis.Y) {
+                explorationDirection = Direction.NORTH;
+            }
+        } else if (entity != null) {
+            this.world = (ServerWorld) entity.getWorld();
+        }
+
+        ensurePickaxeEquipped(entity);
+
+        // Salva estado permanente com o baú de destino
+        Vec3d pos = entity != null ? entity.getPos() : (player != null ? player.getPos() : Vec3d.ZERO);
+        String dim = world != null ? world.getRegistryKey().getValue().toString() : "minecraft:overworld";
+        mod.getData().setMiningTask(this.rawQuery, pos, dim, targetChestPos, targetChestDim);
+
+        // Confirmação ao jogador
+        if (player != null) {
+            player.sendMessage(Text.literal("§6=================================================="), false);
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aOpa, patrão §b" + player.getName().getString() + "§a!"), false);
+            player.sendMessage(Text.literal("§fIniciando mineração passiva de: §6§l[" + targetDisplayName + "]§f!"), false);
+            player.sendMessage(Text.literal("§fDestino: Baú em §eX: " + targetChestPos.getX() + ", Y: " + targetChestPos.getY() + ", Z: " + targetChestPos.getZ()), false);
+            player.sendMessage(Text.literal("§aTrabalharei sem parar até encher este baú! Ao ficar cheio, entrarei em modo de descanso (IDLE)."), false);
+            player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura de até 32 blocos)."), false);
+            player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados mantidos."), false);
+            player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento se desejar interromper."), false);
+            player.sendMessage(Text.literal("§6=================================================="), false);
+        }
+
+        if (entity != null) {
+            entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 1.2f);
+        }
+
+        return true;
     }
 
     /**
@@ -226,9 +321,16 @@ public class JacintoMiner {
         JacintoData data = mod.getData();
         if (!"MINING".equalsIgnoreCase(data.currentTask)) return;
 
-        this.rawQuery = data.miningTarget != null ? data.miningTarget : "diamante";
+        this.rawQuery = data.miningTarget != null ? data.miningTarget : "andesito";
+        this.targetItem = JacintoOrganizer.matchItemName(this.rawQuery);
         this.targetDisplayName = resolveDisplayName(this.rawQuery);
         this.isMining = true;
+        this.hasMiningChest = data.hasMiningChest;
+        if (data.hasMiningChest) {
+            this.targetChestPos = new BlockPos(data.miningChestX, data.miningChestY, data.miningChestZ);
+            this.targetChestDim = data.miningChestDimension;
+            this.carriedItemCount = data.carriedMinedCount;
+        }
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.ignoredOres.clear();
@@ -241,7 +343,7 @@ public class JacintoMiner {
             ensurePickaxeEquipped(entity);
         }
 
-        LOG.info("[JacintoMiner] Retomando mineração passiva de [{}]...", targetDisplayName);
+        LOG.info("[JacintoMiner] Retomando mineração passiva de [{}] com destino ao baú [{}]...", targetDisplayName, targetChestPos);
     }
 
     /**
@@ -275,10 +377,60 @@ public class JacintoMiner {
             ensurePickaxeEquipped(entity);
         }
 
-        // 3. Validação do Alvo Atual
+        // 3. Caso esteja retornando para descarregar no Baú de Destino
+        if (isReturningToChest && hasMiningChest && targetChestPos != null) {
+            ServerWorld targetWorld = world;
+            if (targetChestDim != null && !targetChestDim.equals(world.getRegistryKey().getValue().toString())) {
+                ServerWorld w = world.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD, new Identifier(targetChestDim)));
+                if (w != null) targetWorld = w;
+            }
+
+            double distSq = entity.squaredDistanceTo(Vec3d.ofCenter(targetChestPos));
+            if (distSq > 16.0) { // mais de 4 blocos de distância
+                if (!entity.getNavigation().isFollowingPath() || world.getServer().getTicks() % 20 == 0) {
+                    entity.getNavigation().startMovingTo(targetChestPos.getX() + 0.5, targetChestPos.getY(), targetChestPos.getZ() + 0.5, 1.25);
+                }
+                checkStuckAndClearObstacle(world, entity, targetChestPos);
+                return;
+            }
+
+            // Chegou ao baú! Descarrega os itens:
+            entity.getNavigation().stop();
+            faceBlock(entity, targetChestPos);
+            entity.swingHand(Hand.MAIN_HAND);
+            world.playSound(null, targetChestPos, SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.8f, 1.0f);
+            world.spawnParticles(ParticleTypes.HAPPY_VILLAGER, targetChestPos.getX() + 0.5, targetChestPos.getY() + 0.8, targetChestPos.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.05);
+
+            Inventory inv = JacintoOrganizer.getInventoryAtPos(targetWorld, targetChestPos);
+            Item deliverItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+            if (deliverItem == null) deliverItem = Items.ANDESITE;
+
+            if (inv != null && carriedItemCount > 0) {
+                ItemStack stack = new ItemStack(deliverItem, carriedItemCount);
+                ItemStack rem = JacintoOrganizer.insertItemIntoInventory(inv, stack);
+                carriedItemCount = rem.getCount();
+                mod.getData().carriedMinedCount = carriedItemCount;
+                mod.getData().save();
+            }
+
+            // Verifica se o baú está completamente CHEIO
+            boolean full = (inv != null) && (carriedItemCount > 0 || JacintoOrganizer.isInventoryFullOfItem(inv, deliverItem));
+            if (full) {
+                finishMiningChestFull(entity, world);
+                return;
+            }
+
+            // Não está cheio, descarregou o lote e retorna para a mina
+            isReturningToChest = false;
+            targetOrePos = null;
+            navigationTarget = null;
+            return;
+        }
+
+        // 4. Validação do Alvo Atual
         if (targetOrePos != null) {
             BlockState state = world.getBlockState(targetOrePos);
-            if (!isMatchingOre(state, rawQuery)) {
+            if (!isTargetBlock(state)) {
                 // Bloco já foi minerado ou sumiu
                 targetOrePos = null;
                 navigationTarget = null;
@@ -286,7 +438,7 @@ public class JacintoMiner {
             }
         }
 
-        // 4. Se não tem alvo, ativa o scanner de 32 blocos
+        // 5. Se não tem alvo, ativa o scanner de 32 blocos
         if (targetOrePos == null) {
             if (--scanCooldown <= 0) {
                 scanCooldown = 25; // Escaneia a cada 1.25s
@@ -303,14 +455,19 @@ public class JacintoMiner {
                         );
                     }
                 } else {
-                    // Sem minérios no raio: avança no estilo túnel / prospeção
-                    tickExploratoryMining(world, entity);
+                    // Sem minérios no raio: se tiver itens no bolso e baú configurado, vai descarregar!
+                    if (hasMiningChest && carriedItemCount > 0) {
+                        isReturningToChest = true;
+                    } else {
+                        // Sem minérios no raio: avança no estilo túnel / prospeção
+                        tickExploratoryMining(world, entity);
+                    }
                 }
             }
             return;
         }
 
-        // 5. Com alvo definido: Aproximação e Mineração
+        // 6. Com alvo definido: Aproximação e Mineração
         double distSq = entity.squaredDistanceTo(Vec3d.ofCenter(targetOrePos));
 
         // Alcance de mineração de player: cerca de 4.2 blocos (distSq <= 18.0)
@@ -326,7 +483,7 @@ public class JacintoMiner {
             return;
         }
 
-        // 6. Dentro do alcance: Para e Executa a Escavação
+        // 7. Dentro do alcance: Para e Executa a Escavação
         entity.getNavigation().stop();
         faceBlock(entity, targetOrePos);
 
@@ -352,6 +509,10 @@ public class JacintoMiner {
             if (broken) {
                 sessionBlocksMined++;
                 mod.getData().totalBlocksMined++;
+                if (hasMiningChest) {
+                    carriedItemCount++;
+                    mod.getData().carriedMinedCount = carriedItemCount;
+                }
                 mod.getData().save();
 
                 // Efeito sonoro de conquista ao minerar
@@ -362,6 +523,11 @@ public class JacintoMiner {
 
                 // Notificação de marco para o solicitante
                 notifyMilestoneIfApplicable(entity, minedState);
+
+                // Se encheu o lote de transporte (32 itens) e tem baú de destino, vai descarregar
+                if (hasMiningChest && carriedItemCount >= 32) {
+                    isReturningToChest = true;
+                }
             }
 
             targetOrePos = null;
@@ -386,7 +552,7 @@ public class JacintoMiner {
                     if (ignoredOres.contains(pos)) continue;
 
                     BlockState state = world.getBlockState(pos);
-                    if (isMatchingOre(state, rawQuery)) {
+                    if (isTargetBlock(state)) {
                         // Verifica se não está completamente imerso em lava
                         if (isSurroundedByLava(world, pos)) {
                             ignoredOres.add(pos);
@@ -607,7 +773,98 @@ public class JacintoMiner {
         if (n.contains("ferro") || n.contains("ouro") || n.contains("cobre")) {
             return 16;
         }
+        if (n.contains("esmeralda") || n.contains("emerald")) {
+            return 100;
+        }
+        if (n.contains("quartz") || n.contains("quartzo")) {
+            return 32;
+        }
+        if (n.contains("andesit") || n.contains("diorit") || n.contains("granit")) {
+            return 20; // Camada farta de pedras ornamentais
+        }
         return 40; // Carvão e minérios de superfície
+    }
+
+    public boolean isTargetBlock(BlockState state) {
+        if (state == null || state.isAir()) return false;
+        Block block = state.getBlock();
+
+        // 1. Se o targetItem for um BlockItem (ex: Andesito, Pedra, Pedregulho, Granito, Diorito, Tufo, etc.)
+        if (targetItem instanceof BlockItem bi) {
+            if (bi.getBlock() == block) return true;
+        }
+
+        // 2. Mapeamento de minérios quando targetItem for lingote/gema/bruto
+        if (targetItem == Items.DIAMOND || targetItem == Items.DIAMOND_ORE || targetItem == Items.DEEPSLATE_DIAMOND_ORE) {
+            return block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE;
+        }
+        if (targetItem == Items.RAW_IRON || targetItem == Items.IRON_INGOT || targetItem == Items.IRON_ORE || targetItem == Items.DEEPSLATE_IRON_ORE) {
+            return block == Blocks.IRON_ORE || block == Blocks.DEEPSLATE_IRON_ORE || block == Blocks.RAW_IRON_BLOCK;
+        }
+        if (targetItem == Items.RAW_GOLD || targetItem == Items.GOLD_INGOT || targetItem == Items.GOLD_ORE || targetItem == Items.DEEPSLATE_GOLD_ORE || targetItem == Items.NETHER_GOLD_ORE) {
+            return block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE || block == Blocks.NETHER_GOLD_ORE || block == Blocks.RAW_GOLD_BLOCK;
+        }
+        if (targetItem == Items.COAL || targetItem == Items.COAL_ORE || targetItem == Items.DEEPSLATE_COAL_ORE) {
+            return block == Blocks.COAL_ORE || block == Blocks.DEEPSLATE_COAL_ORE;
+        }
+        if (targetItem == Items.RAW_COPPER || targetItem == Items.COPPER_INGOT || targetItem == Items.COPPER_ORE || targetItem == Items.DEEPSLATE_COPPER_ORE) {
+            return block == Blocks.COPPER_ORE || block == Blocks.DEEPSLATE_COPPER_ORE || block == Blocks.RAW_COPPER_BLOCK;
+        }
+        if (targetItem == Items.REDSTONE || targetItem == Items.REDSTONE_ORE || targetItem == Items.DEEPSLATE_REDSTONE_ORE) {
+            return block == Blocks.REDSTONE_ORE || block == Blocks.DEEPSLATE_REDSTONE_ORE;
+        }
+        if (targetItem == Items.EMERALD || targetItem == Items.EMERALD_ORE || targetItem == Items.DEEPSLATE_EMERALD_ORE) {
+            return block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE;
+        }
+        if (targetItem == Items.LAPIS_LAZULI || targetItem == Items.LAPIS_ORE || targetItem == Items.DEEPSLATE_LAPIS_ORE) {
+            return block == Blocks.LAPIS_ORE || block == Blocks.DEEPSLATE_LAPIS_ORE;
+        }
+        if (targetItem == Items.ANCIENT_DEBRIS || targetItem == Items.NETHERITE_INGOT || targetItem == Items.NETHERITE_SCRAP) {
+            return block == Blocks.ANCIENT_DEBRIS;
+        }
+        if (targetItem == Items.QUARTZ || targetItem == Items.NETHER_QUARTZ_ORE) {
+            return block == Blocks.NETHER_QUARTZ_ORE;
+        }
+        if (targetItem == Items.AMETHYST_SHARD || targetItem == Items.AMETHYST_CLUSTER || targetItem == Items.AMETHYST_BLOCK) {
+            return block == Blocks.AMETHYST_CLUSTER || block == Blocks.AMETHYST_BLOCK;
+        }
+
+        // 3. Fallback inteligente via isMatchingOre
+        return isMatchingOre(state, rawQuery);
+    }
+
+    private void finishMiningChestFull(HuskEntity entity, ServerWorld world) {
+        this.isMining = false;
+        this.hasMiningChest = false;
+        this.isReturningToChest = false;
+        this.targetOrePos = null;
+        this.navigationTarget = null;
+        releaseForcedChunks(world);
+        mod.getData().setIdleTask();
+        if (entity != null) {
+            entity.getNavigation().stop();
+        }
+
+        if (targetChestPos != null) {
+            world.playSound(null, targetChestPos, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            world.spawnParticles(ParticleTypes.HAPPY_VILLAGER, targetChestPos.getX() + 0.5, targetChestPos.getY() + 1.0, targetChestPos.getZ() + 0.5, 30, 0.5, 0.5, 0.5, 0.1);
+        }
+
+        String msg = "§6==================================================\n" +
+                "§e[Jacinto Itemakino Baú] §aMissão cumprida, patrão!\n" +
+                "§fO baú designado para §6§l[" + targetDisplayName + "]§f foi completamente §a§lENCHIDO§f! 📦🎉\n" +
+                "§7Entrando em modo de descanso (IDLE). Me chame com /organizar ou nova tarefa quando precisar!\n" +
+                "§6==================================================";
+
+        ServerPlayerEntity p = null;
+        if (requestingPlayerUuid != null && world.getServer() != null) {
+            p = world.getServer().getPlayerManager().getPlayer(requestingPlayerUuid);
+        }
+        if (p != null) {
+            p.sendMessage(Text.literal(msg), false);
+        } else if (world.getServer() != null) {
+            world.getServer().getPlayerManager().broadcast(Text.literal(msg), false);
+        }
     }
 
     /**
@@ -722,6 +979,9 @@ public class JacintoMiner {
         if (q.contains("netherite") || q.contains("debris") || q.contains("detrito")) return "Detritos Ancestrais (Netherite)";
         if (q.contains("quartzo") || q.contains("quartz")) return "Quartzo";
         if (q.contains("amethyst") || q.contains("ametista")) return "Ametista";
+        if (q.contains("andesit")) return "Andesito";
+        if (q.contains("diorit")) return "Diorito";
+        if (q.contains("granit")) return "Granito";
         if (fallbackCustomName != null && !fallbackCustomName.isBlank()) {
             return fallbackCustomName;
         }

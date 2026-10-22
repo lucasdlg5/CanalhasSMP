@@ -48,6 +48,14 @@ public class JacintoData {
     public double miningY = 0.0;
     public double miningZ = 0.0;
 
+    // Baú de depósito da mineração passiva
+    public boolean hasMiningChest = false;
+    public int miningChestX = 0;
+    public int miningChestY = 0;
+    public int miningChestZ = 0;
+    public String miningChestDimension = "minecraft:overworld";
+    public int carriedMinedCount = 0;
+
     // Equipamentos salvos como SNBT (String NBT) para preservar encantamentos, durabilidade e atributos
     public Map<String, String> equipmentSnbt = new HashMap<>();
 
@@ -107,6 +115,10 @@ public class JacintoData {
     }
 
     public void setMiningTask(String targetOre, Vec3d pos, String dimension) {
+        setMiningTask(targetOre, pos, dimension, null, null);
+    }
+
+    public void setMiningTask(String targetOre, Vec3d pos, String dimension, BlockPos chestPos, String chestDim) {
         this.currentTask = "MINING";
         this.miningTarget = targetOre;
         if (pos != null) {
@@ -116,6 +128,15 @@ public class JacintoData {
         }
         if (dimension != null) {
             this.miningDimension = dimension;
+        }
+        if (chestPos != null) {
+            this.hasMiningChest = true;
+            this.miningChestX = chestPos.getX();
+            this.miningChestY = chestPos.getY();
+            this.miningChestZ = chestPos.getZ();
+            this.miningChestDimension = chestDim != null ? chestDim : dimension;
+        } else {
+            this.hasMiningChest = false;
         }
         save();
     }
