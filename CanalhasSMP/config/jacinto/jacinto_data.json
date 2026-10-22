@@ -1,0 +1,47 @@
+{
+  "jacintoUuid": "c0d91b63-5121-4bd3-a603-f97c07d96f7b",
+  "baseX": -525.5129659597934,
+  "baseY": 64.0,
+  "baseZ": -312.4713326250725,
+  "baseDimension": "minecraft:overworld",
+  "baseSet": true,
+  "totalItemsOrganized": 10108,
+  "totalBlocksMined": 0,
+  "currentTask": "IDLE",
+  "miningTarget": "andesito",
+  "miningDimension": "minecraft:overworld",
+  "miningX": -509.8050093559329,
+  "miningY": 49.0,
+  "miningZ": -205.762441574981,
+  "hasMiningChest": true,
+  "miningChestX": -518,
+  "miningChestY": 49,
+  "miningChestZ": -199,
+  "miningChestDimension": "minecraft:overworld",
+  "carriedMinedCount": 0,
+  "equipmentSnbt": {
+    "mainhand": "{Count:1b,id:\"minecraft:wooden_sword\",tag:{Damage:0,Unbreakable:1b,display:{Name:'{\"text\":\"§eEspada de Madeira da Firma\"}'}}}",
+    "feet": "{Count:1b,id:\"minecraft:leather_boots\",tag:{Damage:0}}",
+    "legs": "{Count:1b,id:\"minecraft:leather_leggings\",tag:{Damage:0}}",
+    "chest": "{Count:1b,id:\"minecraft:leather_chestplate\",tag:{Damage:0}}",
+    "head": "{Count:1b,id:\"minecraft:leather_helmet\",tag:{Damage:0}}"
+  },
+  "chestRules": {
+    "minecraft:overworld:-521,49,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,49,-202": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-520,49,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-527,49,-202": {
+      "canInsert": true,
+      "canExtract": false
+    }
+  }
+}

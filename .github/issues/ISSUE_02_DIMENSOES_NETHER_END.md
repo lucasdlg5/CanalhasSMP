@@ -3,7 +3,7 @@
 - **Tipo:** 🚀 Nova Funcionalidade (Feature)
 - **Prioridade:** 🔴 Alta
 - **Módulo:** `JacintoItemakino` (`JacintoMiner.java`, `JacintoCommands.java`)
-- **Status:** 📋 Aberto / Planejado
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

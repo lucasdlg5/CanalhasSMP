@@ -3,7 +3,7 @@
 - **Tipo:** 🧩 Compatibilidade de Mods (Mod Compatibility)
 - **Prioridade:** 🟡 Média
 - **Módulo:** `JacintoItemakino` (`JacintoOrganizer.java`, `JacintoMiner.java`)
-- **Status:** 📋 Aberto / Sugestão
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

@@ -8,13 +8,13 @@
 
 | ID | Título da Issue | Categoria | Prioridade | Status | Documento Detalhado |
 | :---: | :--- | :---: | :---: | :---: | :---: |
-| **#1** | **Suporte a Encantamentos (Fortuna, Silk Touch, Eficiência)** | 🛠️ Mecânica / Bug | 🟡 Alta | 📋 Planejado | [.github/issues/ISSUE_01_ENCANTAMENTOS.md](file:///.github/issues/ISSUE_01_ENCANTAMENTOS.md) |
-| **#2** | **Mineração Interdimensional (Nether & The End)** | 🚀 Feature | 🔴 Alta | 📋 Planejado | [.github/issues/ISSUE_02_DIMENSOES_NETHER_END.md](file:///.github/issues/ISSUE_02_DIMENSOES_NETHER_END.md) |
-| **#3** | **Sistema Ativo de Contenção de Lava e Fluidos** | 🛡️ Sobrevivência | 🟡 Média | 💡 Sugestão | [.github/issues/ISSUE_03_CONTENCAO_LAVA.md](file:///.github/issues/ISSUE_03_CONTENCAO_LAVA.md) |
-| **#4** | **Suporte a Mochilas de Operário (Traveler's Backpack)** | 🎒 QoL | 🟢 Média | 💡 Sugestão | [.github/issues/ISSUE_04_MOCHILAS_CAPACIDADE.md](file:///.github/issues/ISSUE_04_MOCHILAS_CAPACIDADE.md) |
-| **#5** | **Telemetria do Jacinto no Dashboard C# & App Móvel** | 📊 Integração | 🟡 Média | 💡 Sugestão | [.github/issues/ISSUE_05_TELEMETRIA_DASHBOARD_APP.md](file:///.github/issues/ISSUE_05_TELEMETRIA_DASHBOARD_APP.md) |
-| **#6** | **Holograma / Marcador de Progresso no Baú** | 🎨 UI / UX | 🟢 Baixa | 💡 Sugestão | [.github/issues/ISSUE_06_FEEDBACK_VISUAL_HOLOGRAMA.md](file:///.github/issues/ISSUE_06_FEEDBACK_VISUAL_HOLOGRAMA.md) |
-| **#7** | **Suporte Avançado a Baús de Mods (Iron Chests & Gavetas)** | 🧩 Compatibilidade | 🟡 Média | 💡 Sugestão | [.github/issues/ISSUE_07_COMPATIBILIDADE_BAUS_MODS.md](file:///.github/issues/ISSUE_07_COMPATIBILIDADE_BAUS_MODS.md) |
+| **#1** | **Suporte a Encantamentos (Fortuna, Silk Touch, Eficiência)** | 🛠️ Mecânica / QoL | 🟡 Alta | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_01_ENCANTAMENTOS.md](file:///.github/issues/ISSUE_01_ENCANTAMENTOS.md) |
+| **#2** | **Mineração Interdimensional (Nether & The End)** | 🚀 Feature | 🔴 Alta | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_02_DIMENSOES_NETHER_END.md](file:///.github/issues/ISSUE_02_DIMENSOES_NETHER_END.md) |
+| **#3** | **Sistema Ativo de Contenção de Lava e Fluidos** | 🛡️ Sobrevivência | 🟡 Média | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_03_CONTENCAO_LAVA.md](file:///.github/issues/ISSUE_03_CONTENCAO_LAVA.md) |
+| **#4** | **Suporte a Mochilas de Operário (Traveler's Backpack)** | 🎒 QoL | 🟢 Média | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_04_MOCHILAS_CAPACIDADE.md](file:///.github/issues/ISSUE_04_MOCHILAS_CAPACIDADE.md) |
+| **#5** | **Telemetria do Jacinto no Dashboard C# & App Móvel** | 📊 Integração | 🟡 Média | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_05_TELEMETRIA_DASHBOARD_APP.md](file:///.github/issues/ISSUE_05_TELEMETRIA_DASHBOARD_APP.md) |
+| **#6** | **Holograma / Marcador de Progresso no Baú** | 🎨 UI / UX | 🟢 Baixa | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_06_FEEDBACK_VISUAL_HOLOGRAMA.md](file:///.github/issues/ISSUE_06_FEEDBACK_VISUAL_HOLOGRAMA.md) |
+| **#7** | **Suporte Avançado a Baús de Mods (Iron Chests & Gavetas)** | 🧩 Compatibilidade | 🟡 Média | ✅ Concluído (v2.0.0) | [.github/issues/ISSUE_07_COMPATIBILIDADE_BAUS_MODS.md](file:///.github/issues/ISSUE_07_COMPATIBILIDADE_BAUS_MODS.md) |
 
 ---
 

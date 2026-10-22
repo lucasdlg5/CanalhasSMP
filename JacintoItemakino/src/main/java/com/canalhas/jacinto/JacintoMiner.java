@@ -4,6 +4,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.mob.HuskEntity;
 import net.minecraft.inventory.Inventory;
@@ -73,6 +75,7 @@ public class JacintoMiner {
     private Vec3d lastPosition = null;
 
     private ServerWorld world = null;
+    private final JacintoHologram hologram = new JacintoHologram();
 
     public JacintoMiner(JacintoMod mod) {
         this.mod = mod;
@@ -88,6 +91,10 @@ public class JacintoMiner {
 
     public int getSessionBlocksMined() {
         return sessionBlocksMined;
+    }
+
+    public int getCarriedItemCount() {
+        return carriedItemCount;
     }
 
     public Set<ChunkPos> getForcedChunks() {
@@ -131,6 +138,35 @@ public class JacintoMiner {
         this.rawQuery = query != null ? query.trim() : "andesito";
         this.targetItem = item != null ? item : JacintoOrganizer.matchItemName(this.rawQuery);
         this.targetDisplayName = displayName != null ? displayName : resolveDisplayName(this.rawQuery);
+
+        // Validação Interdimensional (Nether & The End - Issue #2)
+        String normQ = normalize(this.rawQuery);
+        boolean isNetherOre = normQ.contains("netherite") || normQ.contains("debris") || normQ.contains("detrito") || normQ.contains("quartzo") || normQ.contains("quartz");
+        boolean isEndOre = normQ.contains("elytra") || normQ.contains("shulker") || normQ.contains("purpur");
+        ServerWorld checkWorld = player != null ? player.getServerWorld() : (entity != null ? (ServerWorld) entity.getWorld() : null);
+        boolean isNetherDim = checkWorld != null && checkWorld.getRegistryKey().getValue().getPath().contains("the_nether");
+        boolean isEndDim = checkWorld != null && checkWorld.getRegistryKey().getValue().getPath().contains("the_end");
+
+        if (isNetherOre && !isNetherDim) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, esse minério só existe nas profundezas do Nether! 🔥"), false);
+                player.sendMessage(Text.literal("§fMotivo: §e[" + targetDisplayName + "]§f não nasce no mundo normal (Overworld)."), false);
+                player.sendMessage(Text.literal("§aDica: Coloque o baú diretamente no Nether e me chame lá com §e/jacinto chamar§a para minerar!"), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+            }
+            if (entity != null) {
+                entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+            }
+            return false;
+        }
+        if (isEndOre && !isEndDim) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, itens do The End só podem ser coletados na dimensão do Fim! 🌌"), false);
+            }
+            return false;
+        }
 
         // Validação da Picareta vs Nível do Bloco (Mining Tier Compatibility)
         ItemStack currentPick = mod.getData().getEffectivePickaxe();
@@ -212,6 +248,16 @@ public class JacintoMiner {
         // Ativa a silhueta luminosa (Glowing Outline)
         mod.getNpc().setGlowingSilhouette(true, player);
 
+        // Inicializa holograma flutuante sobre o baú de destino (Issue #6 e #7)
+        if (this.world != null && targetChestPos != null) {
+            Inventory inv = JacintoOrganizer.getInventoryAtPos(this.world, targetChestPos);
+            Item deliverItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+            if (deliverItem == null) deliverItem = Items.ANDESITE;
+            int totalInChest = inv != null ? JacintoOrganizer.countItemInInventory(inv, deliverItem) : 0;
+            int maxCap = inv != null ? JacintoOrganizer.getMaxCapacityForItem(inv, deliverItem) : 1728;
+            hologram.update(this.world, targetChestPos, targetDisplayName, totalInChest, maxCap);
+        }
+
         if (entity != null) {
             entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
                     SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 1.2f);
@@ -269,6 +315,35 @@ public class JacintoMiner {
 
         this.rawQuery = query.trim();
         this.targetDisplayName = resolveDisplayName(this.rawQuery, customDisplayName);
+
+        // Validação Interdimensional (Nether & The End - Issue #2)
+        String normQ = normalize(this.rawQuery);
+        boolean isNetherOre = normQ.contains("netherite") || normQ.contains("debris") || normQ.contains("detrito") || normQ.contains("quartzo") || normQ.contains("quartz");
+        boolean isEndOre = normQ.contains("elytra") || normQ.contains("shulker") || normQ.contains("purpur");
+        ServerWorld checkWorld = player != null ? player.getServerWorld() : (entity != null ? (ServerWorld) entity.getWorld() : null);
+        boolean isNetherDim = checkWorld != null && checkWorld.getRegistryKey().getValue().getPath().contains("the_nether");
+        boolean isEndDim = checkWorld != null && checkWorld.getRegistryKey().getValue().getPath().contains("the_end");
+
+        if (isNetherOre && !isNetherDim) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, esse minério só existe nas profundezas do Nether! 🔥"), false);
+                player.sendMessage(Text.literal("§fMotivo: §e[" + targetDisplayName + "]§f não nasce no mundo normal (Overworld)."), false);
+                player.sendMessage(Text.literal("§aDica: Vá até o Nether e me chame lá com §e/jacinto chamar§a para minerar!"), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+            }
+            if (entity != null) {
+                entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+            }
+            return false;
+        }
+        if (isEndOre && !isEndDim) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, itens do The End só podem ser coletados na dimensão do Fim! 🌌"), false);
+            }
+            return false;
+        }
 
         // Validação da Picareta vs Nível do Bloco (Mining Tier Compatibility)
         ItemStack currentPick = mod.getData().getEffectivePickaxe();
@@ -349,6 +424,16 @@ public class JacintoMiner {
         // Ativa a silhueta luminosa (Glowing Outline)
         mod.getNpc().setGlowingSilhouette(true, player);
 
+        // Inicializa holograma flutuante sobre o baú de destino (Issue #6 e #7)
+        if (this.world != null && targetChestPos != null) {
+            Inventory inv = JacintoOrganizer.getInventoryAtPos(this.world, targetChestPos);
+            Item deliverItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+            if (deliverItem == null) deliverItem = Items.ANDESITE;
+            int totalInChest = inv != null ? JacintoOrganizer.countItemInInventory(inv, deliverItem) : 0;
+            int maxCap = inv != null ? JacintoOrganizer.getMaxCapacityForItem(inv, deliverItem) : 1728;
+            hologram.update(this.world, targetChestPos, targetDisplayName, totalInChest, maxCap);
+        }
+
         if (entity != null) {
             entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
                     SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 1.2f);
@@ -371,6 +456,7 @@ public class JacintoMiner {
         this.isMining = false;
         this.targetOrePos = null;
         this.navigationTarget = null;
+        this.hologram.remove();
 
         // Libera todos os chunks que estavam forçados para o Jacinto minerar
         releaseForcedChunks(this.world);
@@ -496,6 +582,13 @@ public class JacintoMiner {
                 mod.getData().save();
             }
 
+            // Atualiza o holograma flutuante sobre o baú (Issue #6 e #7)
+            if (inv != null) {
+                int totalInChest = JacintoOrganizer.countItemInInventory(inv, deliverItem);
+                int maxCap = JacintoOrganizer.getMaxCapacityForItem(inv, deliverItem);
+                hologram.update(targetWorld, targetChestPos, targetDisplayName, totalInChest, maxCap);
+            }
+
             // Verifica se o baú está completamente CHEIO
             boolean full = (inv != null) && (carriedItemCount > 0 || JacintoOrganizer.isInventoryFullOfItem(inv, deliverItem));
             if (full) {
@@ -542,7 +635,8 @@ public class JacintoMiner {
                     if (hasMiningChest && carriedItemCount > 0) {
                         isReturningToChest = true;
                     } else {
-                        // Sem minérios no raio: avança no estilo túnel / prospeção
+                        // Sem minérios no raio: avança no estilo túnel / prospeção e contém lava perigosa (Issue #3)
+                        checkAndContainNearbyLava(world, entity);
                         tickExploratoryMining(world, entity);
                     }
                 }
@@ -570,6 +664,13 @@ public class JacintoMiner {
         entity.getNavigation().stop();
         faceBlock(entity, targetOrePos);
 
+        // Contenção preventiva de lava ao redor (Issue #3)
+        checkAndContainNearbyLava(world, entity);
+
+        ItemStack heldPick = entity.getMainHandStack();
+        int efficiency = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, heldPick);
+        int ticksNeeded = Math.max(3, 12 - (efficiency * 2)); // Issue #1: Eficiência acelera a mineração
+
         digProgressTicks++;
 
         // Efeitos visuais e sonoros de bater a picareta
@@ -582,8 +683,8 @@ public class JacintoMiner {
                     5, 0.25, 0.25, 0.25, 0.05);
         }
 
-        // Tempo de quebra realista (12 ticks = 0.6s)
-        if (digProgressTicks >= 12) {
+        // Tempo de quebra acelerado por Eficiência
+        if (digProgressTicks >= ticksNeeded) {
             digProgressTicks = 0;
 
             // Re-valida segurança contra Claims e Proteção de Construções antes de quebrar
@@ -595,13 +696,34 @@ public class JacintoMiner {
 
             BlockState minedState = world.getBlockState(targetOrePos);
 
-            // Quebra o bloco com drop baseado na ferramenta do Jacinto
-            boolean broken = world.breakBlock(targetOrePos, true, entity);
+            int silkTouch = EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, heldPick);
+            int fortune = EnchantmentHelper.getLevel(Enchantments.FORTUNE, heldPick);
+
+            // Calcula drops reais considerando Fortune e Silk Touch (Issue #1)
+            List<ItemStack> drops = Block.getDroppedStacks(minedState, world, targetOrePos, world.getBlockEntity(targetOrePos), entity, heldPick);
+            int countGained = 0;
+            Item dropItemType = targetItem;
+            for (ItemStack drop : drops) {
+                if (!drop.isEmpty()) {
+                    countGained += drop.getCount();
+                    if (dropItemType == null || silkTouch > 0) {
+                        dropItemType = drop.getItem();
+                    }
+                }
+            }
+            if (countGained <= 0) countGained = 1;
+
+            if (silkTouch > 0 && dropItemType != null) {
+                this.targetItem = dropItemType;
+            }
+
+            // Quebra o bloco: se tem baú de destino, os itens vão direto para o bolso do Jacinto
+            boolean broken = world.breakBlock(targetOrePos, !hasMiningChest, entity);
             if (broken) {
                 sessionBlocksMined++;
                 mod.getData().totalBlocksMined++;
                 if (hasMiningChest) {
-                    carriedItemCount++;
+                    carriedItemCount += countGained;
                     mod.getData().carriedMinedCount = carriedItemCount;
                 }
                 mod.getData().save();
@@ -618,8 +740,9 @@ public class JacintoMiner {
                 // Notificação de marco para o solicitante
                 notifyMilestoneIfApplicable(entity, minedState);
 
-                // Se encheu o lote de transporte (32 itens) e tem baú de destino, vai descarregar
-                if (hasMiningChest && carriedItemCount >= 32) {
+                // Se encheu o lote de transporte (Issue #4: mochilas dinâmicas de 32 a 256) e tem baú de destino, vai descarregar
+                int maxCap = getMaxCarriedCapacity(entity);
+                if (hasMiningChest && carriedItemCount >= maxCap) {
                     isReturningToChest = true;
                 }
             }
@@ -849,6 +972,57 @@ public class JacintoMiner {
     }
 
     /**
+     * Calcula a capacidade dinâmica de transporte do Jacinto baseado na mochila ou trouxa equipada (Issue #4)
+     */
+    public static int getMaxCarriedCapacity(HuskEntity entity) {
+        if (entity == null) return 32;
+        ItemStack chest = entity.getEquippedStack(EquipmentSlot.CHEST);
+        if (chest.isEmpty()) return 32;
+
+        String id = Registries.ITEM.getId(chest.getItem()).getPath().toLowerCase(Locale.ROOT);
+        String name = chest.getName().getString().toLowerCase(Locale.ROOT);
+
+        if (id.contains("netherite") || id.contains("diamond") || name.contains("netherite") || name.contains("diamante")) {
+            if (id.contains("backpack") || id.contains("bag") || name.contains("mochila")) {
+                return 256; // 4 packs
+            }
+        }
+        if (id.contains("gold") || id.contains("iron") || name.contains("ouro") || name.contains("ferro")) {
+            if (id.contains("backpack") || id.contains("bag") || name.contains("mochila")) {
+                return 192; // 3 packs
+            }
+        }
+        if (id.contains("backpack") || id.contains("bag") || id.contains("satchel") || name.contains("mochila")) {
+            return 128; // 2 packs
+        }
+        if (id.contains("bundle") || id.contains("pouch") || name.contains("trouxa") || name.contains("bolsa") || chest.getItem() == Items.BUNDLE) {
+            return 64; // 1 pack
+        }
+        return 32;
+    }
+
+    /**
+     * Sistema ativo de contenção e resfriamento de lava ao redor do Jacinto (Issue #3)
+     */
+    public void checkAndContainNearbyLava(ServerWorld world, HuskEntity entity) {
+        if (world == null || entity == null) return;
+        BlockPos center = entity.getBlockPos();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= 2; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    BlockPos p = center.add(dx, dy, dz);
+                    BlockState s = world.getBlockState(p);
+                    if (s.isOf(Blocks.LAVA)) {
+                        world.setBlockState(p, Blocks.COBBLESTONE.getDefaultState());
+                        world.playSound(null, p, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS, 0.7f, 1.2f);
+                        world.spawnParticles(ParticleTypes.SMOKE, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 6, 0.2, 0.2, 0.2, 0.05);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Mantém um grid de 3x3 Chunks Forçados em torno do Jacinto para que ele continue ativo
      * mesmo que nenhum jogador esteja no mapa ou perto dele
      */
@@ -1071,6 +1245,7 @@ public class JacintoMiner {
         this.isReturningToChest = false;
         this.targetOrePos = null;
         this.navigationTarget = null;
+        this.hologram.remove();
         releaseForcedChunks(world);
         mod.getData().setIdleTask();
         mod.getNpc().setGlowingSilhouette(false, null);

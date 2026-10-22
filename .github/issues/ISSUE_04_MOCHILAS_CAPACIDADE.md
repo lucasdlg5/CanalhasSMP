@@ -3,7 +3,7 @@
 - **Tipo:** 🎒 Melhoria de Qualidade de Vida (QoL & Performance)
 - **Prioridade:** 🟢 Média-Baixa
 - **Módulo:** `JacintoItemakino` (`JacintoNpc.java`, `JacintoMiner.java`)
-- **Status:** 📋 Aberto / Sugestão
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

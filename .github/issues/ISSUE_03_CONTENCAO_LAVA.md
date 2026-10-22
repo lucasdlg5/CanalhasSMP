@@ -3,7 +3,7 @@
 - **Tipo:** 🛡️ Robustez / Sobrevivência (AI & Pathfinding)
 - **Prioridade:** 🟡 Média
 - **Módulo:** `JacintoItemakino` (`JacintoMiner.java`)
-- **Status:** 📋 Aberto / Sugestão
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

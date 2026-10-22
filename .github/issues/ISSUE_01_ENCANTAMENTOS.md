@@ -3,7 +3,7 @@
 - **Tipo:** 🛠️ Melhoria / Mecânica (Feature & Compatibility)
 - **Prioridade:** 🟡 Média-Alta
 - **Módulo:** `JacintoItemakino` (`JacintoMiner.java`)
-- **Status:** 📋 Aberto / Planejado
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

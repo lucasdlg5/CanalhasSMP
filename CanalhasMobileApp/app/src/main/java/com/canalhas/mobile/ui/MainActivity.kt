@@ -598,8 +598,8 @@ fun DashboardScreen(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        MetricPill("Ping Atual", "${net.currentPingMs} ms", if (net.currentPingMs <= 40) AccentGreen else AccentYellow)
-                        MetricPill("Média 5m", "${net.avgPing5m} ms", AccentBlue)
+                        MetricPill("Ping Atual", "${String.format(Locale.ROOT, "%.0f", net.currentPingMs)} ms", if (net.currentPingMs <= 40) AccentGreen else AccentYellow)
+                        MetricPill("Média 5m", "${String.format(Locale.ROOT, "%.1f", net.avgPing5m)} ms", AccentBlue)
                         MetricPill("Perda Pacotes", "${String.format(Locale.ROOT, "%.1f", net.packetLossPercent5m)}%", if (net.packetLossPercent5m > 0) AccentRed else AccentGreen)
                         MetricPill("Quedas (5m)", "${net.outagesLast5m}", if (net.outagesLast5m > 0) AccentRed else TextSecondary)
                     }

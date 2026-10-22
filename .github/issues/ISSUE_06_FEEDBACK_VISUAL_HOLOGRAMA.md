@@ -3,7 +3,7 @@
 - **Tipo:** 🎨 Interface e Experiência do Usuário (UI/UX)
 - **Prioridade:** 🟢 Baixa
 - **Módulo:** `JacintoItemakino` (`JacintoMiner.java`)
-- **Status:** 📋 Aberto / Sugestão
+- **Status:** ✅ Concluído / Implementado na v2.0.0
 
 ---
 

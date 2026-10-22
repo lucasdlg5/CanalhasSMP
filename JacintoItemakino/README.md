@@ -16,7 +16,12 @@ O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e mul
 5. **🏰 Proteção de Construções & Integração com Claims (v1.7.0)**: Integrado nativamente com o sistema de claims do Prominence II (**Open Parties and Claims - OPAC** e **FTB Chunks**). Chunks protegidos por players ou parties são 100% invioláveis! Para materiais de construção (Andesito, Granito, Diorito, Pedras), ele desce compulsoriamente para o subsolo profundo (abaixo de Y=40), protegendo castelos de jogadores (como o castelo do Jodevil) de qualquer escavação acidental!
 6. **🪵 Ferramentas Padrão Infinitas, Desgaste e Tabela de Compatibilidade (v1.8.0)**: Por padrão, Jacinto sempre possui uma **Espada, Picareta e Pá de Madeira Infinitas** (`Unbreakable: true`). Jogadores podem presenteá-lo com ferramentas melhores via botão direito. Ferramentas de jogador sofrem desgaste real e, quando quebram, Jacinto reverte automaticamente para suas ferramentas de madeira da firma! Ele consulta a **Tabela de Compatibilidade de Mineração** (Harvest Tier) antes de minerar; se sua picareta atual não tiver nível suficiente para extrair o minério pedido (ex: pedir Diamante com Picareta de Madeira), ele se recusa, explica o motivo detalhadamente e orienta qual picareta precisa!
 7. **🏢 Workaround Anti-Stuck & Navegação Multi-Andar (v1.8.1)**: Resolve o problema do Jacinto ficar parado em "andares errados" (acima ou abaixo do baú em castelos e bases verticais). Monitora tempo parado (`stuckTicks`), detecta desníveis de andar (`Math.abs(dy) >= 2.0`), busca rotas alternativas por escadas/alçapões nas redondezas e aciona o **Atalho de Operário da Firma** (deslocamento assistido para o andar correto após tempo limite), além de pular baús comprovadamente emparedados, garantindo que o expediente nunca congele!
-8. **✨ Silhueta Luminosa (Glowing Outline) de Expediente Ativo (v1.9.0)**: Ao delegar uma tarefa para o Jacinto (`/organizar` ou `/minerar`), sua **silhueta luminosa dourada** se acende automaticamente (`entity.setGlowing(true)`). O jogador que delegou a tarefa consegue enxergar a silhueta do Jacinto através de paredes, portas e montanhas, sabendo imediatamente que a tarefa foi recebida e observando seu deslocamento a caminho do baú ou mina. A silhueta se desativa automaticamente assim que a tarefa termina ou é interrompida!
+9. **💎 Encantamentos de Picareta Ativos (v2.0.0 - Issue #1)**: Total suporte a **Eficiência** (acelera exponencialmente a velocidade de quebra dos blocos), **Fortuna** (multiplica realisticamente os drops de diamantes, carvão, lápis e ferro bruto via loot tables oficiais) e **Toque Suave / Silk Touch** (coleta os minérios inteiros sem quebrar em gemas).
+10. **🌌 Validação Interdimensional (v2.0.0 - Issue #2)**: Ao solicitar minérios do Nether (Detritos Ancestrais / Ancient Debris, Quartzo) ou The End no Overworld, Jacinto recusa com orientação didática explicando onde o baú deve ser colocado para a expedição.
+11. **🔥 Contenção Ativa de Lava (v2.0.0 - Issue #3)**: Ao escavar túneis profundos e encontrar lava, Jacinto imediatamente resfria e contém os fluidos circundantes com pedregulho, evitando queimar itens ou prender sua rota.
+12. **🎒 Mochilas e Capacidade de Carga Ampliada (v2.0.0 - Issue #4)**: Ao equipar o Jacinto com trouxas ou mochilas (*Traveler's Backpack*, *Sophisticated Backpacks*), sua capacidade de transporte aumenta dinamicamente de 32 para **64 (Bundle), 128 (Mochila Básica), 192 (Ferro/Ouro) ou 256 itens (Diamante/Netherite)**, multiplicando o rendimento da firma em até 8x!
+13. **📊 Telemetria em Tempo Real (v2.0.0 - Issue #5)**: Exportação periódica contínua de status, coordenadas, durabilidade da ferramenta, tarefa ativa e estatísticas de mineração no arquivo `config/jacinto/telemetry.json`, integrado ao Dashboard C# e Canalhas Mobile App.
+14. **🎨 Holograma de Progresso sobre o Baú (v2.0.0 - Issue #6 & #7)**: Exibe acima do baú de mineração o título da tarefa, porcentagem preenchida e quantidade atual vs máxima com texto flutuante 100% nativo do servidor, suportando Baús Vanilla, Baús Duplos e Baús de Mods (*Iron Chests*, *Storage Drawers*).
 
 ---
 
@@ -229,11 +234,11 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 # Na pasta JacintoItemakino/:
 gradlew.bat build -x test
 ```
-O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.9.0.jar`
+The JAR is generated at:
+`JacintoItemakino/build/libs/jacinto-itemakino-2.0.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.9.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
+1. Copie o arquivo `jacinto-itemakino-2.0.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 

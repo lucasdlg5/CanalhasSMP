@@ -1005,6 +1005,24 @@ public class JacintoOrganizer {
         return true;
     }
 
+    public static int countItemInInventory(Inventory inv, Item item) {
+        if (inv == null || item == null) return 0;
+        int count = 0;
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack cur = inv.getStack(i);
+            if (!cur.isEmpty() && cur.getItem() == item) {
+                count += cur.getCount();
+            }
+        }
+        return count;
+    }
+
+    public static int getMaxCapacityForItem(Inventory inv, Item item) {
+        if (inv == null) return 0;
+        int maxPerStack = item != null ? Math.min(inv.getMaxCountPerStack(), item.getMaxCount()) : inv.getMaxCountPerStack();
+        return inv.size() * maxPerStack;
+    }
+
     /**
      * Varrer blocos de inventário no raio de ação, excluindo ambas as metades do baú de destino
      */
