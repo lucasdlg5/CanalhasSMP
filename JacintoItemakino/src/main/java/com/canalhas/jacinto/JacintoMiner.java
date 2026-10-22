@@ -764,8 +764,13 @@ public class JacintoMiner {
         int maxY = Math.min(world.getTopY(), center.getY() + 16);
 
         // Se o alvo for pedra/andesito, a busca NUNCA ultrapassa a camada Y=40 (proteção de construções)
-        if (isStone && maxY > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
-            maxY = JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y;
+        if (isStone) {
+            if (maxY > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                maxY = JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y;
+            }
+            if (minY > maxY) {
+                minY = Math.max(world.getBottomY(), maxY - 20);
+            }
         }
 
         for (int dx = -radius; dx <= radius; dx += 2) {
@@ -853,6 +858,16 @@ public class JacintoMiner {
                 entity.getNavigation().startMovingTo(downStep.getX() + 0.5, downStep.getY(), downStep.getZ() + 0.5, 1.0);
                 return;
             } else {
+                // Se estiver dentro de um Claim ou na base onde é proibido quebrar o chão:
+                if (JacintoClaimHelper.isPosClaimed(world, current) || current.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                    BlockPos mineStart = findSafeSubterraneanStartPos(world, current, optimalY);
+                    if (mineStart != null) {
+                        entity.teleport(world, mineStart.getX() + 0.5, mineStart.getY(), mineStart.getZ() + 0.5, Collections.emptySet(), entity.getYaw(), 0.0f);
+                        world.playSound(null, mineStart, SoundEvents.BLOCK_WOODEN_DOOR_OPEN, SoundCategory.NEUTRAL, 0.8f, 1.2f);
+                        world.spawnParticles(ParticleTypes.POOF, mineStart.getX() + 0.5, mineStart.getY() + 0.5, mineStart.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.05);
+                        return;
+                    }
+                }
                 explorationDirection = explorationDirection.rotateYClockwise();
                 return;
             }
@@ -877,6 +892,18 @@ public class JacintoMiner {
         }
     }
 
+    private BlockPos findSafeSubterraneanStartPos(ServerWorld world, BlockPos start, int targetY) {
+        Direction dir = explorationDirection != null ? explorationDirection : Direction.NORTH;
+        for (int dist = 16; dist <= 48; dist += 8) {
+            BlockPos candidate = start.offset(dir, dist);
+            BlockPos targetPos = new BlockPos(candidate.getX(), targetY, candidate.getZ());
+            if (!JacintoClaimHelper.isPosClaimed(world, targetPos)) {
+                return targetPos;
+            }
+        }
+        return new BlockPos(start.getX(), targetY, start.getZ());
+    }
+
     /**
      * Detecta se o Jacinto ficou preso em paredes ou blocos durante o trajeto e cava o caminho
      */
@@ -885,14 +912,12 @@ public class JacintoMiner {
         if (lastPosition != null && lastPosition.squaredDistanceTo(pos) < 0.05) {
             stuckTicks++;
 
-            // Se estiver retornando para o baú e ficar preso (especialmente em andar diferente)
+            // Se estiver retornando para o baú e ficar preso (especialmente em andar diferente ou vindo da mina)
             if (isReturningToChest && hasMiningChest && targetChestPos != null) {
                 double dy = entity.getY() - targetChestPos.getY();
-                double dx = entity.getX() - (targetChestPos.getX() + 0.5);
-                double dz = entity.getZ() - (targetChestPos.getZ() + 0.5);
-                boolean isWrongFloor = Math.abs(dy) >= 2.0 && (dx * dx + dz * dz) <= 6.0 * 6.0;
+                boolean isWrongFloor = Math.abs(dy) >= 2.0;
 
-                if ((isWrongFloor && stuckTicks >= 80) || stuckTicks >= 120) {
+                if ((isWrongFloor && stuckTicks >= 40) || stuckTicks >= 80) {
                     BlockPos stand = JacintoOrganizer.findBestStandingPosAdjacent(world, targetChestPos);
                     entity.teleport(world, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, Collections.emptySet(), entity.getYaw(), 0.0f);
                     faceBlock(entity, targetChestPos);
