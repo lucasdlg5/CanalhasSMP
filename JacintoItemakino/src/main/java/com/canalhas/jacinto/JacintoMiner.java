@@ -102,6 +102,10 @@ public class JacintoMiner {
         return targetChestPos;
     }
 
+    public boolean isConstructionOrStoneTarget() {
+        return JacintoClaimHelper.isConstructionOrStoneType(rawQuery, targetDisplayName);
+    }
+
     /**
      * Inicia a mineração passiva com baú de destino para encher
      */
@@ -165,6 +169,15 @@ public class JacintoMiner {
             player.sendMessage(Text.literal("§fIniciando mineração passiva de: §6§l[" + targetDisplayName + "]§f!"), false);
             player.sendMessage(Text.literal("§fDestino: Baú em §eX: " + targetChestPos.getX() + ", Y: " + targetChestPos.getY() + ", Z: " + targetChestPos.getZ()), false);
             player.sendMessage(Text.literal("§aTrabalharei sem parar até encher este baú! Ao ficar cheio, entrarei em modo de descanso (IDLE)."), false);
+
+            if (isConstructionOrStoneTarget()) {
+                player.sendMessage(Text.literal("§e🛡️ [Proteção de Construções & Claims Ativada]:"), false);
+                player.sendMessage(Text.literal("§7- Material de construção detectado! Descerei para cavernas subterrâneas (abaixo de Y=40) para não tocar em castelos ou edificações."), false);
+                player.sendMessage(Text.literal("§7- Respeito integral a Claims (Open Parties and Claims / FTB): nenhum bloco em chunk claimado será quebrado!"), false);
+            } else {
+                player.sendMessage(Text.literal("§7- Respeito integral a Claims: chunks protegidos por players/parties são 100% seguros."), false);
+            }
+
             player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura de até 32 blocos)."), false);
             player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados mantidos."), false);
             player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento se desejar interromper."), false);
@@ -265,6 +278,15 @@ public class JacintoMiner {
             } else {
                 player.sendMessage(Text.literal("§fIniciando mineração passiva de: §6§l[" + targetDisplayName + "]§f!"), false);
             }
+
+            if (isConstructionOrStoneTarget()) {
+                player.sendMessage(Text.literal("§e🛡️ [Proteção de Construções & Claims Ativada]:"), false);
+                player.sendMessage(Text.literal("§7- Material de construção detectado! Descerei para o subsolo (abaixo de Y=40) para não mexer em castelos ou edificações."), false);
+                player.sendMessage(Text.literal("§7- Chunks com Claim (Open Parties / FTB) são 100% protegidos contra mineração."), false);
+            } else {
+                player.sendMessage(Text.literal("§7- Respeito integral a Claims: chunks protegidos por players/parties são 100% seguros."), false);
+            }
+
             player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura contínua de até 32 blocos)."), false);
             player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados (trabalho contínuo mesmo longe dos players)."), false);
             player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento para eu encerrar o turno!"), false);
@@ -430,8 +452,8 @@ public class JacintoMiner {
         // 4. Validação do Alvo Atual
         if (targetOrePos != null) {
             BlockState state = world.getBlockState(targetOrePos);
-            if (!isTargetBlock(state)) {
-                // Bloco já foi minerado ou sumiu
+            if (!isTargetBlock(state, targetOrePos) || !canSafeBreak(world, targetOrePos)) {
+                // Bloco já foi minerado, sumiu ou virou claim/proibido
                 targetOrePos = null;
                 navigationTarget = null;
                 digProgressTicks = 0;
@@ -502,6 +524,14 @@ public class JacintoMiner {
         // Tempo de quebra realista (12 ticks = 0.6s)
         if (digProgressTicks >= 12) {
             digProgressTicks = 0;
+
+            // Re-valida segurança contra Claims e Proteção de Construções antes de quebrar
+            if (!canSafeBreak(world, targetOrePos)) {
+                targetOrePos = null;
+                navigationTarget = null;
+                return;
+            }
+
             BlockState minedState = world.getBlockState(targetOrePos);
 
             // Quebra o bloco com drop baseado na ferramenta do Jacinto
@@ -542,8 +572,14 @@ public class JacintoMiner {
         BlockPos bestPos = null;
         double closestDistSq = Double.MAX_VALUE;
 
+        boolean isStone = isConstructionOrStoneTarget();
         int minY = Math.max(world.getBottomY(), center.getY() - 16);
         int maxY = Math.min(world.getTopY(), center.getY() + 16);
+
+        // Se o alvo for pedra/andesito, a busca NUNCA ultrapassa a camada Y=40 (proteção de construções)
+        if (isStone && maxY > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+            maxY = JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y;
+        }
 
         for (int dx = -radius; dx <= radius; dx += 2) {
             for (int dz = -radius; dz <= radius; dz += 2) {
@@ -551,8 +587,20 @@ public class JacintoMiner {
                     BlockPos pos = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
                     if (ignoredOres.contains(pos)) continue;
 
+                    // Ignora veios em chunks protegidos por Claims (OPAC / FTB)
+                    if (JacintoClaimHelper.isPosClaimed(world, pos)) {
+                        ignoredOres.add(pos);
+                        continue;
+                    }
+
+                    // Ignora rochas/andesito em superfície
+                    if (isStone && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+                        ignoredOres.add(pos);
+                        continue;
+                    }
+
                     BlockState state = world.getBlockState(pos);
-                    if (isTargetBlock(state)) {
+                    if (isTargetBlock(state, pos)) {
                         // Verifica se não está completamente imerso em lava
                         if (isSurroundedByLava(world, pos)) {
                             ignoredOres.add(pos);
@@ -612,10 +660,15 @@ public class JacintoMiner {
         if (current.getY() > optimalY + 2) {
             // Cria escada/degrau seguro para baixo
             BlockPos downStep = current.offset(explorationDirection).down();
-            safeBreakBlock(world, entity, downStep);
-            safeBreakBlock(world, entity, downStep.up());
-            entity.getNavigation().startMovingTo(downStep.getX() + 0.5, downStep.getY(), downStep.getZ() + 0.5, 1.0);
-            return;
+            if (canSafeBreak(world, downStep) && canSafeBreak(world, downStep.up())) {
+                safeBreakBlock(world, entity, downStep);
+                safeBreakBlock(world, entity, downStep.up());
+                entity.getNavigation().startMovingTo(downStep.getX() + 0.5, downStep.getY(), downStep.getZ() + 0.5, 1.0);
+                return;
+            } else {
+                explorationDirection = explorationDirection.rotateYClockwise();
+                return;
+            }
         }
 
         // 2. No nível ideal, avança minerando um túnel 1x2 na direção da exploração
@@ -674,6 +727,7 @@ public class JacintoMiner {
     }
 
     private boolean canSafeBreak(ServerWorld world, BlockPos pos) {
+        if (pos == null) return false;
         BlockState state = world.getBlockState(pos);
         if (state.isAir()) return false;
         if (state.isOf(Blocks.BEDROCK)) return false;
@@ -681,6 +735,22 @@ public class JacintoMiner {
 
         // Não quebre se houver lava imediatamente acima
         if (world.getBlockState(pos.up()).isOf(Blocks.LAVA)) return false;
+
+        // 1. REGRA DE INTEGRAÇÃO COM MODS DE CLAIM (Open Parties and Claims / FTB Chunks)
+        // Se o chunk estiver protegido/claimado por um player ou party, o Jacinto NUNCA quebra nada ali!
+        if (JacintoClaimHelper.isPosClaimed(world, pos)) {
+            return false;
+        }
+
+        // 2. Proteção do Baú de Destino e suporte adjacente
+        if (hasMiningChest && targetChestPos != null && pos.isWithinDistance(targetChestPos, 2.5)) {
+            return false;
+        }
+
+        // 3. Regra Subterrânea para Andesito e Rochas: NUNCA quebra blocos de pedra acima de Y=40
+        if (isConstructionOrStoneTarget() && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+            return false;
+        }
 
         return state.getHardness(world, pos) >= 0;
     }
@@ -779,14 +849,29 @@ public class JacintoMiner {
         if (n.contains("quartz") || n.contains("quartzo")) {
             return 32;
         }
-        if (n.contains("andesit") || n.contains("diorit") || n.contains("granit")) {
-            return 20; // Camada farta de pedras ornamentais
+        if (n.contains("andesit") || n.contains("diorit") || n.contains("granit") || n.contains("pedra") || n.contains("cobble") || n.contains("stone") || n.contains("tufo") || n.contains("tuff")) {
+            return 15; // Camada subterrânea profunda e segura (longe de castelos e edificações de base)
         }
         return 40; // Carvão e minérios de superfície
     }
 
     public boolean isTargetBlock(BlockState state) {
+        return isTargetBlock(state, null);
+    }
+
+    public boolean isTargetBlock(BlockState state, BlockPos pos) {
         if (state == null || state.isAir()) return false;
+
+        // Proteção de Construções: NUNCA considera blocos de pedra/construção acima de Y=40
+        if (pos != null && isConstructionOrStoneTarget() && pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+            return false;
+        }
+
+        // Proteção de Claims: NUNCA considera blocos em chunks protegidos por Claims
+        if (pos != null && world != null && JacintoClaimHelper.isPosClaimed(world, pos)) {
+            return false;
+        }
+
         Block block = state.getBlock();
 
         // 1. Se o targetItem for um BlockItem (ex: Andesito, Pedra, Pedregulho, Granito, Diorito, Tufo, etc.)
