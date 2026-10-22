@@ -752,8 +752,27 @@ public class JacintoMiner {
         Vec3d pos = entity.getPos();
         if (lastPosition != null && lastPosition.squaredDistanceTo(pos) < 0.05) {
             stuckTicks++;
-            if (stuckTicks >= 20) {
-                stuckTicks = 0;
+
+            // Se estiver retornando para o baú e ficar preso (especialmente em andar diferente)
+            if (isReturningToChest && hasMiningChest && targetChestPos != null) {
+                double dy = entity.getY() - targetChestPos.getY();
+                double dx = entity.getX() - (targetChestPos.getX() + 0.5);
+                double dz = entity.getZ() - (targetChestPos.getZ() + 0.5);
+                boolean isWrongFloor = Math.abs(dy) >= 2.0 && (dx * dx + dz * dz) <= 6.0 * 6.0;
+
+                if ((isWrongFloor && stuckTicks >= 80) || stuckTicks >= 120) {
+                    BlockPos stand = JacintoOrganizer.findBestStandingPosAdjacent(world, targetChestPos);
+                    entity.teleport(world, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, Collections.emptySet(), entity.getYaw(), 0.0f);
+                    faceBlock(entity, targetChestPos);
+                    world.playSound(null, stand, SoundEvents.BLOCK_WOODEN_DOOR_OPEN, SoundCategory.NEUTRAL, 0.8f, 1.2f);
+                    world.spawnParticles(ParticleTypes.POOF, stand.getX() + 0.5, stand.getY() + 0.5, stand.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.05);
+                    stuckTicks = 0;
+                    lastPosition = entity.getPos();
+                    return;
+                }
+            }
+
+            if (stuckTicks % 20 == 0) {
                 // Quebra bloco obstrutor na altura dos pés ou da cabeça em direção ao alvo
                 Direction dirToTarget = Direction.fromRotation(entity.getYaw());
                 BlockPos obsFeet = entity.getBlockPos().offset(dirToTarget);

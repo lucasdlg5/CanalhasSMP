@@ -15,6 +15,7 @@ O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e mul
 4. **👷 Postura Pacífica e Status de Aliado da Firma (v1.6.0)**: Jacinto não persegue e nem agarra jogadores (braços baixados), possui colisão desativada para players passarem através dele sem travar portas/baús, é **100% imune a ataques de jogadores e NPCs companheiros (como a Vitória)** e **não dropa XP**, prevenindo qualquer tipo de farm indevido! Apenas monstros hostis podem atacá-lo.
 5. **🏰 Proteção de Construções & Integração com Claims (v1.7.0)**: Integrado nativamente com o sistema de claims do Prominence II (**Open Parties and Claims - OPAC** e **FTB Chunks**). Chunks protegidos por players ou parties são 100% invioláveis! Para materiais de construção (Andesito, Granito, Diorito, Pedras), ele desce compulsoriamente para o subsolo profundo (abaixo de Y=40), protegendo castelos de jogadores (como o castelo do Jodevil) de qualquer escavação acidental!
 6. **🪵 Ferramentas Padrão Infinitas, Desgaste e Tabela de Compatibilidade (v1.8.0)**: Por padrão, Jacinto sempre possui uma **Espada, Picareta e Pá de Madeira Infinitas** (`Unbreakable: true`). Jogadores podem presenteá-lo com ferramentas melhores via botão direito. Ferramentas de jogador sofrem desgaste real e, quando quebram, Jacinto reverte automaticamente para suas ferramentas de madeira da firma! Ele consulta a **Tabela de Compatibilidade de Mineração** (Harvest Tier) antes de minerar; se sua picareta atual não tiver nível suficiente para extrair o minério pedido (ex: pedir Diamante com Picareta de Madeira), ele se recusa, explica o motivo detalhadamente e orienta qual picareta precisa!
+7. **🏢 Workaround Anti-Stuck & Navegação Multi-Andar (v1.8.1)**: Resolve o problema do Jacinto ficar parado em "andares errados" (acima ou abaixo do baú em castelos e bases verticais). Monitora tempo parado (`stuckTicks`), detecta desníveis de andar (`Math.abs(dy) >= 2.0`), busca rotas alternativas por escadas/alçapões nas redondezas e aciona o **Atalho de Operário da Firma** (deslocamento assistido para o andar correto após tempo limite), além de pular baús comprovadamente emparedados, garantindo que o expediente nunca congele!
 
 ---
 
@@ -228,10 +229,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.8.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.8.1.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.8.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
+1. Copie o arquivo `jacinto-itemakino-1.8.1.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 

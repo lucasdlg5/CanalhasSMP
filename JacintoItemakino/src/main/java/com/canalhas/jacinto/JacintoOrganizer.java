@@ -4,6 +4,7 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.entity.BlockEntity;
@@ -12,6 +13,7 @@ import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
 import net.minecraft.block.enums.ChestType;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.mob.HuskEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
@@ -19,6 +21,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -30,6 +33,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +69,11 @@ public class JacintoOrganizer {
     private int currentChestIndex = 0;
     private int totalTransferred = 0;
     private int workCooldown = 0;
+
+    // Monitoramento de Mobilidade, Anti-Stuck e Multi-Andar (Workaround Inteligente)
+    private Vec3d lastPosition = null;
+    private int stuckTicks = 0;
+    private int rerouteAttempts = 0;
 
     // Dicionário ampliado Português -> Item
     private static final Map<String, Item> PT_DICT = new HashMap<>();
@@ -598,8 +607,12 @@ public class JacintoOrganizer {
 
         // Move o Jacinto até o primeiro baú de origem
         BlockPos first = sourceChests.get(0);
-        jacinto.getNavigation().startMovingTo(first.getX(), first.getY(), first.getZ(), 1.25);
+        BlockPos firstStand = findBestStandingPosAdjacent(serverWorld, first);
+        jacinto.getNavigation().startMovingTo(firstStand.getX() + 0.5, firstStand.getY(), firstStand.getZ() + 0.5, 1.25);
         this.workCooldown = 10;
+        this.stuckTicks = 0;
+        this.rerouteAttempts = 0;
+        this.lastPosition = null;
         return true;
     }
 
@@ -639,15 +652,13 @@ public class JacintoOrganizer {
             return;
         }
 
-        // Caminha até o baú de origem se estiver longe
-        double distSq = jacinto.squaredDistanceTo(Vec3d.ofCenter(sourcePos));
-        if (distSq > 3.5 * 3.5) {
-            jacinto.getNavigation().startMovingTo(sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(), 1.25);
-            workCooldown = 15;
+        // Caminha até o baú de origem com detecção de andar errado, rotas alternativas e anti-stuck
+        if (navigateToChestWithWorkaround(jacinto, sourcePos)) {
             return;
         }
 
         // Chegou ao baú de origem! Efeito sonoro e partículas
+        faceBlock(jacinto, sourcePos);
         world.playSound(null, sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(),
                 SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1.0f);
         world.spawnParticles(ParticleTypes.CRIT, sourcePos.getX() + 0.5, sourcePos.getY() + 0.8, sourcePos.getZ() + 0.5, 5, 0.2, 0.2, 0.2, 0.05);
@@ -664,9 +675,13 @@ public class JacintoOrganizer {
 
         // Avança para o próximo baú da fila
         currentChestIndex++;
+        stuckTicks = 0;
+        rerouteAttempts = 0;
+        lastPosition = null;
         if (currentChestIndex < sourceChests.size()) {
             BlockPos nextPos = sourceChests.get(currentChestIndex);
-            jacinto.getNavigation().startMovingTo(nextPos.getX(), nextPos.getY(), nextPos.getZ(), 1.25);
+            BlockPos stand = findBestStandingPosAdjacent(world, nextPos);
+            jacinto.getNavigation().startMovingTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 1.25);
             workCooldown = 15;
         } else {
             finishOrganizing(false, null);
@@ -685,6 +700,9 @@ public class JacintoOrganizer {
         }
 
         this.isBusy = false;
+        this.stuckTicks = 0;
+        this.rerouteAttempts = 0;
+        this.lastPosition = null;
         mod.getData().setIdleTask();
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
@@ -699,6 +717,9 @@ public class JacintoOrganizer {
 
     private void finishOrganizing(boolean interrupted, String reason) {
         this.isBusy = false;
+        this.stuckTicks = 0;
+        this.rerouteAttempts = 0;
+        this.lastPosition = null;
         mod.getData().setIdleTask();
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
@@ -722,6 +743,179 @@ public class JacintoOrganizer {
                         totalTransferred + "x [" + targetItemDisplayName + "]§a no baú designado!"), false);
             }
         }
+    }
+
+    /**
+     * Gerencia a navegação inteligente até o baú com detecção de andar errado,
+     * rotas alternativas e assistência inteligente para nunca travar a tarefa.
+     * Retorna true se ainda estiver a caminho, ou false se tiver chegado ao alcance do baú.
+     */
+    private boolean navigateToChestWithWorkaround(HuskEntity jacinto, BlockPos sourcePos) {
+        BlockPos bestStandPos = findBestStandingPosAdjacent(world, sourcePos);
+        double distSq = jacinto.squaredDistanceTo(Vec3d.ofCenter(sourcePos));
+
+        double dx = jacinto.getX() - (sourcePos.getX() + 0.5);
+        double dz = jacinto.getZ() - (sourcePos.getZ() + 0.5);
+        double dy = jacinto.getY() - sourcePos.getY();
+        double horizontalDistSq = dx * dx + dz * dz;
+        double verticalDist = Math.abs(dy);
+
+        // Se está no mesmo andar (vertical <= 1.8) e dentro do alcance de interação (distSq <= 3.8 * 3.8), chegou!
+        if (verticalDist <= 1.8 && distSq <= 3.8 * 3.8) {
+            stuckTicks = 0;
+            rerouteAttempts = 0;
+            lastPosition = null;
+            return false; // Chegou ao baú!
+        }
+
+        // Estatística de permanência na mesma posição (Stuck Detection)
+        Vec3d currentPos = jacinto.getPos();
+        if (lastPosition != null && lastPosition.squaredDistanceTo(currentPos) < 0.08) {
+            stuckTicks += 15;
+        } else {
+            stuckTicks = 0;
+            lastPosition = currentPos;
+        }
+
+        // Detecção de andar errado: próximo no plano horizontal, mas em altura diferente
+        boolean isWrongFloor = verticalDist >= 2.0 && horizontalDistSq <= 6.0 * 6.0;
+
+        // FASE 1: Se estiver no andar errado ou travado há mais de 45 ticks (~2.2s), tenta rota alternativa
+        if (stuckTicks >= 45 && stuckTicks < 90) {
+            if (isWrongFloor) {
+                // Tenta buscar escada, degrau ou alçapão nas redondezas que conecte os andares
+                BlockPos stairOrOpening = findNearbyStaircaseOrLadder(world, jacinto.getBlockPos(), (int) Math.signum(dy));
+                if (stairOrOpening != null) {
+                    jacinto.getNavigation().startMovingTo(stairOrOpening.getX() + 0.5, stairOrOpening.getY(), stairOrOpening.getZ() + 0.5, 1.3);
+                    workCooldown = 15;
+                    return true;
+                }
+            }
+
+            // Tenta posição alternativa ao redor do baú
+            BlockPos altPos = getAlternativeStandingPos(world, sourcePos, ++rerouteAttempts);
+            jacinto.getNavigation().startMovingTo(altPos.getX() + 0.5, altPos.getY(), altPos.getZ() + 0.5, 1.3);
+            workCooldown = 15;
+            return true;
+        }
+
+        // FASE 2: Workaround Assistido de Operário da Firma (Deslocamento Inteligente para o Andar do Baú)
+        // Se ficou preso no andar errado há mais de 90 ticks (~4.5s), ou em qualquer lugar há mais de 120 ticks (~6s):
+        if ((isWrongFloor && stuckTicks >= 90) || stuckTicks >= 120) {
+            LOG.warn("[JacintoOrganizer] Jacinto detectado no andar errado ou preso (stuckTicks={}, dy={:.1f}). Executando deslocamento assistido para o andar do baú {}",
+                    stuckTicks, dy, sourcePos);
+
+            // Posiciona o Jacinto suavemente na melhor posição livre adjacente ao baú
+            jacinto.teleport(world, bestStandPos.getX() + 0.5, bestStandPos.getY(), bestStandPos.getZ() + 0.5,
+                    Collections.emptySet(), jacinto.getYaw(), 0.0f);
+            faceBlock(jacinto, sourcePos);
+
+            // Efeitos e som de operário (passo/porta e nuvem de poeira)
+            world.playSound(null, bestStandPos, SoundEvents.BLOCK_WOODEN_DOOR_OPEN, SoundCategory.NEUTRAL, 0.8f, 1.2f);
+            world.spawnParticles(ParticleTypes.POOF,
+                    bestStandPos.getX() + 0.5, bestStandPos.getY() + 0.5, bestStandPos.getZ() + 0.5,
+                    10, 0.3, 0.3, 0.3, 0.05);
+
+            if (requestingPlayer != null) {
+                String floorWord = dy > 0 ? "inferior" : "superior";
+                requestingPlayer.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §7(Desloquei-me para o andar " + floorWord + " para alcançar o baú da firma!)"), false);
+            }
+
+            stuckTicks = 0;
+            rerouteAttempts = 0;
+            lastPosition = jacinto.getPos();
+            workCooldown = 10;
+            return true;
+        }
+
+        // FASE 3: Se o baú estiver comprovadamente emparedado / sem acesso físico (stuckTicks >= 200, ~10s)
+        if (stuckTicks >= 200) {
+            LOG.warn("[JacintoOrganizer] Baú em {} considerado inacessível após múltiplas tentativas. Pulando para o próximo.", sourcePos);
+            if (requestingPlayer != null) {
+                requestingPlayer.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cO baú em X: " + sourcePos.getX() +
+                        ", Y: " + sourcePos.getY() + ", Z: " + sourcePos.getZ() +
+                        " está inacessível ou obstruído! Pulando para o próximo da fila..."), false);
+            }
+            currentChestIndex++;
+            stuckTicks = 0;
+            rerouteAttempts = 0;
+            lastPosition = null;
+            workCooldown = 10;
+            return true;
+        }
+
+        // Movimento padrão: navega até o ponto de apoio do baú
+        if (!jacinto.getNavigation().isFollowingPath() || world.getServer().getTicks() % 20 == 0) {
+            jacinto.getNavigation().startMovingTo(bestStandPos.getX() + 0.5, bestStandPos.getY(), bestStandPos.getZ() + 0.5, 1.25);
+        }
+        workCooldown = 15;
+        return true;
+    }
+
+    public static boolean canStandAt(World world, BlockPos pos) {
+        if (world == null || pos == null) return false;
+        BlockState feet = world.getBlockState(pos);
+        BlockState head = world.getBlockState(pos.up());
+        BlockState floor = world.getBlockState(pos.down());
+        return !feet.isOpaque() && !head.isOpaque() && floor.isOpaque() && !feet.isOf(Blocks.LAVA) && !floor.isOf(Blocks.LAVA);
+    }
+
+    public static BlockPos findBestStandingPosAdjacent(World world, BlockPos chestPos) {
+        if (world == null || chestPos == null) return chestPos;
+        Direction[] dirs = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+        for (Direction dir : dirs) {
+            BlockPos side = chestPos.offset(dir);
+            if (canStandAt(world, side)) {
+                return side;
+            }
+        }
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                BlockPos candidate = chestPos.add(dx, 0, dz);
+                if (canStandAt(world, candidate)) {
+                    return candidate;
+                }
+                BlockPos candidateUp = chestPos.add(dx, 1, dz);
+                if (canStandAt(world, candidateUp)) {
+                    return candidateUp;
+                }
+            }
+        }
+        return chestPos;
+    }
+
+    public static BlockPos getAlternativeStandingPos(World world, BlockPos chestPos, int attempt) {
+        Direction[] dirs = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+        int idx = Math.abs(attempt) % dirs.length;
+        BlockPos side = chestPos.offset(dirs[idx]);
+        if (canStandAt(world, side)) {
+            return side;
+        }
+        return findBestStandingPosAdjacent(world, chestPos);
+    }
+
+    public static BlockPos findNearbyStaircaseOrLadder(ServerWorld world, BlockPos center, int directionY) {
+        if (world == null || center == null) return null;
+        for (int r = 1; r <= 8; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    for (int dy = -2; dy <= 2; dy++) {
+                        BlockPos p = center.add(dx, dy, dz);
+                        BlockState s = world.getBlockState(p);
+                        if (s.isOf(Blocks.LADDER) || s.isIn(BlockTags.CLIMBABLE) || s.isIn(BlockTags.STAIRS) || s.isIn(BlockTags.TRAPDOORS)) {
+                            return p;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void faceBlock(HuskEntity entity, BlockPos pos) {
+        if (entity == null || pos == null) return;
+        entity.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, Vec3d.ofCenter(pos));
     }
 
     /**
