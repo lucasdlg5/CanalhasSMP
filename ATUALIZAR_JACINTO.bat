@@ -1,7 +1,6 @@
 @echo off
-chcp 65001 >nul
 echo ========================================================
-echo   Atualizando Jacinto Itemakino Baú para a versão 1.6.0
+echo   Atualizando Jacinto Itemakino Bau para a versao 1.6.0
 echo ========================================================
 echo.
 copy /Y "JacintoItemakino\build\libs\jacinto-itemakino-1.6.0.jar" "CanalhasSMP\mods\jacinto-itemakino-1.6.0.jar"
@@ -15,5 +14,5 @@ if exist "CanalhasSMP\mods\jacinto-itemakino-1.4.0.jar" del /f /q "CanalhasSMP\m
 if exist "CanalhasSMP\mods\jacinto-itemakino-1.5.0.jar" del /f /q "CanalhasSMP\mods\jacinto-itemakino-1.5.0.jar" 2>nul
 echo.
 echo Mod atualizado com sucesso na pasta mods do servidor!
-echo Reinicie o servidor no painel para carregar as alterações.
+echo Reinicie o servidor no painel para carregar as alteracoes.
 pause
