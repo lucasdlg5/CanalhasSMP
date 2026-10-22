@@ -4,12 +4,13 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
 import net.minecraft.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.HuskEntity;
@@ -46,7 +47,9 @@ import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -61,6 +64,9 @@ import java.util.UUID;
 public class JacintoNpc {
     public static final String JACINTO_TAG = "jacinto_itemakino_npc";
     public static final String NPC_NAME = "§e§lJacinto Itemakino Baú";
+    public static final String ENEMY_TEAM_NAME = "jacinto_enemy_white";
+    public static final double MAX_BASE_PATROL_RADIUS = 20.0;
+    public static final double MAX_BASE_PATROL_RADIUS_SQ = MAX_BASE_PATROL_RADIUS * MAX_BASE_PATROL_RADIUS;
     private static final Logger LOG = LoggerFactory.getLogger("JacintoNpc");
 
     private final JacintoMod mod;
@@ -74,6 +80,12 @@ public class JacintoNpc {
     // Silhueta Luminosa (Glowing Outline) ativa durante tarefas delegadas
     private boolean glowingSilhouette = false;
     private UUID taskDelegatorUuid = null;
+
+    // Alvo de combate ativo, silhueta branca e controle de obstáculos/alcance
+    private LivingEntity currentCombatTarget = null;
+    private int combatStuckTicks = 0;
+    private Vec3d lastCombatPos = null;
+    private final Map<UUID, Long> unreachableEnemies = new HashMap<>();
 
     private static final String[] RESPAWN_PHRASES = {
             "§6[Jacinto Itemakino Baú] §eRapaz, fui de base rapidão... tropecei na quina do baú, mas o Jacinto já tá vivinho da silva de novo! 📦💀",
@@ -132,8 +144,7 @@ public class JacintoNpc {
 
         // Garante que Jacinto NUNCA tenha jogadores ou entidades pacíficas como alvo e mantenha braços relaxados
         if (entity.getTarget() instanceof PlayerEntity || entity.getTarget() instanceof PassiveEntity) {
-            entity.setTarget(null);
-            entity.setAttacking(false);
+            clearCombatTarget(entity);
         }
         if (entity.getTarget() == null && entity.isAttacking()) {
             entity.setAttacking(false);
@@ -145,8 +156,13 @@ public class JacintoNpc {
             entity.setGlowing(shouldGlow);
         }
 
-        // Comportamento quando está Ocioso (Idle): Defesa da base e patrulha
-        if (!mod.getOrganizer().isBusy() && !mod.getMiner().isMining()) {
+        // Se uma tarefa iniciou, garante que combate ativo e silhueta do monstro sejam limpos imediatamente
+        if (mod.getOrganizer().isBusy() || mod.getMiner().isMining()) {
+            if (currentCombatTarget != null || entity.getTarget() != null) {
+                clearCombatTarget(entity);
+            }
+        } else {
+            // Comportamento quando está Ocioso (Idle): Defesa inteligente da base e patrulha
             tickIdleCombat(entity);
             tickIdleWander(entity);
         }
@@ -240,9 +256,10 @@ public class JacintoNpc {
         husk.goalSelector.add(2, new MeleeAttackGoal(husk, 1.25, false));
         husk.goalSelector.add(7, new LookAroundGoal(husk));
 
-        // Foco de combate APENAS em monstros hostis verdadeiros
-        husk.targetSelector.add(1, new ActiveTargetGoal<>(husk, HostileEntity.class, 10, true, false,
-                target -> target != null && target.isAlive() && !target.getCommandTags().contains(JACINTO_TAG)));
+        // NOTA: Não adicionamos ActiveTargetGoal aqui! O foco de combate é gerenciado
+        // 100% pelo tickIdleCombat() com verificação estrita de alcançabilidade de rota (findPathTo)
+        // e silhueta branca. Isso impede que o Jacinto trave em paredes mirando monstros inacessíveis.
+        husk.targetSelector.clear(goal -> true);
 
         husk.setAttacking(false);
 
@@ -328,52 +345,245 @@ public class JacintoNpc {
     }
 
     /**
-     * Patrulha e ataca monstros hostis ao redor
+     * Aplica silhueta branca no monstro alvo para indicar claramente aos jogadores
+     * qual criatura Jacinto está enfrentando ou tentando alcançar.
      */
-    private void tickIdleCombat(HuskEntity entity) {
-        if (--idleCombatCooldown > 0) return;
-        idleCombatCooldown = 15; // Checa a cada 0.75s
-
-        // Nunca ataque se o alvo atual já for válido e vivo
-        if (entity.getTarget() != null && entity.getTarget().isAlive()) {
-            return;
-        }
-
-        Box searchBox = entity.getBoundingBox().expand(14.0, 5.0, 14.0);
-        List<HostileEntity> monsters = entity.getWorld().getEntitiesByClass(HostileEntity.class, searchBox,
-                m -> m.isAlive() && !m.getCommandTags().contains(JACINTO_TAG)
-        );
-
-        if (!monsters.isEmpty()) {
-            // Foca no monstro mais próximo
-            HostileEntity closest = null;
-            double closestDistSq = Double.MAX_VALUE;
-            for (HostileEntity m : monsters) {
-                double dist = entity.squaredDistanceTo(m);
-                if (dist < closestDistSq) {
-                    closestDistSq = dist;
-                    closest = m;
-                }
+    private void applyEnemyWhiteHighlight(MinecraftServer server, LivingEntity target) {
+        if (server == null || target == null) return;
+        try {
+            ServerScoreboard scoreboard = server.getScoreboard();
+            Team team = scoreboard.getTeam(ENEMY_TEAM_NAME);
+            if (team == null) {
+                team = scoreboard.addTeam(ENEMY_TEAM_NAME);
+                team.setDisplayName(Text.literal("Alvo do Jacinto"));
+                team.setColor(Formatting.WHITE);
+            } else {
+                team.setColor(Formatting.WHITE);
             }
-            if (closest != null) {
-                entity.setTarget(closest);
-                entity.getNavigation().startMovingTo(closest, 1.25);
-            }
+            scoreboard.addPlayerToTeam(target.getEntityName(), team);
+            target.setGlowing(true);
+        } catch (Exception e) {
+            LOG.warn("Falha ao aplicar silhueta branca no inimigo: " + e.getMessage());
         }
     }
 
     /**
-     * Passeia suavemente pela base quando não há perigo por perto
+     * Remove a silhueta branca do monstro quando for derrotado, desengajado ou ignorado.
+     */
+    private void clearEnemyHighlight(MinecraftServer server, LivingEntity target) {
+        if (target == null) return;
+        try {
+            target.setGlowing(false);
+            if (server != null) {
+                ServerScoreboard scoreboard = server.getScoreboard();
+                Team team = scoreboard.getTeam(ENEMY_TEAM_NAME);
+                if (team != null) {
+                    scoreboard.removePlayerFromTeam(target.getEntityName(), team);
+                }
+                scoreboard.clearPlayerTeam(target.getEntityName());
+            }
+        } catch (Exception e) {
+            LOG.warn("Falha ao remover silhueta branca do inimigo: " + e.getMessage());
+        }
+    }
+
+    private void setCombatTarget(HuskEntity entity, LivingEntity target, Path path) {
+        if (currentCombatTarget != null && currentCombatTarget != target) {
+            clearEnemyHighlight(entity.getServer(), currentCombatTarget);
+        }
+        this.currentCombatTarget = target;
+        this.combatStuckTicks = 0;
+        this.lastCombatPos = entity.getPos();
+
+        entity.setTarget(target);
+        entity.setAttacking(true);
+
+        applyEnemyWhiteHighlight(entity.getServer(), target);
+
+        if (path != null) {
+            entity.getNavigation().startMovingAlong(path, 1.25);
+        } else {
+            entity.getNavigation().startMovingTo(target, 1.25);
+        }
+    }
+
+    public void clearCombatTarget(HuskEntity entity) {
+        if (entity != null) {
+            entity.setTarget(null);
+            entity.setAttacking(false);
+            entity.getNavigation().stop();
+        }
+        if (currentCombatTarget != null) {
+            MinecraftServer server = entity != null ? entity.getServer() : currentCombatTarget.getServer();
+            clearEnemyHighlight(server, currentCombatTarget);
+            currentCombatTarget = null;
+        }
+        combatStuckTicks = 0;
+        lastCombatPos = null;
+    }
+
+    /**
+     * Move Jacinto para outro setor na patrulha da base quando um monstro é inalcançável
+     * ou para revezar a vigilância da área
+     */
+    private void patrolToNewPoint(HuskEntity entity, Vec3d basePos) {
+        if (entity == null || basePos == null) return;
+        double angle = random.nextDouble() * 2 * Math.PI;
+        double dist = 4.0 + random.nextDouble() * 10.0; // 4 a 14 blocos da base
+        double targetX = basePos.x + Math.cos(angle) * dist;
+        double targetZ = basePos.z + Math.sin(angle) * dist;
+
+        entity.getNavigation().stop();
+        entity.getNavigation().startMovingTo(targetX, basePos.y, targetZ, 0.95);
+    }
+
+    /**
+     * Patrulha e ataca monstros hostis ao redor protegendo a base:
+     * - Destaca o alvo atual com silhueta branca (glowing outline branco) visível através de paredes.
+     * - Checa conectividade de rota (findPathTo / reachesTarget).
+     * - Inimigos em cavernas subterrâneas ou atrás de paredes intransponíveis são ignorados.
+     * - Preso/Loop em parede por mais de 2.0s -> abandona alvo, coloca na blacklist e patrulha outro canto.
+     * - Restrito ao raio de proteção da base (não sai para longe).
+     */
+    private void tickIdleCombat(HuskEntity entity) {
+        if (--idleCombatCooldown > 0) return;
+        idleCombatCooldown = 10; // Checa a cada 0.5s
+
+        ServerWorld world = (ServerWorld) entity.getWorld();
+        JacintoData data = mod.getData();
+
+        // 1. Limpa blacklist expirada
+        long currentTime = world.getTime();
+        unreachableEnemies.entrySet().removeIf(entry -> entry.getValue() <= currentTime);
+
+        // 2. Garante âncora de base se ainda não definida
+        if (!data.baseSet && entity.isOnGround()) {
+            data.setBase(entity.getPos(), world.getRegistryKey().getValue().toString());
+        }
+
+        Vec3d basePos = data.baseSet ? new Vec3d(data.baseX, data.baseY, data.baseZ) : entity.getPos();
+        double distToBaseSq = entity.squaredDistanceTo(basePos);
+
+        // 3. Tether de Base: Se Jacinto se afastou além do raio máximo (20 blocos), retorna imediatamente
+        if (distToBaseSq > MAX_BASE_PATROL_RADIUS_SQ) {
+            if (currentCombatTarget != null || entity.getTarget() != null) {
+                clearCombatTarget(entity);
+            }
+            entity.getNavigation().startMovingTo(basePos.x, basePos.y, basePos.z, 1.15);
+            return;
+        }
+
+        // 4. Verificação do alvo atual se já estiver em combate
+        if (currentCombatTarget != null) {
+            // Se morreu ou foi removido
+            if (!currentCombatTarget.isAlive() || currentCombatTarget.isRemoved()) {
+                clearCombatTarget(entity);
+                // Pequena celebração ao abater inimigo
+                world.spawnParticles(ParticleTypes.HAPPY_VILLAGER, entity.getX(), entity.getY() + 1.2, entity.getZ(), 5, 0.2, 0.2, 0.2, 0.02);
+            } else {
+                // Alvo saiu para muito longe da base?
+                if (currentCombatTarget.squaredDistanceTo(basePos) > (MAX_BASE_PATROL_RADIUS + 6.0) * (MAX_BASE_PATROL_RADIUS + 6.0)) {
+                    clearCombatTarget(entity);
+                    patrolToNewPoint(entity, basePos);
+                    return;
+                }
+
+                // Detector de loop/travamento contra paredes ou obstáculos
+                combatStuckTicks += 10;
+                double distToTargetSq = entity.squaredDistanceTo(currentCombatTarget);
+
+                // Se já faz mais de 40 ticks (2 segundos) tentando alcançar e está fora do alcance melee
+                if (combatStuckTicks >= 40 && distToTargetSq > 9.0) {
+                    boolean barelyMoved = lastCombatPos != null && entity.squaredDistanceTo(lastCombatPos) < 0.36;
+                    Path testPath = entity.getNavigation().findPathTo(currentCombatTarget, 1);
+                    boolean cannotReach = testPath == null || !testPath.reachesTarget();
+
+                    if (barelyMoved || cannotReach) {
+                        LOG.info("[Jacinto Combat] Inimigo {} inacessível (atrás de parede ou caverna). Ignorando e patrulhando outro setor.", currentCombatTarget.getName().getString());
+                        unreachableEnemies.put(currentCombatTarget.getUuid(), currentTime + 300L); // 15s de blacklist
+                        clearCombatTarget(entity);
+                        patrolToNewPoint(entity, basePos);
+                        return;
+                    }
+                }
+
+                lastCombatPos = entity.getPos();
+
+                // Mantém navegação ativa se estiver parado longe do alvo
+                if (entity.getNavigation().isIdle() && distToTargetSq > 4.0) {
+                    entity.getNavigation().startMovingTo(currentCombatTarget, 1.25);
+                }
+                return;
+            }
+        }
+
+        // 5. Se foi atacado recentemente por um inimigo próximo, prioriza revidar caso haja rota
+        if (entity.getAttacker() instanceof HostileEntity attacker && attacker.isAlive() && !attacker.isRemoved()
+                && !unreachableEnemies.containsKey(attacker.getUuid())
+                && attacker.squaredDistanceTo(basePos) <= (MAX_BASE_PATROL_RADIUS + 4.0) * (MAX_BASE_PATROL_RADIUS + 4.0)) {
+            Path path = entity.getNavigation().findPathTo(attacker, 1);
+            if (path != null && path.reachesTarget()) {
+                setCombatTarget(entity, attacker, path);
+                return;
+            } else {
+                unreachableEnemies.put(attacker.getUuid(), currentTime + 300L);
+            }
+        }
+
+        // 6. Busca novos inimigos nas redondezas da base (raio de 14 blocos)
+        Box searchBox = entity.getBoundingBox().expand(14.0, 5.0, 14.0);
+        List<HostileEntity> monsters = world.getEntitiesByClass(HostileEntity.class, searchBox, m ->
+                m.isAlive() &&
+                !m.isRemoved() &&
+                !m.getCommandTags().contains(JACINTO_TAG) &&
+                !unreachableEnemies.containsKey(m.getUuid()) &&
+                m.squaredDistanceTo(basePos) <= (MAX_BASE_PATROL_RADIUS + 4.0) * (MAX_BASE_PATROL_RADIUS + 4.0)
+        );
+
+        if (monsters.isEmpty()) {
+            return;
+        }
+
+        // Ordena monstros por proximidade de Jacinto
+        monsters.sort((a, b) -> Double.compare(entity.squaredDistanceTo(a), entity.squaredDistanceTo(b)));
+
+        for (HostileEntity m : monsters) {
+            // Checa rota aberta e acessível antes de engajar
+            Path path = entity.getNavigation().findPathTo(m, 1);
+            if (path != null && path.reachesTarget()) {
+                setCombatTarget(entity, m, path);
+                return;
+            } else {
+                // Inimigo preso atrás de parede ou caverna subterrânea
+                unreachableEnemies.put(m.getUuid(), currentTime + 300L);
+            }
+        }
+
+        // Se há monstros na área mas NENHUM tem rota transponível:
+        // Move para outro canto da patrulha para proteger o restante da base sem ficar parado na parede
+        patrolToNewPoint(entity, basePos);
+    }
+
+    /**
+     * Passeia suavemente pela base quando não há perigo por perto, mantendo guarda próxima à base
      */
     private void tickIdleWander(HuskEntity entity) {
         if (--idleWanderCooldown > 0) return;
-        idleWanderCooldown = 100 + random.nextInt(100); // A cada 5-10s
+        idleWanderCooldown = 80 + random.nextInt(80); // A cada 4-8s
 
-        if (entity.getTarget() != null) return;
+        if (entity.getTarget() != null || currentCombatTarget != null) return;
 
-        double ox = (random.nextDouble() - 0.5) * 16.0;
-        double oz = (random.nextDouble() - 0.5) * 16.0;
-        entity.getNavigation().startMovingTo(entity.getX() + ox, entity.getY(), entity.getZ() + oz, 0.9);
+        JacintoData data = mod.getData();
+        Vec3d basePos = data.baseSet ? new Vec3d(data.baseX, data.baseY, data.baseZ) : entity.getPos();
+        double distToBaseSq = entity.squaredDistanceTo(basePos);
+
+        if (distToBaseSq > 14.0 * 14.0) {
+            // Se já está afastado do centro da base, caminha de volta
+            entity.getNavigation().startMovingTo(basePos.x, basePos.y, basePos.z, 0.95);
+        } else {
+            // Patrulha setor aleatório dentro do raio seguro
+            patrolToNewPoint(entity, basePos);
+        }
     }
 
     /**
@@ -479,6 +689,9 @@ public class JacintoNpc {
      */
     public void onDeath(HuskEntity entity) {
         if (entity == null) return;
+
+        // Limpa silhueta de inimigo e alvo atual
+        clearCombatTarget(entity);
 
         // Salva os equipamentos atuais na memória para garantir que nada seja perdido
         JacintoData data = mod.getData();
