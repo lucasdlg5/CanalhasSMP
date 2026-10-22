@@ -52,6 +52,9 @@ public class JacintoMod implements ModInitializer {
             npc.onServerTick(server);
             organizer.onServerTick();
             miner.onServerTick();
+            if (server.getTicks() % 40 == 0) {
+                JacintoTelemetry.export(this, server);
+            }
         });
 
         // Interação com o Jacinto (equipar armaduras/armas e conversar)

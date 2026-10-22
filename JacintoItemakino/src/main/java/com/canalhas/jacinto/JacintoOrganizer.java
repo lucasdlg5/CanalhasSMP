@@ -53,6 +53,7 @@ import java.util.regex.Pattern;
 public class JacintoOrganizer {
     private static final Logger LOG = LoggerFactory.getLogger("JacintoOrganizer");
     private final JacintoMod mod;
+    private final JacintoTargetHighlight targetHighlight = new JacintoTargetHighlight();
 
     // Estado da organização atual
     private boolean isBusy = false;
@@ -707,6 +708,7 @@ public class JacintoOrganizer {
         this.stuckTicks = 0;
         this.rerouteAttempts = 0;
         this.lastPosition = null;
+        this.targetHighlight.clear();
         mod.getData().setIdleTask();
         mod.getNpc().setGlowingSilhouette(false, null);
         HuskEntity jacinto = mod.getNpc().getEntity();
@@ -725,6 +727,7 @@ public class JacintoOrganizer {
         this.stuckTicks = 0;
         this.rerouteAttempts = 0;
         this.lastPosition = null;
+        this.targetHighlight.clear();
         mod.getData().setIdleTask();
         mod.getNpc().setGlowingSilhouette(false, null);
         HuskEntity jacinto = mod.getNpc().getEntity();
@@ -801,7 +804,7 @@ public class JacintoOrganizer {
             // Tenta posição alternativa ao redor do baú
             BlockPos altPos = getAlternativeStandingPos(world, sourcePos, ++rerouteAttempts);
             jacinto.getNavigation().startMovingTo(altPos.getX() + 0.5, altPos.getY(), altPos.getZ() + 0.5, 1.3);
-            workCooldown = 15;
+            targetHighlight.update(world, sourcePos, targetItem);
             return true;
         }
 
@@ -850,11 +853,13 @@ public class JacintoOrganizer {
             return true;
         }
 
-        // Movimento padrão: navega até o ponto de apoio do baú
-        if (!jacinto.getNavigation().isFollowingPath() || world.getServer().getTicks() % 20 == 0) {
-            jacinto.getNavigation().startMovingTo(bestStandPos.getX() + 0.5, bestStandPos.getY(), bestStandPos.getZ() + 0.5, 1.25);
+        // Atualiza a silhueta luminosa VERDE no baú-alvo
+        targetHighlight.update(world, sourcePos, targetItem);
+
+        // Movimento padrão: navega até o ponto de apoio do baú de forma contínua e ágil
+        if (!jacinto.getNavigation().isFollowingPath() || world.getServer().getTicks() % 10 == 0) {
+            jacinto.getNavigation().startMovingTo(bestStandPos.getX() + 0.5, bestStandPos.getY(), bestStandPos.getZ() + 0.5, 1.3);
         }
-        workCooldown = 15;
         return true;
     }
 

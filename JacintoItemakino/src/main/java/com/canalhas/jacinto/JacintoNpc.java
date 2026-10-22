@@ -226,7 +226,7 @@ public class JacintoNpc {
         if (husk.getHealth() > 20.0f) husk.setHealth(20.0f);
 
         var speedAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-        if (speedAttr != null) speedAttr.setBaseValue(0.28);
+        if (speedAttr != null) speedAttr.setBaseValue(0.33); // Velocidade aprimorada para passos ágeis e decididos
 
         var attackAttr = husk.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE);
         if (attackAttr != null) attackAttr.setBaseValue(4.0);
@@ -235,11 +235,9 @@ public class JacintoNpc {
         husk.targetSelector.clear(goal -> true);
         husk.goalSelector.clear(goal -> true);
 
-        // Registra IA amigável
+        // Registra IA amigável (sem LookAtPlayer nem Wander distrativos enquanto trabalha)
         husk.goalSelector.add(0, new SwimGoal(husk));
         husk.goalSelector.add(2, new MeleeAttackGoal(husk, 1.25, false));
-        husk.goalSelector.add(5, new WanderAroundFarGoal(husk, 0.9));
-        husk.goalSelector.add(6, new LookAtEntityGoal(husk, PlayerEntity.class, 8.0f));
         husk.goalSelector.add(7, new LookAroundGoal(husk));
 
         // Foco de combate APENAS em monstros hostis verdadeiros

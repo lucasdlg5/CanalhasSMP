@@ -76,6 +76,7 @@ public class JacintoMiner {
 
     private ServerWorld world = null;
     private final JacintoHologram hologram = new JacintoHologram();
+    private final JacintoTargetHighlight targetHighlight = new JacintoTargetHighlight();
 
     public JacintoMiner(JacintoMod mod) {
         this.mod = mod;
@@ -457,6 +458,7 @@ public class JacintoMiner {
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.hologram.remove();
+        this.targetHighlight.clear();
 
         // Libera todos os chunks que estavam forçados para o Jacinto minerar
         releaseForcedChunks(this.world);
@@ -556,14 +558,17 @@ public class JacintoMiner {
 
             double distSq = entity.squaredDistanceTo(Vec3d.ofCenter(targetChestPos));
             if (distSq > 16.0) { // mais de 4 blocos de distância
-                if (!entity.getNavigation().isFollowingPath() || world.getServer().getTicks() % 20 == 0) {
-                    entity.getNavigation().startMovingTo(targetChestPos.getX() + 0.5, targetChestPos.getY(), targetChestPos.getZ() + 0.5, 1.25);
+                if (!entity.getNavigation().isFollowingPath() || world.getServer().getTicks() % 10 == 0) {
+                    entity.getNavigation().startMovingTo(targetChestPos.getX() + 0.5, targetChestPos.getY(), targetChestPos.getZ() + 0.5, 1.3);
                 }
+                Item deliverItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+                targetHighlight.update(targetWorld, targetChestPos, deliverItem != null ? deliverItem : Items.CHEST);
                 checkStuckAndClearObstacle(world, entity, targetChestPos);
                 return;
             }
 
             // Chegou ao baú! Descarrega os itens:
+            targetHighlight.clear();
             entity.getNavigation().stop();
             faceBlock(entity, targetChestPos);
             entity.swingHand(Hand.MAIN_HAND);
@@ -598,6 +603,7 @@ public class JacintoMiner {
 
             // Não está cheio, descarregou o lote e retorna para a mina
             isReturningToChest = false;
+            targetHighlight.clear();
             targetOrePos = null;
             navigationTarget = null;
             return;
@@ -621,16 +627,19 @@ public class JacintoMiner {
                 targetOrePos = scanNearbyOres(world, entity.getBlockPos(), 32);
 
                 if (targetOrePos != null) {
+                    Item miningItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+                    targetHighlight.update(world, targetOrePos, miningItem != null ? miningItem : Items.ANDESITE);
                     navigationTarget = findBestStandingPosition(world, targetOrePos, entity.getBlockPos());
                     if (navigationTarget != null) {
                         entity.getNavigation().startMovingTo(
                                 navigationTarget.getX() + 0.5,
                                 navigationTarget.getY(),
                                 navigationTarget.getZ() + 0.5,
-                                1.15
+                                1.3
                         );
                     }
                 } else {
+                    targetHighlight.clear();
                     // Sem minérios no raio: se tiver itens no bolso e baú configurado, vai descarregar!
                     if (hasMiningChest && carriedItemCount > 0) {
                         isReturningToChest = true;
@@ -651,9 +660,12 @@ public class JacintoMiner {
         if (distSq > 18.0) {
             // Ainda precisa andar até o bloco
             BlockPos dest = navigationTarget != null ? navigationTarget : targetOrePos;
-            if (!entity.getNavigation().isFollowingPath() || world.getServer().getTicks() % 20 == 0) {
-                entity.getNavigation().startMovingTo(dest.getX() + 0.5, dest.getY(), dest.getZ() + 0.5, 1.15);
+            if (!entity.getNavigation().isFollowingPath() || world.getServer().getTicks() % 10 == 0) {
+                entity.getNavigation().startMovingTo(dest.getX() + 0.5, dest.getY(), dest.getZ() + 0.5, 1.3);
             }
+
+            Item miningItem = targetItem != null ? targetItem : JacintoOrganizer.matchItemName(rawQuery);
+            targetHighlight.update(world, targetOrePos, miningItem != null ? miningItem : Items.ANDESITE);
 
             // Detector de enrosco / obstáculo
             checkStuckAndClearObstacle(world, entity, dest);
@@ -747,6 +759,7 @@ public class JacintoMiner {
                 }
             }
 
+            targetHighlight.clear();
             targetOrePos = null;
             navigationTarget = null;
         }
@@ -1271,6 +1284,7 @@ public class JacintoMiner {
         this.targetOrePos = null;
         this.navigationTarget = null;
         this.hologram.remove();
+        this.targetHighlight.clear();
         releaseForcedChunks(world);
         mod.getData().setIdleTask();
         mod.getNpc().setGlowingSilhouette(false, null);
