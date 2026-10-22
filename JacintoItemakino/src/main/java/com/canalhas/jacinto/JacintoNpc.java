@@ -102,7 +102,7 @@ public class JacintoNpc {
         }
 
         // Comportamento quando está Ocioso (Idle): Defesa da base e patrulha
-        if (!mod.getOrganizer().isBusy()) {
+        if (!mod.getOrganizer().isBusy() && !mod.getMiner().isMining()) {
             tickIdleCombat(entity);
             tickIdleWander(entity);
         }
@@ -180,7 +180,16 @@ public class JacintoNpc {
         }
 
         Vec3d spawnPos;
-        if (data.baseSet) {
+        if ("MINING".equalsIgnoreCase(data.currentTask) && data.miningY != 0.0 && data.miningDimension != null) {
+            Identifier dimId = Identifier.tryParse(data.miningDimension);
+            if (dimId != null) {
+                ServerWorld mineWorld = server.getWorld(RegistryKey.of(RegistryKeys.WORLD, dimId));
+                if (mineWorld != null) {
+                    world = mineWorld;
+                }
+            }
+            spawnPos = new Vec3d(data.miningX, data.miningY, data.miningZ);
+        } else if (data.baseSet) {
             spawnPos = new Vec3d(data.baseX, data.baseY, data.baseZ);
         } else if (!server.getPlayerManager().getPlayerList().isEmpty()) {
             ServerPlayerEntity p = server.getPlayerManager().getPlayerList().get(0);
@@ -237,8 +246,16 @@ public class JacintoNpc {
         world.playSound(null, spawnPos.x, spawnPos.y, spawnPos.z, SoundEvents.ENTITY_VILLAGER_YES, SoundCategory.NEUTRAL, 1.0f, 1.0f);
 
         if (announceRespawn) {
-            String phrase = RESPAWN_PHRASES[random.nextInt(RESPAWN_PHRASES.length)];
-            server.getPlayerManager().broadcast(Text.literal(phrase), false);
+            if ("MINING".equalsIgnoreCase(data.currentTask)) {
+                String phrase = "§6[Jacinto Itemakino Baú] §eMorri mas voltei com sede de minério! Retomando a picareta e a extração de [" + mod.getMiner().getTargetDisplayName() + "] imediatamente! ⛏️🔥";
+                server.getPlayerManager().broadcast(Text.literal(phrase), false);
+                mod.getMiner().resumeMining();
+            } else {
+                String phrase = RESPAWN_PHRASES[random.nextInt(RESPAWN_PHRASES.length)];
+                server.getPlayerManager().broadcast(Text.literal(phrase), false);
+            }
+        } else if ("MINING".equalsIgnoreCase(data.currentTask)) {
+            mod.getMiner().resumeMining();
         }
 
         return husk;
@@ -289,7 +306,8 @@ public class JacintoNpc {
         if (player.isSneaking() && held.isEmpty()) {
             player.sendMessage(Text.literal("§6=== 📦 STATUS DO JACINTO ITEMAKINO BAÚ ==="), false);
             player.sendMessage(Text.literal("§fVida: §a" + String.format("%.0f", jacinto.getHealth()) + "/20 ❤"), false);
-            player.sendMessage(Text.literal("§fArma: §e" + getStackDisplayName(jacinto.getMainHandStack())), false);
+            player.sendMessage(Text.literal("§fTarefa Atual: §e" + (mod.getMiner().isMining() ? "Minerando " + mod.getMiner().getTargetDisplayName() : (mod.getOrganizer().isBusy() ? "Organizando Baús" : "Patrulhando / Ocioso"))), false);
+            player.sendMessage(Text.literal("§fArma/Ferramenta: §e" + getStackDisplayName(jacinto.getMainHandStack())), false);
             player.sendMessage(Text.literal("§fEscudo/Mão Secundária: §e" + getStackDisplayName(jacinto.getOffHandStack())), false);
             player.sendMessage(Text.literal("§fArmadura: §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.HEAD)) + " §7| §b" +
@@ -297,6 +315,7 @@ public class JacintoNpc {
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.LEGS)) + " §7| §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.FEET))), false);
             player.sendMessage(Text.literal("§fTotal de Itens Organizados na Carreira: §a" + data.totalItemsOrganized + " itens"), false);
+            player.sendMessage(Text.literal("§fTotal de Minérios Extraídos na Carreira: §b" + data.totalBlocksMined + " blocos"), false);
             player.sendMessage(Text.literal("§7(Dica: Clique com armaduras ou armas na mão dele para equipá-lo!)"), false);
             jacinto.playSound(SoundEvents.ENTITY_VILLAGER_YES, 1.0f, 1.0f);
             return;

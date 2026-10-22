@@ -26,24 +26,27 @@ public class JacintoMod implements ModInitializer {
     private JacintoData data;
     private JacintoNpc npc;
     private JacintoOrganizer organizer;
+    private JacintoMiner miner;
 
     @Override
     public void onInitialize() {
-        LOG.info("[Jacinto Itemakino] Inicializando mod organizador de baús...");
+        LOG.info("[Jacinto Itemakino] Inicializando mod organizador de baús e mineração autônoma...");
 
         Path configDir = FabricLoader.getInstance().getConfigDir().resolve("jacinto");
         this.data = JacintoData.load(configDir);
         this.npc = new JacintoNpc(this);
         this.organizer = new JacintoOrganizer(this);
+        this.miner = new JacintoMiner(this);
 
-        // Registro de Comandos (/organizar e /jacinto)
+        // Registro de Comandos (/organizar, /minerar e /jacinto)
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 JacintoCommands.register(dispatcher, this));
 
-        // Tick loop do servidor para movimentação, organização e respawn
+        // Tick loop do servidor para movimentação, organização, mineração e respawn
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             npc.onServerTick(server);
             organizer.onServerTick();
+            miner.onServerTick();
         });
 
         // Interação com o Jacinto (equipar armaduras/armas e conversar)
@@ -92,5 +95,9 @@ public class JacintoMod implements ModInitializer {
 
     public JacintoOrganizer getOrganizer() {
         return organizer;
+    }
+
+    public JacintoMiner getMiner() {
+        return miner;
     }
 }

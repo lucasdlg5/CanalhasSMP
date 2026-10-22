@@ -1,21 +1,43 @@
 # 📦 Jacinto Itemakino Baú
 
 > **Mod Oficial Server-Side para Fabric 1.20.1 — CanalhasSMP**  
-> *"Jacinto organizando, a firma prosperando! Deixa que o Jacinto bota ordem na bagunça."*
+> *"Jacinto organizando, minerando e a firma prosperando! Deixa que o Jacinto bota ordem na bagunça e traz os minérios pra base."*
 
 ---
 
 ## 📖 Visão Geral
 
-O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e protetor criado para resolver de vez a bagunça de baús no servidor. 
+O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e multifuncional criado para a firma CanalhasSMP. Ele combina três grandes funções:
 
-Basta colocar uma placa identificando o que vai em cada baú e usar o comando `/organizar`: o Jacinto lê a placa, varre todos os baús e barris da redondeza em até **24 blocos**, coleta os itens correspondentes e traz tudo para o baú de destino — **com proteção total contra loops infinitos**.
-
-Enquanto não está organizando baús, o Jacinto atua como **guardião da base**, patrulhando a redondeza e atacando monstros hostis com as armaduras e armas que os jogadores derem a ele!
+1. **📦 Organização Inteligente de Baús**: Lê a placa de um baú e varre recipientes vizinhos em 24 blocos, concentrando os itens com **proteção total contra loops infinitos**.
+2. **⛏️ Mineração Passiva e Autônoma**: Você pede um item/minério para ele e ele ativa seu **scanner geológico de 32 blocos**, caminha pelo trajeto mais acessível e começa a escavar os veios de minério sem parar!
+3. **⚔️ Proteção da Base e Persistência**: Pode ser equipado com quaisquer armas/armaduras de jogador, patrulha a base atacando monstros hostis e **nunca despawna** — graças a um sistema dinâmico de **3x3 Chunks Forçados**, continuando seu trabalho mesmo quando nenhum jogador está por perto! Se morrer, respawna em 5 segundos e retoma a tarefa imediatamente!
 
 ---
 
-## 🔄 Fluxo de Funcionamento (Como Funciona)
+## 🔄 Fluxos de Funcionamento
+
+### 1. Fluxo de Mineração Passiva Autônoma (`/minerar`)
+
+```mermaid
+flowchart TD
+    A["⛏️ Jogador digita /minerar diamante (ou ferro, ouro, etc.)"] --> B["💬 Mensagem privada de confirmação ao jogador"]
+    B --> C["🔒 Sistema ativa 3x3 Chunks Forçados e Anti-Despawn"]
+    C --> D["📡 Scanner geológico varre raio de 32 blocos por veios"]
+    D --> E{"Veio de minério encontrado?"}
+    E -- "Sim" --> F["🚶 Caminha pelo trajeto aberto mais próximo ao veio"]
+    F --> G["⛏️ Bate picareta e escava o minério com efeitos e drops"]
+    G --> H["📈 Incrementa estatística e notifica marcos de extração"]
+    H --> D
+    E -- "Não" --> I["🧭 Prospeção / Strip-Mining em túnel 1x2 na camada ideal"]
+    I --> D
+    J["☠️ Jacinto morre em combate?"] --> K["⏳ Timer de 5s: Mantém tarefa e equipamentos"]
+    K --> L["⚡ Respawn triunfal e volta direta para a mina!"]
+    L --> D
+    M["🛑 Jogador digita /minerar stop"] --> N["🔓 Libera chunks forçados e volta ao repouso na base"]
+```
+
+### 2. Fluxo de Organização de Baús (`/organizar`)
 
 ```mermaid
 flowchart TD
@@ -33,87 +55,104 @@ flowchart TD
 
 ---
 
-## 🛠️ Como Usar na Prática (Passo a Passo Didático)
+## ⛏️ Como Usar a Mineração Passiva (Passo a Passo)
+
+### Passo 1: Pedir o Item / Minério Desejado
+Digite no chat do jogo o comando `/minerar` seguido do nome do minério (em português, inglês ou ID):
+```minecraft
+/minerar diamante
+```
+- **Outros exemplos populares:**
+  - `/minerar ferro` (ou `iron`)
+  - `/minerar ouro` (ou `gold`)
+  - `/minerar carvao` (ou `coal`)
+  - `/minerar cobre` (ou `copper`)
+  - `/minerar redstone`
+  - `/minerar lapis`
+  - `/minerar esmeralda`
+  - `/minerar ancient_debris` (ou `debris`, `netherite`, `detrito`)
+  - `/minerar quartzo` (ou `quartz`)
+  - Minérios de mods (ex: `/minerar tin_ore`, `/minerar lead`, etc.).
+
+### Passo 2: Confirmação e Ativação do Scanner
+O Jacinto envia uma confirmação privada para você:
+> `[Jacinto Itemakino Baú] Opa, patrão Asminn! Iniciando mineração passiva de: [Diamante]! Ligando scanner geológico e fixando carregamento dos chunks da mina...`
+
+### Passo 3: Como o Jacinto Trabalha na Mina
+1. **Scanner Geológico:** Varre um cubo de até **32 blocos de raio** procurando por blocos do minério pedido.
+2. **Navegação Inteligente:** Antes de quebrar qualquer bloco, ele procura o caminho aberto (chão sólido e ar) mais próximo do minério e caminha até lá.
+3. **Escavação Cuidadosa:** Só quebra blocos quando necessário para abrir passagem até o minério, evitando quebrar lava ou cair em abismos.
+4. **Prospeção por Túnel (Strip Mining):** Se não houver minérios visíveis no scanner imediato, ele desce com segurança até a altura ideal do minério (ex: Y = -58 para Diamante/Redstone, Y = 14 para Netherite, Y = 16 para Ferro) e escava um túnel 1x2 reto até o scanner apitar um novo veio!
+5. **Ferramenta & Encantamentos:** Ele empunha uma picareta (se você der a ele uma picareta com **Fortuna III** ou **Eficiência**, ele usará com todos os bônus!).
+
+### Passo 4: Interromper ou Trocar de Tarefa
+- Para encerrar o expediente dele:
+  ```minecraft
+  /minerar stop
+  ```
+  Ele desativa os chunks forçados, para de cavar e avisa quantos minérios conseguiu extrair.
+- Para trocar o que ele está minerando: basta digitar `/minerar ouro` (ele ajusta o alvo na hora).
+- Para fazê-lo organizar baús: digite `/organizar` (ele cancela a mineração e vai para a organização).
+
+---
+
+## 🌐 Tecnologia Anti-Despawn e Chunks Forçados (Trabalho Contínuo a Distância)
+
+No Minecraft vanilla, entidades normais entram em *despawn* ou congelam quando os jogadores se afastam mais de 32 ou 128 blocos, e os chunks são descarregados da memória.
+
+Para resolver isso de forma 100% confiável no Jacinto:
+1. **Persistência Total:** O Jacinto recebe flag de persistência permanente (`cannotDespawn`).
+2. **Carregamento Dinâmico 3x3 (Forced Chunks):** Enquanto está minerando, o Jacinto mantém um grid de **9 chunks (3x3)** centralizados na posição dele forçados via API nativa de chunks (`setChunkForced`).
+3. **Sem Vazamento de Memória:** Conforme o Jacinto avança caminhando pelo subterrâneo, os chunks antigos que ficaram para trás são liberados e os novos são ativados.
+4. **Trabalho Sem Jogadores:** Ele continua minerando normalmente mesmo se todos os jogadores saírem do servidor ou estiverem em outra dimensão (Nether / The End)!
+
+---
+
+## 🔁 Persistência Ininterrupta Através de Mortes e Restarts
+
+- **A Tarefa Nunca é Perdida:** A tarefa atual (`MINING`, `ORGANIZING` ou `IDLE`) e o alvo de mineração ficam salvos em `config/jacinto/jacinto_data.json`.
+- **Morte em Combate:** Se monstros derrotarem o Jacinto na mina:
+  1. Seus itens e picareta **não caem no chão** e ficam salvos em segurança.
+  2. Um timer de 5 segundos é disparado.
+  3. Ele renasce com 20 HP, equipa suas ferramentas e **volta imediatamente para a coordenada da mina para continuar escavando**!
+  4. Manda frase cômica no chat:
+     > `[Jacinto Itemakino Baú] Morri mas voltei com sede de minério! Retomando a picareta e a extração de [Diamante] imediatamente! ⛏️🔥`
+
+---
+
+## 📦 Como Usar a Organização de Baús (Passo a Passo)
 
 ### Passo 1: Preparar o Baú e a Placa
-1. Coloque o seu baú (simples ou duplo) ou barril no local desejado.
+1. Coloque o baú (simples ou duplo) ou barril no local desejado.
 2. Coloque uma placa **na frente**, **em cima** ou **grudada na lateral** do baú.
-3. Escreva na placa o nome do item que aquele baú deve armazenar.
-   - **Exemplos aceitos em Português:** `Diamante`, `Ferro`, `Barra de Ferro`, `Ouro`, `Cobre`, `Carvão`, `Redstone`, `Esmeralda`, `Pedra`, `Pedregulho`, `Madeira`, etc.
-   - **Exemplos em Inglês / ID:** `diamond`, `iron_ingot`, `raw_iron`, `cobblestone`.
-   - **Identificação por Conteúdo:** Se a placa tiver um apelido ou estiver decorada, mas o baú já contiver o item dentro, o Jacinto detecta automaticamente o item existente no baú!
+3. Escreva na placa o nome do item que aquele baú deve armazenar (ex: `Diamante`, `Ferro`, `Ouro`, `Redstone`, `Madeira`, etc.).
+   - Se o baú já contiver o item dentro, o Jacinto detecta automaticamente mesmo com placa decorada!
 
 ### Passo 2: Executar o Comando
-Mire a mira do jogo diretamente para a placa (ou para o baú com a placa) e digite no chat:
+Mire a mira do jogo diretamente para a placa e digite:
 ```minecraft
 /organizar
 ```
 
 ### Passo 3: Confirmação e Trabalho
-O Jacinto responderá imediatamente no seu chat privado:
-> `[Jacinto Itemakino Baú] Opa, patrão Asminn! Identifiquei o item: [Diamante]. Revistando 8 baús vizinhos para concentrar tudo aqui...`
-
-Ele começará a caminhar entre os baús da base, abrindo os recipientes com efeitos sonoros e partículas, transferindo todos os itens correspondentes para o baú central.
-
-### Passo 4: Cancelar a Qualquer Momento
-Se você precisar sair ou quiser interromper o trabalho do Jacinto no meio do trajeto, digite:
-```minecraft
-/organizar stop
-```
-O Jacinto puxará o freio de mão imediatamente e avisará quantos itens conseguiu guardar até aquele momento.
-
----
-
-## 🛡️ Prevenção Total de Loop (Sem Retirar do Próprio Baú)
-
-Um dos maiores desafios de NPCs organizadores é o perigo de entrar em loop: retirar o item de um baú e recolocá-lo no mesmo lugar.
-
-No **Jacinto Itemakino**, esse problema foi eliminado na raiz:
-1. Assim que a placa é lida, a posição do baú alvo (`targetChestPos`) é registrada.
-2. Se for um **baú duplo**, o mod localiza automaticamente a outra metade conectada.
-3. Ambas as metades são inseridas em uma **Lista Negra de Coleta (Blacklist)**.
-4. O scanner de 24 blocos **ignora estritamente** essas coordenadas durante toda a rotina de busca.
+O Jacinto responde no chat privado e transfere todos os itens correspondentes dos baús em até **24 blocos**, com **proteção total contra loops infinitos** (o baú alvo e sua metade dupla são estritamente ignorados na coleta).
 
 ---
 
 ## ⚔️ Equipamentos, Vida e Defesa da Base
-
-O Jacinto é um operário duro na queda que protege a firma de invasores!
 
 | Característica | Detalhes |
 | :--- | :--- |
 | **Vida Máxima** | **20 HP** (10 corações normais de jogador). |
 | **Aparência** | Humanóide operário (Husk) — não queima sob o sol e renderiza todas as armaduras. |
 | **Comportamento Passivo** | Patrulha a base num raio de 16 blocos enquanto ocioso. |
-| **Combate** | Ao avistar monstros hostis (Zumbis, Creepers, Esqueletos, Aranhas) em até 14 blocos, parte para o ataque com sua arma equipada. |
-| **Segurança Absoluta** | **Nunca ataca jogadores**, animais domesticados (lobos, gatos) ou aldeões. |
+| **Combate** | Ao avistar monstros hostis em até 14 blocos, parte para o ataque com sua arma equipada. |
+| **Segurança Absoluta** | **Nunca ataca jogadores**, animais domesticados ou aldeões. |
 
 ### 🦺 Como Dar Equipamentos para o Jacinto:
-- **Equipar:** Basta **clicar com o botão direito** no Jacinto segurando qualquer item de equipamento:
-  - **Capacetes, Peitorais, Calças e Botas** (Couro, Ferro, Diamante, Netherite, etc.).
-  - **Armas e Ferramentas:** Espadas, Machados, Picaretas na mão principal.
-  - **Mão Secundária:** Escudos ou Tochas.
-- **Troca Justa:** Se ele já estiver usando uma peça naquele slot, ele veste a nova com som de armadura e **devolve a peça antiga para o seu inventário**!
-- **Proteção de Inventário:** As armaduras e armas dadas ao Jacinto são salvas em arquivo (`config/jacinto/jacinto_data.json`). **Elas nunca dropam no chão e nunca são perdidas**.
-
-### 📊 Como Ver o Status do Jacinto:
-- Chegue perto dele e use **Shift + Clique Direito com a mão vazia**.
-- Ele exibirá a vida atual, todas as armaduras/armas equipadas e o recorde histórico de itens que já organizou na carreira!
-
----
-
-## 💀 Morte, Respawn em 5 Segundos e Frases Cômicas
-
-Se o Jacinto for derrotado em combate por uma horda de monstros:
-1. **Sem Perda de Loot:** Seus equipamentos não caem no chão; ficam guardados em segurança na memória.
-2. **Timer de 5 Segundos:** Um cronômetro de 100 ticks (5 segundos) é iniciado no servidor.
-3. **Retorno Triunfal:** Ele renasce na base com a vida cheia (20/20 HP) e com todas as suas armaduras e armas equipadas novamente.
-4. **Frase no Chat Global:** Ele manda uma pérola bem-humorada para animar os jogadores:
-   > - `[Jacinto Itemakino Baú] Rapaz, fui de base rapidão... tropecei na quina do baú, mas o Jacinto já tá vivinho da silva de novo! 📦💀`
-   > - `[Jacinto Itemakino Baú] Bateram no Jacinto, mas esqueceram que vaso ruim não quebra! Já tô de pé pro trabalho!`
-   > - `[Jacinto Itemakino Baú] Morri mas passo bem! 5 segundinhos de CLT remunerado e já voltei pra labuta da firma!`
-   > - `[Jacinto Itemakino Baú] Quase que o Jacinto fica guardado no baú pra sempre, mas o plano de saúde da firma cobriu o respawn!`
-   > - `[Jacinto Itemakino Baú] Derrubaram o peão, mas o Jacinto levanta mais rápido que entrega expressa! Quem é o próximo monstro?`
+- **Equipar:** Basta **clicar com o botão direito** no Jacinto segurando armadura (Capacete, Peitoral, Calça, Bota), Picareta, Espada ou Escudo.
+- **Troca Justa:** Se ele já estiver usando uma peça naquele slot, veste a nova e **devolve a peça antiga para o seu inventário**.
+- **Consulta de Status:** Use **Shift + Botão Direito com a mão vazia** para ver a vida dele, equipamentos, tarefa atual e recorde histórico de minérios e baús organizados!
 
 ---
 
@@ -121,44 +160,44 @@ Se o Jacinto for derrotado em combate por uma horda de monstros:
 
 | Comando | Descrição | Permissão |
 | :--- | :--- | :--- |
-| `/organizar` | Inicia a organização mirando na placa do baú. | Todos |
-| `/organizar stop` / `/organizar parar` | Interrompe imediatamente o trabalho atual. | Todos |
-| `/organizar status` / `/jacinto status` | Exibe a vida, coordenadas e tarefas do Jacinto. | Todos |
-| `/organizar chamar` / `/jacinto chamar` | Teleporta o Jacinto imediatamente para o jogador. | Todos |
-| `/jacinto base` | Define a sua posição atual como a base oficial de respawn do Jacinto. | Todos |
-| `/jacinto respawn` | Força o respawn imediato do Jacinto via comando. | OP (Nível 2) |
+| `/minerar <item>` | Inicia mineração passiva do minério desejado (ex: `/minerar diamante`). | Todos |
+| `/minerar stop` / `/minerar parar` | Interrompe a mineração e libera os chunks forçados. | Todos |
+| `/minerar status` | Exibe item em mineração, blocos minerados na sessão e chunks forçados. | Todos |
+| `/organizar` | Inicia a organização de baús mirando na placa do baú. | Todos |
+| `/organizar stop` | Interrompe imediatamente a organização de baús. | Todos |
+| `/organizar status` / `/jacinto status` | Exibe a vida, coordenadas, tarefa e histórico de trabalho do Jacinto. | Todos |
+| `/jacinto minerar <item>` | Alias do comando de mineração passiva. | Todos |
+| `/jacinto parar` / `/jacinto stop` | Para qualquer tarefa ativa (mineração ou organização). | Todos |
+| `/jacinto chamar` | Teleporta o Jacinto imediatamente para a sua posição. | Todos |
+| `/jacinto base` | Define a sua localização atual como base de repouso oficial do Jacinto. | Todos |
+| `/jacinto respawn` | Força a reinvocação do Jacinto caso necessário. | OP (Nível 2) |
 
 ---
 
-## ⚙️ Como Compilar e Instalar
+## ⚙️ Compilação e Instalação
 
-O mod é 100% autônomo e construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
+Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 
 ### 1. Compilação do Código-Fonte:
-No terminal da pasta `JacintoItemakino/`:
 ```bash
-# Windows
+# Na pasta JacintoItemakino/:
 gradlew.bat build -x test
-
-# Linux / macOS
-./gradlew build -x test
 ```
-O arquivo final compilado será gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.0.1.jar`
+O arquivo JAR é gerado em:
+`JacintoItemakino/build/libs/jacinto-itemakino-1.1.0.jar`
 
-### 2. Instalação no Servidor:
-1. Copie o arquivo `jacinto-itemakino-1.0.1.jar` para a pasta `mods/` do servidor.
+### 2. Instalação:
+1. Copie o arquivo `jacinto-itemakino-1.1.0.jar` para a pasta `mods/` do servidor.
 2. Inicie ou reinicie o servidor.
-3. Não requer instalação no cliente dos jogadores (é puramente server-side).
+3. Não requer instalação no cliente dos jogadores (100% server-side).
 
 ---
 
 ## ☁️ Backup Automático do Servidor
 
 O mod está integrado nativamente ao gerenciador de backup do ecossistema CanalhasSMP ([`ModSourceBackupManager`](../SenhorCummins/src/main/java/com/canalhas/cummins/ModSourceBackupManager.java)):
-- A cada 15 minutos e a cada parada do servidor, todo o código-fonte, scripts Gradle, JARs compilados e arquivos de configuração do Jacinto são sincronizados para `world/mods_desenvolvidos/`.
-- Quando o **Textile Backup** gera o `.zip` da pasta `world/` para a nuvem/Google Drive, o mod do Jacinto é salvo automaticamente junto!
+- A cada 15 minutos e ao encerrar o servidor, todo o código-fonte, scripts Gradle, JARs compilados e dados de persistência do Jacinto são sincronizados para `world/mods_desenvolvidos/` e enviados no `.zip` de backup do mundo.
 
 ---
 
-*Desenvolvido com carinho para a firma CanalhasSMP.* 📦❤️
+*Desenvolvido com carinho para a firma CanalhasSMP.* 📦⛏️❤️

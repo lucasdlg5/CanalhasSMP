@@ -1,6 +1,7 @@
 package com.canalhas.jacinto;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.entity.mob.HuskEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.command.CommandManager;
@@ -25,11 +26,31 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("base").executes(c -> handleJacintoSetBase(c.getSource(), mod)))
         );
 
-        // Alias /jacinto
+        // Comando de Mineração Passiva /minerar <item>
+        d.register(CommandManager.literal("minerar")
+                .then(CommandManager.literal("stop").executes(c -> handleMinerarStop(c.getSource(), mod)))
+                .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
+                .then(CommandManager.literal("cancelar").executes(c -> handleMinerarStop(c.getSource(), mod)))
+                .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
+                .then(CommandManager.argument("item", StringArgumentType.greedyString())
+                        .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
+                .executes(c -> handleMinerarHelp(c.getSource(), mod))
+        );
+
+        // Alias e centralizador /jacinto
         d.register(CommandManager.literal("jacinto")
                 .executes(c -> handleOrganizarStatus(c.getSource(), mod))
+                .then(CommandManager.literal("minerar")
+                        .then(CommandManager.literal("stop").executes(c -> handleMinerarStop(c.getSource(), mod)))
+                        .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
+                        .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
+                        .then(CommandManager.argument("item", StringArgumentType.greedyString())
+                                .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item")))))
+                .then(CommandManager.literal("parar").executes(c -> handlePararGeral(c.getSource(), mod)))
+                .then(CommandManager.literal("stop").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
                 .then(CommandManager.literal("base").executes(c -> handleJacintoSetBase(c.getSource(), mod)))
+                .then(CommandManager.literal("status").executes(c -> handleOrganizarStatus(c.getSource(), mod)))
                 .then(CommandManager.literal("respawn").requires(s -> s.hasPermissionLevel(2))
                         .executes(c -> handleJacintoForceRespawn(c.getSource(), mod)))
         );
@@ -41,6 +62,10 @@ public final class JacintoCommands {
             src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
             return 0;
         }
+        // Se estava minerando, interrompe mineração para iniciar organização
+        if (mod.getMiner().isMining()) {
+            mod.getMiner().stopMining(player);
+        }
         mod.getOrganizer().tryStartOrganizing(player);
         return 1;
     }
@@ -48,6 +73,56 @@ public final class JacintoCommands {
     private static int handleOrganizarStop(ServerCommandSource src, JacintoMod mod) {
         ServerPlayerEntity player = src.getPlayer();
         mod.getOrganizer().stopOrganizing(player);
+        return 1;
+    }
+
+    private static int handleMinerarStart(ServerCommandSource src, JacintoMod mod, String item) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player == null) {
+            src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
+            return 0;
+        }
+        mod.getMiner().tryStartMining(player, item);
+        return 1;
+    }
+
+    private static int handleMinerarStop(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        mod.getMiner().stopMining(player);
+        return 1;
+    }
+
+    private static int handleMinerarHelp(ServerCommandSource src, JacintoMod mod) {
+        src.sendFeedback(() -> Text.literal("§6=== ⛏️ JACINTO ITEMAKINO - MINERAÇÃO PASSIVA ==="), false);
+        src.sendFeedback(() -> Text.literal("§fComo usar: §e/minerar <minério ou item>"), false);
+        src.sendFeedback(() -> Text.literal("§fExemplos: §e/minerar diamante§7, §e/minerar ferro§7, §e/minerar ouro§7, §e/minerar ancient_debris"), false);
+        src.sendFeedback(() -> Text.literal("§fOutros comandos: §e/minerar stop§7 | §e/minerar status"), false);
+        src.sendFeedback(() -> Text.literal("§7(O Jacinto usa um scanner de veios, mantém seus chunks forçados e nunca despawna mesmo longe!)"), false);
+        return 1;
+    }
+
+    private static int handleMinerarStatus(ServerCommandSource src, JacintoMod mod) {
+        JacintoMiner miner = mod.getMiner();
+        src.sendFeedback(() -> Text.literal("§6=== ⛏️ STATUS DA MINERAÇÃO DO JACINTO ==="), false);
+        if (miner.isMining()) {
+            src.sendFeedback(() -> Text.literal("§fStatus: §aAtivo minerando §6§l[" + miner.getTargetDisplayName() + "]"), false);
+            src.sendFeedback(() -> Text.literal("§fMinerados nesta sessão: §e" + miner.getSessionBlocksMined() + " blocos"), false);
+            src.sendFeedback(() -> Text.literal("§fChunks Carregados (3x3 Forçados): §b" + miner.getForcedChunks().size() + " chunks"), false);
+        } else {
+            src.sendFeedback(() -> Text.literal("§fStatus: §7Inativo / Ocioso. Use §e/minerar <item>§7 para ativá-lo!"), false);
+        }
+        src.sendFeedback(() -> Text.literal("§fTotal de Minérios na Carreira: §b" + mod.getData().totalBlocksMined + " blocos"), false);
+        return 1;
+    }
+
+    private static int handlePararGeral(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (mod.getMiner().isMining()) {
+            mod.getMiner().stopMining(player);
+        }
+        if (mod.getOrganizer().isBusy()) {
+            mod.getOrganizer().stopOrganizing(player);
+        }
         return 1;
     }
 
@@ -61,12 +136,22 @@ public final class JacintoCommands {
             src.sendFeedback(() -> Text.literal("§fVida: §a" + String.format("%.0f", entity.getHealth()) + "/20 ❤"), false);
             src.sendFeedback(() -> Text.literal("§fPosição: §eX: " + (int)entity.getX() + ", Y: " + (int)entity.getY() + ", Z: " + (int)entity.getZ() +
                     " §7(" + entity.getWorld().getRegistryKey().getValue().getPath() + ")"), false);
-            src.sendFeedback(() -> Text.literal("§fAtividade: §b" + (mod.getOrganizer().isBusy() ? "Organizando Baús..." : "Descansando / Patrulhando a Base")), false);
+
+            String activity;
+            if (mod.getMiner().isMining()) {
+                activity = "Minerando " + mod.getMiner().getTargetDisplayName() + " (" + mod.getMiner().getSessionBlocksMined() + " nesta sessão)";
+            } else if (mod.getOrganizer().isBusy()) {
+                activity = "Organizando Baús...";
+            } else {
+                activity = "Descansando / Patrulhando a Base";
+            }
+            src.sendFeedback(() -> Text.literal("§fAtividade: §b" + activity), false);
         } else {
             src.sendFeedback(() -> Text.literal("§fStatus: §cFora de combate / Aguardando Respawn"), false);
         }
         src.sendFeedback(() -> Text.literal("§fTotal de Itens Organizados: §e" + data.totalItemsOrganized + " itens"), false);
-        src.sendFeedback(() -> Text.literal("§7Comandos: §e/organizar§7 (olhando p/ placa) | §e/organizar stop§7 | §e/organizar chamar"), false);
+        src.sendFeedback(() -> Text.literal("§fTotal de Minérios Extraídos: §b" + data.totalBlocksMined + " blocos"), false);
+        src.sendFeedback(() -> Text.literal("§7Comandos: §e/organizar§7 | §e/minerar <item>§7 | §e/minerar stop§7 | §e/jacinto chamar"), false);
         return 1;
     }
 
@@ -87,7 +172,7 @@ public final class JacintoCommands {
             }
             player.getServerWorld().spawnParticles(ParticleTypes.HAPPY_VILLAGER, player.getX(), player.getY() + 1.0, player.getZ(), 10, 0.4, 0.4, 0.4, 0.1);
             player.getServerWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENTITY_VILLAGER_YES, SoundCategory.NEUTRAL, 1.0f, 1.0f);
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fCheguei, patrão! O que temos pra organizar hoje?"), false);
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fCheguei, patrão! Às suas ordens para organizar ou minerar!"), false);
         }
         return 1;
     }
@@ -97,7 +182,7 @@ public final class JacintoCommands {
         if (player == null) return 0;
 
         mod.getData().setBase(player.getPos(), player.getServerWorld().getRegistryKey().getValue().toString());
-        player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aBase principal do Jacinto redefinida para a sua localização atual!\n§7(Sempre que o Jacinto renascer, voltará para cá)."), false);
+        player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aBase principal do Jacinto redefinida para a sua localização atual!\n§7(Sempre que o Jacinto renascer fora de serviço, voltará para cá)."), false);
         return 1;
     }
 

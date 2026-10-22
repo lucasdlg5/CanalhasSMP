@@ -38,6 +38,15 @@ public class JacintoData {
     public boolean baseSet = false;
 
     public long totalItemsOrganized = 0;
+    public long totalBlocksMined = 0;
+
+    // Estado da tarefa atual: "IDLE", "ORGANIZING", "MINING"
+    public String currentTask = "IDLE";
+    public String miningTarget = "diamante";
+    public String miningDimension = "minecraft:overworld";
+    public double miningX = 0.0;
+    public double miningY = 0.0;
+    public double miningZ = 0.0;
 
     // Equipamentos salvos como SNBT (String NBT) para preservar encantamentos, durabilidade e atributos
     public Map<String, String> equipmentSnbt = new HashMap<>();
@@ -79,6 +88,30 @@ public class JacintoData {
         this.baseZ = pos.z;
         this.baseDimension = dimension;
         this.baseSet = true;
+        save();
+    }
+
+    public void setMiningTask(String targetOre, Vec3d pos, String dimension) {
+        this.currentTask = "MINING";
+        this.miningTarget = targetOre;
+        if (pos != null) {
+            this.miningX = pos.x;
+            this.miningY = pos.y;
+            this.miningZ = pos.z;
+        }
+        if (dimension != null) {
+            this.miningDimension = dimension;
+        }
+        save();
+    }
+
+    public void setOrganizingTask() {
+        this.currentTask = "ORGANIZING";
+        save();
+    }
+
+    public void setIdleTask() {
+        this.currentTask = "IDLE";
         save();
     }
 

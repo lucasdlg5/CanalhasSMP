@@ -78,6 +78,11 @@ public class JacintoOrganizer {
             return false;
         }
 
+        // Se estava minerando, interrompe mineração para focar nos baús
+        if (mod.getMiner().isMining()) {
+            mod.getMiner().stopMining(player);
+        }
+
         HitResult hit = player.raycast(6.0, 0, false);
         if (hit.getType() != HitResult.Type.BLOCK) {
             player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para uma placa na frente ou no baú que deseja organizar e tente novamente!"), false);
@@ -130,6 +135,7 @@ public class JacintoOrganizer {
 
         // Configura o alvo e as exclusões de loop
         this.isBusy = true;
+        mod.getData().setOrganizingTask();
         this.requestingPlayer = player;
         this.requestingPlayerUuid = player.getUuid();
         this.world = serverWorld;
@@ -257,6 +263,7 @@ public class JacintoOrganizer {
         }
 
         this.isBusy = false;
+        mod.getData().setIdleTask();
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
             jacinto.getNavigation().stop();
@@ -270,6 +277,7 @@ public class JacintoOrganizer {
 
     private void finishOrganizing(boolean interrupted, String reason) {
         this.isBusy = false;
+        mod.getData().setIdleTask();
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
             jacinto.getNavigation().stop();
