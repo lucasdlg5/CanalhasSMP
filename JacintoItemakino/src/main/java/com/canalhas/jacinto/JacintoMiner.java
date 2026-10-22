@@ -1087,7 +1087,7 @@ public class JacintoMiner {
                 double dy = entity.getY() - targetChestPos.getY();
                 boolean isWrongFloor = Math.abs(dy) >= 2.0;
 
-                if ((isWrongFloor && stuckTicks >= 40) || stuckTicks >= 80) {
+                if ((isWrongFloor && stuckTicks >= 60) || stuckTicks >= 100) {
                     BlockPos stand = JacintoOrganizer.findBestStandingPosAdjacent(world, targetChestPos);
                     entity.teleport(world, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, Collections.emptySet(), entity.getYaw(), 0.0f);
                     faceBlock(entity, targetChestPos);
@@ -1099,26 +1099,25 @@ public class JacintoMiner {
                 }
             }
 
-            // Se estiver indo até um minério alvo e ficar preso por mais de 40 ticks
+            // Se estiver indo até um minério alvo e ficar travado no trajeto
             if (!isReturningToChest && targetOrePos != null) {
-                Direction dirToTarget = Direction.fromRotation(entity.getYaw());
-                BlockPos obsFeet = entity.getBlockPos().offset(dirToTarget);
-                BlockPos obsHead = obsFeet.up();
+                // Tenta abrir caminho quebrando blocos obstrutores a cada 10 ticks
+                if (stuckTicks % 10 == 0) {
+                    Direction dirToTarget = Direction.fromRotation(entity.getYaw());
+                    BlockPos obsFeet = entity.getBlockPos().offset(dirToTarget);
+                    BlockPos obsHead = obsFeet.up();
 
-                boolean obstacleCleared = false;
-                if (canSafeBreak(world, obsHead) && !world.getBlockState(obsHead).isAir()) {
-                    safeBreakBlock(world, entity, obsHead);
-                    obstacleCleared = true;
-                }
-                if (canSafeBreak(world, obsFeet) && !world.getBlockState(obsFeet).isAir()) {
-                    safeBreakBlock(world, entity, obsFeet);
-                    obstacleCleared = true;
+                    if (canSafeBreak(world, obsHead) && !world.getBlockState(obsHead).isAir()) {
+                        safeBreakBlock(world, entity, obsHead);
+                    }
+                    if (canSafeBreak(world, obsFeet) && !world.getBlockState(obsFeet).isAir()) {
+                        safeBreakBlock(world, entity, obsFeet);
+                    }
                 }
 
-                // Se o obstáculo não pode ser quebrado (ex: claim ou parede de base protegida)
-                // ou se já passaram 40 ticks preso:
-                if (!obstacleCleared || stuckTicks >= 40) {
-                    LOG.info("[JacintoMiner] Alvo em {} inalcançável/bloqueado. Recalculando e buscando nova rota...", targetOrePos);
+                // Somente se persistir travado por 60 ticks (~3 segundos) sem conseguir avançar:
+                if (stuckTicks >= 60) {
+                    LOG.info("[JacintoMiner] Alvo em {} inalcançável/bloqueado após 3s travado. Recalculando e buscando nova rota...", targetOrePos);
                     ignoredOres.add(targetOrePos);
                     targetHighlight.clear();
                     targetOrePos = null;
@@ -1129,24 +1128,11 @@ public class JacintoMiner {
                     return;
                 }
             }
-
-            if (stuckTicks % 20 == 0) {
-                // Quebra bloco obstrutor na altura dos pés ou da cabeça em direção ao alvo
-                Direction dirToTarget = Direction.fromRotation(entity.getYaw());
-                BlockPos obsFeet = entity.getBlockPos().offset(dirToTarget);
-                BlockPos obsHead = obsFeet.up();
-
-                if (canSafeBreak(world, obsHead) && !world.getBlockState(obsHead).isAir()) {
-                    safeBreakBlock(world, entity, obsHead);
-                }
-                if (canSafeBreak(world, obsFeet) && !world.getBlockState(obsFeet).isAir()) {
-                    safeBreakBlock(world, entity, obsFeet);
-                }
-            }
         } else {
+            // Em movimento ativo normal: reseta contagem de travamento
             stuckTicks = 0;
-            lastPosition = pos;
         }
+        lastPosition = pos;
     }
 
     /**
@@ -1422,9 +1408,11 @@ public class JacintoMiner {
             return false;
         }
 
-        // Proteção de Construções na Superfície: NUNCA considera rochas/construções sob céu aberto ou acima do teto subterrâneo
+        // Proteção de Construções na Superfície: NUNCA considera rochas sob céu aberto ou acima do teto subterrâneo,
+        // a não ser que esteja no perímetro imediato do baú designado (área de trabalho/gerador do player)
         if (pos != null && world != null && isConstructionOrStoneTarget()) {
-            if (world.isSkyVisible(pos.up()) || pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
+            boolean nearChest = targetChestPos != null && pos.isWithinDistance(targetChestPos, 16.0);
+            if (!nearChest && (world.isSkyVisible(pos.up()) || pos.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y)) {
                 return false;
             }
         }
