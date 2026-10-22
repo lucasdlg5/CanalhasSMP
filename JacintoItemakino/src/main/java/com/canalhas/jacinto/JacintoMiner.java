@@ -204,9 +204,13 @@ public class JacintoMiner {
 
             player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura de até 32 blocos)."), false);
             player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados mantidos."), false);
+            player.sendMessage(Text.literal("§6✨ [Silhueta do Jacinto Ativada]: §fAcompanhe a silhueta dourada do Jacinto através das paredes e terreno enquanto ele minera!"), false);
             player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento se desejar interromper."), false);
             player.sendMessage(Text.literal("§6=================================================="), false);
         }
+
+        // Ativa a silhueta luminosa (Glowing Outline)
+        mod.getNpc().setGlowingSilhouette(true, player);
 
         if (entity != null) {
             entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
@@ -337,9 +341,13 @@ public class JacintoMiner {
 
             player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura contínua de até 32 blocos)."), false);
             player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados (trabalho contínuo mesmo longe dos players)."), false);
+            player.sendMessage(Text.literal("§6✨ [Silhueta do Jacinto Ativada]: §fAcompanhe a silhueta dourada do Jacinto através das paredes e terreno enquanto ele minera!"), false);
             player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento para eu encerrar o turno!"), false);
             player.sendMessage(Text.literal("§6=================================================="), false);
         }
+
+        // Ativa a silhueta luminosa (Glowing Outline)
+        mod.getNpc().setGlowingSilhouette(true, player);
 
         if (entity != null) {
             entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
@@ -368,6 +376,7 @@ public class JacintoMiner {
         releaseForcedChunks(this.world);
 
         mod.getData().setIdleTask();
+        mod.getNpc().setGlowingSilhouette(false, null);
 
         HuskEntity entity = mod.getNpc().getEntity();
         if (entity != null && entity.isAlive()) {
@@ -1064,6 +1073,7 @@ public class JacintoMiner {
         this.navigationTarget = null;
         releaseForcedChunks(world);
         mod.getData().setIdleTask();
+        mod.getNpc().setGlowingSilhouette(false, null);
         if (entity != null) {
             entity.getNavigation().stop();
             // Reverte a mão principal para a Espada (padrão ou customizada) ao concluir a tarefa

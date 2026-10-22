@@ -613,6 +613,10 @@ public class JacintoOrganizer {
         this.stuckTicks = 0;
         this.rerouteAttempts = 0;
         this.lastPosition = null;
+
+        // Ativa a silhueta luminosa (Glowing) do Jacinto para o jogador poder observá-lo a caminho através das paredes
+        mod.getNpc().setGlowingSilhouette(true, player);
+        player.sendMessage(Text.literal("§6✨ [Silhueta do Jacinto Ativada]: §fVocê pode acompanhar o trajeto luminoso do Jacinto através das paredes enquanto ele organiza os baús!"), false);
         return true;
     }
 
@@ -704,6 +708,7 @@ public class JacintoOrganizer {
         this.rerouteAttempts = 0;
         this.lastPosition = null;
         mod.getData().setIdleTask();
+        mod.getNpc().setGlowingSilhouette(false, null);
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
             jacinto.getNavigation().stop();
@@ -721,6 +726,7 @@ public class JacintoOrganizer {
         this.rerouteAttempts = 0;
         this.lastPosition = null;
         mod.getData().setIdleTask();
+        mod.getNpc().setGlowingSilhouette(false, null);
         HuskEntity jacinto = mod.getNpc().getEntity();
         if (jacinto != null) {
             jacinto.getNavigation().stop();

@@ -37,6 +37,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
@@ -69,6 +70,10 @@ public class JacintoNpc {
     private int respawnTicksRemaining = 0;
     private int idleCombatCooldown = 0;
     private int idleWanderCooldown = 0;
+
+    // Silhueta Luminosa (Glowing Outline) ativa durante tarefas delegadas
+    private boolean glowingSilhouette = false;
+    private UUID taskDelegatorUuid = null;
 
     private static final String[] RESPAWN_PHRASES = {
             "§6[Jacinto Itemakino Baú] §eRapaz, fui de base rapidão... tropecei na quina do baú, mas o Jacinto já tá vivinho da silva de novo! 📦💀",
@@ -132,6 +137,12 @@ public class JacintoNpc {
         }
         if (entity.getTarget() == null && entity.isAttacking()) {
             entity.setAttacking(false);
+        }
+
+        // Sincroniza a silhueta luminosa (Glowing): Ativa enquanto executa tarefa delegada, desliga quando ocioso
+        boolean shouldGlow = glowingSilhouette || mod.getOrganizer().isBusy() || mod.getMiner().isMining();
+        if (entity.isGlowing() != shouldGlow) {
+            entity.setGlowing(shouldGlow);
         }
 
         // Comportamento quando está Ocioso (Idle): Defesa da base e patrulha
@@ -237,11 +248,15 @@ public class JacintoNpc {
 
         husk.setAttacking(false);
 
-        // Adiciona ao scoreboard com colisão desligada
+        // Adiciona ao scoreboard com colisão desligada e cor da equipe
         applyScoreboardTeam(husk);
 
         // Uniforme de trabalho
         ensureWorkerAttire(husk);
+
+        // Silhueta luminosa caso esteja em tarefa ativa
+        boolean shouldGlow = glowingSilhouette || mod.getOrganizer().isBusy() || mod.getMiner().isMining();
+        husk.setGlowing(shouldGlow);
     }
 
     public void ensureWorkerAttire(HuskEntity husk) {
@@ -281,11 +296,37 @@ public class JacintoNpc {
                 team.setDisplayName(Text.literal("Equipe Jacinto"));
                 team.setCollisionRule(AbstractTeam.CollisionRule.NEVER);
                 team.setFriendlyFireAllowed(false);
+                team.setColor(Formatting.GOLD);
+            } else {
+                team.setColor(Formatting.GOLD);
             }
             scoreboard.addPlayerToTeam(husk.getEntityName(), team);
         } catch (Exception e) {
             LOG.warn("Falha ao registrar equipe scoreboard para Jacinto: " + e.getMessage());
         }
+    }
+
+    /**
+     * Ativa ou desativa a silhueta luminosa (Glowing Outline) do Jacinto.
+     * Fica visível através de paredes para que o jogador acompanhe o trajeto até o baú ou mina.
+     */
+    public void setGlowingSilhouette(boolean active, ServerPlayerEntity player) {
+        this.glowingSilhouette = active;
+        this.taskDelegatorUuid = (active && player != null) ? player.getUuid() : null;
+        HuskEntity entity = getEntity();
+        if (entity != null && entity.isAlive()) {
+            entity.setGlowing(active);
+            if (active && entity.getWorld() instanceof ServerWorld sw) {
+                sw.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.NEUTRAL, 0.7f, 1.6f);
+                sw.spawnParticles(ParticleTypes.GLOW, entity.getX(), entity.getY() + 1.0, entity.getZ(),
+                        15, 0.3, 0.5, 0.3, 0.05);
+            }
+        }
+    }
+
+    public boolean isGlowingSilhouette() {
+        return glowingSilhouette;
     }
 
     /**
