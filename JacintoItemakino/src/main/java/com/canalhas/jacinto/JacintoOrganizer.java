@@ -237,7 +237,7 @@ public class JacintoOrganizer {
         return null;
     }
 
-    private ItemFrameEntity findAttachedItemFrame(ServerWorld world, BlockPos chestPos) {
+    public ItemFrameEntity findAttachedItemFrame(ServerWorld world, BlockPos chestPos) {
         ItemFrameEntity frame = scanItemFrames(world, chestPos);
         if (frame != null) return frame;
 
@@ -253,9 +253,13 @@ public class JacintoOrganizer {
         List<ItemFrameEntity> list = world.getEntitiesByClass(
                 ItemFrameEntity.class,
                 new Box(pos).expand(1.25),
-                f -> !f.getHeldItemStack().isEmpty()
+                f -> true
         );
-        return list.isEmpty() ? null : list.get(0);
+        if (list.isEmpty()) return null;
+        for (ItemFrameEntity f : list) {
+            if (!f.getHeldItemStack().isEmpty()) return f;
+        }
+        return list.get(0);
     }
 
     public boolean canChestInsert(ServerWorld world, BlockPos pos) {
@@ -303,6 +307,48 @@ public class JacintoOrganizer {
                 return findAttachedChest(serverWorld, hitPos);
             } else if (getInventoryAtPos(serverWorld, hitPos) != null) {
                 return hitPos;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Procura uma moldura para a qual o jogador está olhando:
+     * 1. Diretamente na entidade Moldura (ItemFrameEntity)
+     * 2. Ou no Baú/Barril que possui uma Moldura afixada (inclusive checando ambas as metades de baú duplo)
+     */
+    public ItemFrameEntity findTargetItemFrameFromPlayerLook(ServerPlayerEntity player) {
+        if (player == null || player.getWorld().isClient()) return null;
+        ServerWorld serverWorld = player.getServerWorld();
+
+        // 1. Raycast de Moldura
+        Vec3d cameraPos = player.getCameraPosVec(1.0F);
+        Vec3d rot = player.getRotationVec(1.0F);
+        Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
+        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
+                e -> (e instanceof ItemFrameEntity), 36.0);
+
+        if (entityHit != null && entityHit.getEntity() instanceof ItemFrameEntity frame) {
+            return frame;
+        }
+
+        // 2. Raycast de Bloco (Baú ou Barril)
+        HitResult hit = player.raycast(6.0, 0, false);
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            BlockHitResult blockHit = (BlockHitResult) hit;
+            BlockPos hitPos = blockHit.getBlockPos();
+            BlockEntity hitBe = serverWorld.getBlockEntity(hitPos);
+
+            BlockPos chestPos = null;
+            if (hitBe instanceof SignBlockEntity) {
+                chestPos = findAttachedChest(serverWorld, hitPos);
+            } else if (getInventoryAtPos(serverWorld, hitPos) != null) {
+                chestPos = hitPos;
+            }
+
+            if (chestPos != null) {
+                return findAttachedItemFrame(serverWorld, chestPos);
             }
         }
         return null;

@@ -2,7 +2,9 @@ package com.canalhas.jacinto;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -55,7 +57,7 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
                 .then(CommandManager.argument("item", StringArgumentType.greedyString())
                         .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
-                .executes(c -> handleMinerarHelp(c.getSource(), mod))
+                .executes(c -> handleMinerarNoArgs(c.getSource(), mod))
         );
 
         // Alias e centralizador /jacinto
@@ -80,7 +82,8 @@ public final class JacintoCommands {
                         .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                         .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
                         .then(CommandManager.argument("item", StringArgumentType.greedyString())
-                                .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item")))))
+                                .executes(c -> handleMinerarStart(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
+                        .executes(c -> handleMinerarNoArgs(c.getSource(), mod)))
                 .then(CommandManager.literal("parar").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("stop").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
@@ -137,12 +140,36 @@ public final class JacintoCommands {
         return 1;
     }
 
+    private static int handleMinerarNoArgs(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player == null) {
+            src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
+            return 0;
+        }
+
+        // Tenta detectar Moldura (mirando diretamente nela ou no Baú/Barril com moldura afixada)
+        ItemFrameEntity frame = mod.getOrganizer().findTargetItemFrameFromPlayerLook(player);
+        if (frame != null) {
+            ItemStack held = frame.getHeldItemStack();
+            if (held.isEmpty()) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cEssa moldura está vazia! Coloque o item ou minério que deseja minerar dentro da moldura e use §e/minerar§c novamente."), false);
+                return 0;
+            }
+            mod.getMiner().tryStartMiningFromFrame(player, held);
+            return 1;
+        }
+
+        // Caso não esteja mirando em baú com moldura nem em moldura, exibe ajuda ilustrativa
+        return handleMinerarHelp(src, mod);
+    }
+
     private static int handleMinerarHelp(ServerCommandSource src, JacintoMod mod) {
         src.sendFeedback(() -> Text.literal("§6=== ⛏️ JACINTO ITEMAKINO - MINERAÇÃO PASSIVA ==="), false);
-        src.sendFeedback(() -> Text.literal("§fComo usar: §e/minerar <minério ou item>"), false);
-        src.sendFeedback(() -> Text.literal("§fExemplos: §e/minerar diamante§7, §e/minerar ferro§7, §e/minerar ouro§7, §e/minerar ancient_debris"), false);
+        src.sendFeedback(() -> Text.literal("§fVocê pode iniciar a mineração de duas formas:"), false);
+        src.sendFeedback(() -> Text.literal("§61. Moldura no Baú: §fColoque o item na moldura, olhe para ela (ou para o baú) e digite §e/minerar"), false);
+        src.sendFeedback(() -> Text.literal("§62. Comando Direto: §e/minerar <minério ou item> §7(ex: /minerar diamante, /minerar ferro, /minerar ancient_debris)"), false);
         src.sendFeedback(() -> Text.literal("§fOutros comandos: §e/minerar stop§7 | §e/minerar status"), false);
-        src.sendFeedback(() -> Text.literal("§7(O Jacinto usa um scanner de veios, mantém seus chunks forçados e nunca despawna mesmo longe!)"), false);
+        src.sendFeedback(() -> Text.literal("§7(O Jacinto usa scanner geológico de 32 blocos, mantém chunks forçados e nunca despawna mesmo longe!)"), false);
         return 1;
     }
 

@@ -6,6 +6,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.MiningToolItem;
@@ -84,9 +85,34 @@ public class JacintoMiner {
     }
 
     /**
-     * Inicia a mineração passiva do item desejado
+     * Inicia a mineração passiva a partir do item contido em uma Moldura
+     */
+    public boolean tryStartMiningFromFrame(ServerPlayerEntity player, ItemStack frameStack) {
+        if (frameStack == null || frameStack.isEmpty()) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cEssa moldura está vazia! Coloque o item ou minério que deseja minerar dentro dela."), false);
+            }
+            return false;
+        }
+
+        Item item = frameStack.getItem();
+        String query = resolveQueryFromItem(item);
+        String name = frameStack.getName().getString();
+
+        return tryStartMining(player, query, name, true);
+    }
+
+    /**
+     * Inicia a mineração passiva do item desejado via texto
      */
     public boolean tryStartMining(ServerPlayerEntity player, String query) {
+        return tryStartMining(player, query, null, false);
+    }
+
+    /**
+     * Inicia a mineração passiva com suporte a identificação via Moldura ou Comando Direto
+     */
+    public boolean tryStartMining(ServerPlayerEntity player, String query, String customDisplayName, boolean fromFrame) {
         if (query == null || query.isBlank()) {
             if (player != null) {
                 player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cInforme o que deseja que eu minere! Ex: §e/minerar diamante§c, §e/minerar ferro§c, §e/minerar ouro§c, etc."), false);
@@ -106,7 +132,7 @@ public class JacintoMiner {
         }
 
         this.rawQuery = query.trim();
-        this.targetDisplayName = resolveDisplayName(this.rawQuery);
+        this.targetDisplayName = resolveDisplayName(this.rawQuery, customDisplayName);
         this.isMining = true;
         this.requestingPlayerUuid = player != null ? player.getUuid() : null;
         this.targetOrePos = null;
@@ -138,7 +164,12 @@ public class JacintoMiner {
         if (player != null) {
             player.sendMessage(Text.literal("§6=================================================="), false);
             player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aOpa, patrão §b" + player.getName().getString() + "§a!"), false);
-            player.sendMessage(Text.literal("§fIniciando mineração passiva de: §6§l[" + targetDisplayName + "]§f!"), false);
+            if (fromFrame) {
+                player.sendMessage(Text.literal("§fIdentifiquei a referência na §6Moldura do Baú§f: §6§l[" + targetDisplayName + "]§f!"), false);
+                player.sendMessage(Text.literal("§aIniciando mineração passiva imediata até nova ordem dos patrões! ⛏️"), false);
+            } else {
+                player.sendMessage(Text.literal("§fIniciando mineração passiva de: §6§l[" + targetDisplayName + "]§f!"), false);
+            }
             player.sendMessage(Text.literal("§7- Scanner geológico ativado (varredura contínua de até 32 blocos)."), false);
             player.sendMessage(Text.literal("§7- Sistema anti-despawn e 3x3 chunks forçados (trabalho contínuo mesmo longe dos players)."), false);
             player.sendMessage(Text.literal("§7- Use §e/minerar stop§7 a qualquer momento para eu encerrar o turno!"), false);
@@ -619,12 +650,66 @@ public class JacintoMiner {
         if (q.contains("quartzo") || q.contains("quartz")) {
             return blockPath.contains("quartz_ore");
         }
+        if (q.contains("amethyst") || q.contains("ametista")) {
+            return blockPath.contains("amethyst");
+        }
 
         // Genérico: se o jogador pediu um minério específico de mod ou bloco com nome correspondente
-        return blockPath.contains(q) && (blockPath.contains("ore") || blockPath.contains("debris") || blockPath.contains("raw"));
+        if (blockPath.contains(q) && (blockPath.contains("ore") || blockPath.contains("debris") || blockPath.contains("raw"))) {
+            return true;
+        }
+
+        // Caso tenha referenciado um bloco de construção/pedra específico (ex: obsidian, stone, deepslate, etc.)
+        if (blockPath.equals(q) || blockPath.replace("_", " ").equals(q) || blockPath.contains(q)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static String resolveQueryFromItem(Item item) {
+        if (item == null || item == Items.AIR) return "";
+        if (item == Items.DIAMOND || item == Items.DIAMOND_ORE || item == Items.DEEPSLATE_DIAMOND_ORE || item == Items.DIAMOND_BLOCK) {
+            return "diamante";
+        }
+        if (item == Items.RAW_IRON || item == Items.IRON_INGOT || item == Items.IRON_ORE || item == Items.DEEPSLATE_IRON_ORE || item == Items.RAW_IRON_BLOCK || item == Items.IRON_BLOCK) {
+            return "ferro";
+        }
+        if (item == Items.RAW_GOLD || item == Items.GOLD_INGOT || item == Items.GOLD_ORE || item == Items.DEEPSLATE_GOLD_ORE || item == Items.NETHER_GOLD_ORE || item == Items.RAW_GOLD_BLOCK || item == Items.GOLD_BLOCK) {
+            return "ouro";
+        }
+        if (item == Items.COAL || item == Items.COAL_ORE || item == Items.DEEPSLATE_COAL_ORE || item == Items.COAL_BLOCK) {
+            return "carvao";
+        }
+        if (item == Items.RAW_COPPER || item == Items.COPPER_INGOT || item == Items.COPPER_ORE || item == Items.DEEPSLATE_COPPER_ORE || item == Items.RAW_COPPER_BLOCK || item == Items.COPPER_BLOCK) {
+            return "cobre";
+        }
+        if (item == Items.REDSTONE || item == Items.REDSTONE_ORE || item == Items.DEEPSLATE_REDSTONE_ORE || item == Items.REDSTONE_BLOCK) {
+            return "redstone";
+        }
+        if (item == Items.EMERALD || item == Items.EMERALD_ORE || item == Items.DEEPSLATE_EMERALD_ORE || item == Items.EMERALD_BLOCK) {
+            return "esmeralda";
+        }
+        if (item == Items.LAPIS_LAZULI || item == Items.LAPIS_ORE || item == Items.DEEPSLATE_LAPIS_ORE || item == Items.LAPIS_BLOCK) {
+            return "lapis";
+        }
+        if (item == Items.ANCIENT_DEBRIS || item == Items.NETHERITE_INGOT || item == Items.NETHERITE_SCRAP || item == Items.NETHERITE_BLOCK) {
+            return "debris";
+        }
+        if (item == Items.QUARTZ || item == Items.NETHER_QUARTZ_ORE || item == Items.QUARTZ_BLOCK) {
+            return "quartz";
+        }
+        if (item == Items.AMETHYST_SHARD || item == Items.AMETHYST_CLUSTER || item == Items.AMETHYST_BLOCK) {
+            return "amethyst";
+        }
+        return Registries.ITEM.getId(item).getPath().replace("_", " ");
     }
 
     private String resolveDisplayName(String query) {
+        return resolveDisplayName(query, null);
+    }
+
+    private String resolveDisplayName(String query, String fallbackCustomName) {
         String q = normalize(query);
         if (q.contains("diaman") || q.contains("diamond")) return "Diamante";
         if (q.contains("ferro") || q.contains("iron")) return "Ferro";
@@ -636,6 +721,10 @@ public class JacintoMiner {
         if (q.contains("lapis")) return "Lápis-Lazúli";
         if (q.contains("netherite") || q.contains("debris") || q.contains("detrito")) return "Detritos Ancestrais (Netherite)";
         if (q.contains("quartzo") || q.contains("quartz")) return "Quartzo";
+        if (q.contains("amethyst") || q.contains("ametista")) return "Ametista";
+        if (fallbackCustomName != null && !fallbackCustomName.isBlank()) {
+            return fallbackCustomName;
+        }
         return query;
     }
 

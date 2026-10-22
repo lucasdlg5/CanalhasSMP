@@ -21,7 +21,7 @@ O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e mul
 
 ```mermaid
 flowchart TD
-    A["⛏️ Jogador digita /minerar diamante (ou ferro, ouro, etc.)"] --> B["💬 Mensagem privada de confirmação ao jogador"]
+    A["⛏️ Jogador olha p/ Baú com Moldura e digita /minerar (ou /minerar <item>)"] --> B["💬 Mensagem privada de confirmação identificando o minério"]
     B --> C["🔒 Sistema ativa 3x3 Chunks Forçados e Anti-Despawn"]
     C --> D["📡 Scanner geológico varre raio de 32 blocos por veios"]
     D --> E{"Veio de minério encontrado?"}
@@ -34,7 +34,7 @@ flowchart TD
     J["☠️ Jacinto morre em combate?"] --> K["⏳ Timer de 5s: Mantém tarefa e equipamentos"]
     K --> L["⚡ Respawn triunfal e volta direta para a mina!"]
     L --> D
-    M["🛑 Jogador digita /minerar stop"] --> N["🔓 Libera chunks forçados e volta ao repouso na base"]
+    M["🛑 Jogador digita /minerar stop (ou nova tarefa /organizar)"] --> N["🔓 Libera chunks forçados e encerra expediente"]
 ```
 
 ### 2. Fluxo de Organização de Baús (`/organizar`)
@@ -57,8 +57,18 @@ flowchart TD
 
 ## ⛏️ Como Usar a Mineração Passiva (Passo a Passo)
 
-### Passo 1: Pedir o Item / Minério Desejado
-Digite no chat do jogo o comando `/minerar` seguido do nome do minério (em português, inglês ou ID):
+Você pode dar ordens de mineração ao Jacinto de duas formas muito práticas:
+
+### Opção 1: 🖼️ Apontando para o Baú com Moldura (Modo Visual - Novo na v1.4.0!)
+1. Coloque uma **Moldura** no baú (ou no bloco conectado a ele) e coloque o exemplar do item/minério dentro (ex: Diamante, Barra de Ferro, Ouro Bruto, Carvão, Detrito Ancestral, etc.).
+2. Mire a mira do jogo no **Baú** ou diretamente na **Moldura** e digite apenas:
+   ```minecraft
+   /minerar
+   ```
+3. O Jacinto lê o item na moldura, envia mensagem de confirmação privada e sai imediatamente para a mina escavar aquele minério passivamente até que alguém dê uma nova tarefa!
+
+### Opção 2: 💬 Digitando o Nome Direto no Chat
+Digite `/minerar` seguido do nome do minério (em português, inglês ou ID):
 ```minecraft
 /minerar diamante
 ```
@@ -74,25 +84,25 @@ Digite no chat do jogo o comando `/minerar` seguido do nome do minério (em port
   - `/minerar quartzo` (ou `quartz`)
   - Minérios de mods (ex: `/minerar tin_ore`, `/minerar lead`, etc.).
 
-### Passo 2: Confirmação e Ativação do Scanner
+### Confirmação e Ativação do Scanner
 O Jacinto envia uma confirmação privada para você:
-> `[Jacinto Itemakino Baú] Opa, patrão Asminn! Iniciando mineração passiva de: [Diamante]! Ligando scanner geológico e fixando carregamento dos chunks da mina...`
+> `[Jacinto Itemakino Baú] Opa, patrão Asminn! Identifiquei a referência na Moldura do Baú: [Diamante]! Iniciando mineração passiva imediata até nova ordem dos patrões! ⛏️`
 
-### Passo 3: Como o Jacinto Trabalha na Mina
+### Como o Jacinto Trabalha na Mina
 1. **Scanner Geológico:** Varre um cubo de até **32 blocos de raio** procurando por blocos do minério pedido.
 2. **Navegação Inteligente:** Antes de quebrar qualquer bloco, ele procura o caminho aberto (chão sólido e ar) mais próximo do minério e caminha até lá.
 3. **Escavação Cuidadosa:** Só quebra blocos quando necessário para abrir passagem até o minério, evitando quebrar lava ou cair em abismos.
 4. **Prospeção por Túnel (Strip Mining):** Se não houver minérios visíveis no scanner imediato, ele desce com segurança até a altura ideal do minério (ex: Y = -58 para Diamante/Redstone, Y = 14 para Netherite, Y = 16 para Ferro) e escava um túnel 1x2 reto até o scanner apitar um novo veio!
 5. **Ferramenta & Encantamentos:** Ele empunha uma picareta (se você der a ele uma picareta com **Fortuna III** ou **Eficiência**, ele usará com todos os bônus!).
 
-### Passo 4: Interromper ou Trocar de Tarefa
-- Para encerrar o expediente dele:
-  ```minecraft
-  /minerar stop
-  ```
-  Ele desativa os chunks forçados, para de cavar e avisa quantos minérios conseguiu extrair.
-- Para trocar o que ele está minerando: basta digitar `/minerar ouro` (ele ajusta o alvo na hora).
-- Para fazê-lo organizar baús: digite `/organizar` (ele cancela a mineração e vai para a organização).
+### Interromper ou Trocar de Tarefa
+- **O Jacinto fica nessa tarefa continuamente** até que os jogadores definam um novo trabalho:
+  - Para interromper a mineração e liberar os chunks:
+    ```minecraft
+    /minerar stop
+    ```
+  - Para trocar o que ele está minerando: aponte para outro baú com moldura e use `/minerar`, ou use `/minerar <novo_item>`.
+  - Para fazê-lo organizar baús: aponte para a placa/moldura e digite `/organizar` (ele cancela a mineração e vai para a organização de baús).
 
 ---
 
@@ -190,9 +200,11 @@ Você pode personalizar individualmente como o Jacinto interage com cada baú da
 | `/organizar nao nao` | Faz o Jacinto ignorar totalmente o baú mirado (mesmo que `ignore`). | Todos |
 | `/organizar stop` | Interrompe imediatamente a organização de baús. | Todos |
 | `/organizar status` / `/jacinto status` | Exibe a vida, coordenadas, tarefa e histórico de trabalho do Jacinto. | Todos |
-| `/minerar <item>` | Inicia mineração passiva do minério desejado (ex: `/minerar diamante`). | Todos |
+| `/minerar` | Inicia a mineração passiva do item contido na Moldura do Baú mirado. | Todos |
+| `/minerar <item>` | Inicia mineração passiva do minério desejado por texto (ex: `/minerar diamante`). | Todos |
 | `/minerar stop` / `/minerar parar` | Interrompe a mineração e libera os chunks forçados. | Todos |
 | `/minerar status` | Exibe item em mineração, blocos minerados na sessão e chunks forçados. | Todos |
+| `/jacinto minerar` | Inicia mineração olhando para a Moldura no baú. | Todos |
 | `/jacinto minerar <item>` | Alias do comando de mineração passiva. | Todos |
 | `/jacinto parar` / `/jacinto stop` | Para qualquer tarefa ativa (mineração ou organização). | Todos |
 | `/jacinto chamar` | Teleporta o Jacinto imediatamente para a sua posição. | Todos |
@@ -211,10 +223,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.3.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.4.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.3.0.jar` para a pasta `mods/` do servidor.
+1. Copie o arquivo `jacinto-itemakino-1.4.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 
