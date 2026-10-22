@@ -51,6 +51,21 @@ public class JacintoData {
     // Equipamentos salvos como SNBT (String NBT) para preservar encantamentos, durabilidade e atributos
     public Map<String, String> equipmentSnbt = new HashMap<>();
 
+    // Regras de permissão de baús: colocar / retirar itens
+    public static class ChestRule {
+        public boolean canInsert = true;
+        public boolean canExtract = true;
+
+        public ChestRule() {}
+
+        public ChestRule(boolean canInsert, boolean canExtract) {
+            this.canInsert = canInsert;
+            this.canExtract = canExtract;
+        }
+    }
+
+    public Map<String, ChestRule> chestRules = new HashMap<>();
+
     private transient Path filePath;
 
     public static JacintoData load(Path configDir) {
@@ -113,6 +128,36 @@ public class JacintoData {
     public void setIdleTask() {
         this.currentTask = "IDLE";
         save();
+    }
+
+    public void setChestRule(String dimension, BlockPos pos, boolean canInsert, boolean canExtract) {
+        String key = getPosKey(dimension, pos);
+        if (canInsert && canExtract) {
+            chestRules.remove(key);
+        } else {
+            chestRules.put(key, new ChestRule(canInsert, canExtract));
+        }
+        save();
+    }
+
+    public ChestRule getChestRule(String dimension, BlockPos pos) {
+        if (pos == null) return null;
+        String key = getPosKey(dimension, pos);
+        return chestRules.get(key);
+    }
+
+    public boolean canInsertIntoChest(String dimension, BlockPos pos) {
+        ChestRule rule = getChestRule(dimension, pos);
+        return rule == null || rule.canInsert;
+    }
+
+    public boolean canExtractFromChest(String dimension, BlockPos pos) {
+        ChestRule rule = getChestRule(dimension, pos);
+        return rule == null || rule.canExtract;
+    }
+
+    private static String getPosKey(String dimension, BlockPos pos) {
+        return (dimension != null ? dimension : "minecraft:overworld") + ":" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
     }
 
     public void saveEquipment(EquipmentSlot slot, ItemStack stack) {

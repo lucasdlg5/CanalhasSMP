@@ -15,9 +15,30 @@ public final class JacintoCommands {
     private JacintoCommands() {}
 
     public static void register(CommandDispatcher<ServerCommandSource> d, JacintoMod mod) {
+        // Sub-árvores para permissões de baú: /organizar <colocar> <tirar>
+        var simBranch = CommandManager.literal("sim")
+                .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, true, true)))
+                .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, true, false)))
+                .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, true, false)));
+
+        var naoBranch = CommandManager.literal("nao")
+                .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, false, true)))
+                .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, false, false)));
+
+        var naoAcentoBranch = CommandManager.literal("não")
+                .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, false, true)))
+                .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, false, false)));
+
         // Comando principal /organizar
         d.register(CommandManager.literal("organizar")
                 .executes(c -> handleOrganizarStart(c.getSource(), mod))
+                .then(CommandManager.literal("ignore").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(CommandManager.literal("ignorar").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(simBranch)
+                .then(naoBranch)
+                .then(naoAcentoBranch)
                 .then(CommandManager.literal("stop").executes(c -> handleOrganizarStop(c.getSource(), mod)))
                 .then(CommandManager.literal("parar").executes(c -> handleOrganizarStop(c.getSource(), mod)))
                 .then(CommandManager.literal("cancelar").executes(c -> handleOrganizarStop(c.getSource(), mod)))
@@ -40,6 +61,20 @@ public final class JacintoCommands {
         // Alias e centralizador /jacinto
         d.register(CommandManager.literal("jacinto")
                 .executes(c -> handleOrganizarStatus(c.getSource(), mod))
+                .then(CommandManager.literal("ignore").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(CommandManager.literal("ignorar").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                .then(CommandManager.literal("sim")
+                        .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, true, true)))
+                        .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, true, false)))
+                        .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, true, false))))
+                .then(CommandManager.literal("nao")
+                        .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, false, true)))
+                        .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                        .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, false, false))))
+                .then(CommandManager.literal("não")
+                        .then(CommandManager.literal("sim").executes(c -> handleChestPermission(c.getSource(), mod, false, true)))
+                        .then(CommandManager.literal("nao").executes(c -> handleChestPermission(c.getSource(), mod, false, false)))
+                        .then(CommandManager.literal("não").executes(c -> handleChestPermission(c.getSource(), mod, false, false))))
                 .then(CommandManager.literal("minerar")
                         .then(CommandManager.literal("stop").executes(c -> handleMinerarStop(c.getSource(), mod)))
                         .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
@@ -54,6 +89,16 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("respawn").requires(s -> s.hasPermissionLevel(2))
                         .executes(c -> handleJacintoForceRespawn(c.getSource(), mod)))
         );
+    }
+
+    private static int handleChestPermission(ServerCommandSource src, JacintoMod mod, boolean canInsert, boolean canExtract) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player == null) {
+            src.sendFeedback(() -> Text.literal("§cComando exclusivo para jogadores dentro do jogo!"), false);
+            return 0;
+        }
+        mod.getOrganizer().setChestPermission(player, canInsert, canExtract);
+        return 1;
     }
 
     private static int handleOrganizarStart(ServerCommandSource src, JacintoMod mod) {
@@ -151,7 +196,7 @@ public final class JacintoCommands {
         }
         src.sendFeedback(() -> Text.literal("§fTotal de Itens Organizados: §e" + data.totalItemsOrganized + " itens"), false);
         src.sendFeedback(() -> Text.literal("§fTotal de Minérios Extraídos: §b" + data.totalBlocksMined + " blocos"), false);
-        src.sendFeedback(() -> Text.literal("§7Comandos: §e/organizar§7 | §e/minerar <item>§7 | §e/minerar stop§7 | §e/jacinto chamar"), false);
+        src.sendFeedback(() -> Text.literal("§7Comandos: §e/organizar§7 | §e/organizar ignore§7 | §e/organizar sim nao§7 | §e/minerar <item>"), false);
         return 1;
     }
 

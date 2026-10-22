@@ -258,6 +258,100 @@ public class JacintoOrganizer {
         return list.isEmpty() ? null : list.get(0);
     }
 
+    public boolean canChestInsert(ServerWorld world, BlockPos pos) {
+        if (world == null || pos == null) return true;
+        String dim = world.getRegistryKey().getValue().toString();
+        if (!mod.getData().canInsertIntoChest(dim, pos)) return false;
+        BlockPos other = getDoubleChestOtherHalf(world, pos);
+        if (other != null && !mod.getData().canInsertIntoChest(dim, other)) return false;
+        return true;
+    }
+
+    public boolean canChestExtract(ServerWorld world, BlockPos pos) {
+        if (world == null || pos == null) return true;
+        String dim = world.getRegistryKey().getValue().toString();
+        if (!mod.getData().canExtractFromChest(dim, pos)) return false;
+        BlockPos other = getDoubleChestOtherHalf(world, pos);
+        if (other != null && !mod.getData().canExtractFromChest(dim, other)) return false;
+        return true;
+    }
+
+    public BlockPos findTargetChestFromPlayerLook(ServerPlayerEntity player) {
+        if (player == null || player.getWorld().isClient()) return null;
+        ServerWorld serverWorld = player.getServerWorld();
+
+        // 1. Raycast de Moldura
+        Vec3d cameraPos = player.getCameraPosVec(1.0F);
+        Vec3d rot = player.getRotationVec(1.0F);
+        Vec3d reachVec = cameraPos.add(rot.multiply(6.0));
+        Box searchBox = player.getBoundingBox().stretch(rot.multiply(6.0)).expand(1.5);
+        EntityHitResult entityHit = ProjectileUtil.raycast(player, cameraPos, reachVec, searchBox,
+                e -> (e instanceof ItemFrameEntity), 36.0);
+
+        if (entityHit != null && entityHit.getEntity() instanceof ItemFrameEntity frame) {
+            return findChestFromItemFrame(serverWorld, frame);
+        }
+
+        // 2. Raycast de Bloco
+        HitResult hit = player.raycast(6.0, 0, false);
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            BlockHitResult blockHit = (BlockHitResult) hit;
+            BlockPos hitPos = blockHit.getBlockPos();
+            BlockEntity hitBe = serverWorld.getBlockEntity(hitPos);
+
+            if (hitBe instanceof SignBlockEntity) {
+                return findAttachedChest(serverWorld, hitPos);
+            } else if (getInventoryAtPos(serverWorld, hitPos) != null) {
+                return hitPos;
+            }
+        }
+        return null;
+    }
+
+    public boolean setChestPermission(ServerPlayerEntity player, boolean canInsert, boolean canExtract) {
+        if (player == null || player.getWorld().isClient()) return false;
+        ServerWorld serverWorld = player.getServerWorld();
+
+        BlockPos chestPos = findTargetChestFromPlayerLook(player);
+        if (chestPos == null) {
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para um baú, barril ou placa/moldura conectada a ele para configurar as permissões!"), false);
+            return false;
+        }
+
+        String dim = serverWorld.getRegistryKey().getValue().toString();
+        mod.getData().setChestRule(dim, chestPos, canInsert, canExtract);
+        BlockPos otherHalf = getDoubleChestOtherHalf(serverWorld, chestPos);
+        if (otherHalf != null) {
+            mod.getData().setChestRule(dim, otherHalf, canInsert, canExtract);
+        }
+
+        serverWorld.playSound(null, chestPos.getX(), chestPos.getY(), chestPos.getZ(),
+                canInsert || canExtract ? SoundEvents.BLOCK_CHEST_OPEN : SoundEvents.BLOCK_CHEST_LOCKED,
+                SoundCategory.BLOCKS, 0.8f, 1.2f);
+        serverWorld.spawnParticles(ParticleTypes.HAPPY_VILLAGER,
+                chestPos.getX() + 0.5, chestPos.getY() + 0.8, chestPos.getZ() + 0.5,
+                10, 0.3, 0.3, 0.3, 0.05);
+
+        String isDouble = otherHalf != null ? " §7(Baú Duplo)" : "";
+        player.sendMessage(Text.literal("§6=================================================="), false);
+        player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aRegras de organização atualizadas!"), false);
+        player.sendMessage(Text.literal("§fLocalização: §eX: " + chestPos.getX() + ", Y: " + chestPos.getY() + ", Z: " + chestPos.getZ() + isDouble), false);
+        player.sendMessage(Text.literal("§f- Colocar itens (Destino): " + (canInsert ? "§a[SIM]" : "§c[NÃO]")), false);
+        player.sendMessage(Text.literal("§f- Retirar itens (Origem):  " + (canExtract ? "§a[SIM]" : "§c[NÃO]")), false);
+
+        if (!canInsert && !canExtract) {
+            player.sendMessage(Text.literal("§7Status: §cIGNORADO TOTALMENTE §7(o Jacinto nunca colocará nem tirará itens deste baú)."), false);
+        } else if (canInsert && !canExtract) {
+            player.sendMessage(Text.literal("§7Status: §aAPENAS ENTRADA / DEPÓSITO §7(o Jacinto pode colocar itens aqui, mas NUNCA retirará nada dele)."), false);
+        } else if (!canInsert && canExtract) {
+            player.sendMessage(Text.literal("§7Status: §eBAÚ DE DESPEJO / APENAS SAÍDA §7(o Jacinto pode esvaziar itens daqui para outros baús, mas NUNCA colocará nada nele)."), false);
+        } else {
+            player.sendMessage(Text.literal("§7Status: §aFLUXO NORMAL §7(o Jacinto pode colocar e retirar itens deste baú normalmente)."), false);
+        }
+        player.sendMessage(Text.literal("§6=================================================="), false);
+        return true;
+    }
+
     public JacintoOrganizer(JacintoMod mod) {
         this.mod = mod;
     }
@@ -373,6 +467,12 @@ public class JacintoOrganizer {
 
         if (identifiedItem == null || identifiedItem == Items.AIR) {
             player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item guardar! Coloque um item na §6Moldura§c, escreva o nome na §ePlaca§c ou coloque um exemplar dentro do §6Baú§c."), false);
+            return false;
+        }
+
+        // Verifica se este baú tem permissão para receber itens (não colocar)
+        if (!canChestInsert(serverWorld, foundChestPos)) {
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, este baú está configurado com [NÃO COLOCAR ITENS]!\n§7Use §e/organizar sim sim§7 ou §e/organizar sim nao§7 nele para permitir usá-lo como destino."), false);
             return false;
         }
 
@@ -649,6 +749,7 @@ public class JacintoOrganizer {
                     BlockPos p = center.add(dx, dy, dz);
                     if (excludedChestPositions.contains(p)) continue;
                     if (visitedDoubleChests.contains(p)) continue;
+                    if (!canChestExtract(world, p)) continue;
 
                     Inventory inv = getInventoryAtPos(world, p);
                     if (inv != null) {

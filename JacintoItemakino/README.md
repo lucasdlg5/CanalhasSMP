@@ -144,6 +144,23 @@ O Jacinto oferece **3 formas intuitivas** para você definir qual item aquele ba
 
 ---
 
+## 🔒 Permissões e Regras de Baús (Ignorar, Entrada e Saída)
+
+Você pode personalizar individualmente como o Jacinto interage com cada baú da base! Basta olhar diretamente para o baú desejado (ou para a placa/moldura dele) e executar:
+
+| Comando | Pode Colocar (Destino) | Pode Retirar (Origem) | Função Prática |
+| :--- | :---: | :---: | :--- |
+| `/organizar sim sim` | ✅ **SIM** | ✅ **SIM** | **Fluxo Normal (Padrão)**: Baú livre tanto para receber itens quanto para ter itens retirados. |
+| `/organizar sim nao` | ✅ **SIM** | ❌ **NÃO** | **Baú de Depósito**: O Jacinto pode guardar itens aqui, mas **NUNCA** retira nada dele para outros baús! |
+| `/organizar nao sim` | ❌ **NÃO** | ✅ **SIM** | **Baú de Despejo (Dump Chest)**: O Jacinto esvazia os itens daqui para a base, mas **NUNCA** guarda nada de volta nele! |
+| `/organizar nao nao` | ❌ **NÃO** | ❌ **NÃO** | **Ignorado**: O Jacinto nunca mexe neste baú (mesmo efeito de `/organizar ignore`). |
+| `/organizar ignore` | ❌ **NÃO** | ❌ **NÃO** | Atalho direto para fazer o Jacinto ignorar totalmente o baú. |
+
+> [!TIP]
+> Se o baú for um **Baú Duplo (Grande)**, a regra configurada se aplica automaticamente a ambas as metades simultaneamente!
+
+---
+
 ## ⚔️ Equipamentos, Vida e Defesa da Base
 
 | Característica | Detalhes |
@@ -165,12 +182,17 @@ O Jacinto oferece **3 formas intuitivas** para você definir qual item aquele ba
 
 | Comando | Descrição | Permissão |
 | :--- | :--- | :--- |
+| `/organizar` | Inicia a organização de baús mirando no baú, placa ou moldura. | Todos |
+| `/organizar ignore` | Faz o Jacinto ignorar totalmente o baú mirado (não coloca e não tira). | Todos |
+| `/organizar sim sim` | Permite o Jacinto colocar e retirar itens do baú mirado (padrão). | Todos |
+| `/organizar sim nao` | Permite o Jacinto colocar itens, mas **nunca retirar** (baú depósito). | Todos |
+| `/organizar nao sim` | Permite o Jacinto retirar itens, mas **nunca colocar** (baú despejo/dump). | Todos |
+| `/organizar nao nao` | Faz o Jacinto ignorar totalmente o baú mirado (mesmo que `ignore`). | Todos |
+| `/organizar stop` | Interrompe imediatamente a organização de baús. | Todos |
+| `/organizar status` / `/jacinto status` | Exibe a vida, coordenadas, tarefa e histórico de trabalho do Jacinto. | Todos |
 | `/minerar <item>` | Inicia mineração passiva do minério desejado (ex: `/minerar diamante`). | Todos |
 | `/minerar stop` / `/minerar parar` | Interrompe a mineração e libera os chunks forçados. | Todos |
 | `/minerar status` | Exibe item em mineração, blocos minerados na sessão e chunks forçados. | Todos |
-| `/organizar` | Inicia a organização de baús mirando na placa do baú. | Todos |
-| `/organizar stop` | Interrompe imediatamente a organização de baús. | Todos |
-| `/organizar status` / `/jacinto status` | Exibe a vida, coordenadas, tarefa e histórico de trabalho do Jacinto. | Todos |
 | `/jacinto minerar <item>` | Alias do comando de mineração passiva. | Todos |
 | `/jacinto parar` / `/jacinto stop` | Para qualquer tarefa ativa (mineração ou organização). | Todos |
 | `/jacinto chamar` | Teleporta o Jacinto imediatamente para a sua posição. | Todos |
@@ -189,10 +211,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.2.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.3.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.2.0.jar` para a pasta `mods/` do servidor.
+1. Copie o arquivo `jacinto-itemakino-1.3.0.jar` para a pasta `mods/` do servidor.
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 
