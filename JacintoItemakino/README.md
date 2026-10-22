@@ -14,6 +14,7 @@ O **Jacinto Itemakino Baú** é um NPC operário inteligente, carismático e mul
 3. **⚔️ Proteção da Base e Persistência**: Pode ser equipado com quaisquer armas/armaduras de jogador, patrulha a base atacando monstros hostis e **nunca despawna** — graças a um sistema dinâmico de **3x3 Chunks Forçados**, continuando seu trabalho mesmo quando nenhum jogador está por perto! Se morrer, respawna em 5 segundos e retoma a tarefa imediatamente!
 4. **👷 Postura Pacífica e Status de Aliado da Firma (v1.6.0)**: Jacinto não persegue e nem agarra jogadores (braços baixados), possui colisão desativada para players passarem através dele sem travar portas/baús, é **100% imune a ataques de jogadores e NPCs companheiros (como a Vitória)** e **não dropa XP**, prevenindo qualquer tipo de farm indevido! Apenas monstros hostis podem atacá-lo.
 5. **🏰 Proteção de Construções & Integração com Claims (v1.7.0)**: Integrado nativamente com o sistema de claims do Prominence II (**Open Parties and Claims - OPAC** e **FTB Chunks**). Chunks protegidos por players ou parties são 100% invioláveis! Para materiais de construção (Andesito, Granito, Diorito, Pedras), ele desce compulsoriamente para o subsolo profundo (abaixo de Y=40), protegendo castelos de jogadores (como o castelo do Jodevil) de qualquer escavação acidental!
+6. **🪵 Ferramentas Padrão Infinitas, Desgaste e Tabela de Compatibilidade (v1.8.0)**: Por padrão, Jacinto sempre possui uma **Espada, Picareta e Pá de Madeira Infinitas** (`Unbreakable: true`). Jogadores podem presenteá-lo com ferramentas melhores via botão direito. Ferramentas de jogador sofrem desgaste real e, quando quebram, Jacinto reverte automaticamente para suas ferramentas de madeira da firma! Ele consulta a **Tabela de Compatibilidade de Mineração** (Harvest Tier) antes de minerar; se sua picareta atual não tiver nível suficiente para extrair o minério pedido (ex: pedir Diamante com Picareta de Madeira), ele se recusa, explica o motivo detalhadamente e orienta qual picareta precisa!
 
 ---
 
@@ -205,8 +206,10 @@ Você pode personalizar individualmente como o Jacinto interage com cada baú da
 | `/minerar <item>` | Inicia mineração passiva do item/bloco desejado (ex: `/minerar Andesito`), guardando no Baú mirado até encher. | Todos |
 | `/minerar stop` / `/minerar parar` | Interrompe a mineração e libera os chunks forçados. | Todos |
 | `/minerar status` | Exibe item em mineração, baú de destino, blocos minerados na sessão e chunks forçados. | Todos |
+| `/minerar compatibilidade` / `/minerar guia` | Exibe a Tabela de Compatibilidade de Picaretas e a picareta atual do Jacinto. | Todos |
 | `/jacinto minerar` | Inicia mineração olhando para o baú com moldura. | Todos |
 | `/jacinto minerar <item>` | Alias do comando de mineração passiva com baú de destino. | Todos |
+| `/jacinto minerar compatibilidade` | Consulta o guia de níveis de picareta e compatibilidade de minérios. | Todos |
 | `/jacinto parar` / `/jacinto stop` | Para qualquer tarefa ativa (mineração ou organização). | Todos |
 | `/jacinto chamar` | Teleporta o Jacinto imediatamente para a sua posição. | Todos |
 | `/jacinto base` | Define a sua localização atual como base de repouso oficial do Jacinto. | Todos |
@@ -225,10 +228,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.7.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.8.0.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.7.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
+1. Copie o arquivo `jacinto-itemakino-1.8.0.jar` para a pasta `mods/` do servidor (ou execute `ATUALIZAR_JACINTO.bat`).
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 

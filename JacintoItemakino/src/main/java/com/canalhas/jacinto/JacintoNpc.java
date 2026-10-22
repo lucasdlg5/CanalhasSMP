@@ -20,7 +20,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.PickaxeItem;
 import net.minecraft.item.ShieldItem;
+import net.minecraft.item.ShovelItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.MiningToolItem;
 import net.minecraft.particle.ParticleTypes;
@@ -261,7 +263,8 @@ public class JacintoNpc {
             husk.setEquipmentDropChance(EquipmentSlot.FEET, 0.0f);
         }
         if (husk.getMainHandStack().isEmpty()) {
-            husk.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_PICKAXE));
+            ItemStack mainTool = mod.getMiner().isMining() ? mod.getData().getEffectivePickaxe() : mod.getData().getEffectiveSword();
+            husk.equipStack(EquipmentSlot.MAINHAND, mainTool.copy());
             husk.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
         }
     }
@@ -473,26 +476,108 @@ public class JacintoNpc {
         ItemStack held = player.getStackInHand(hand);
         JacintoData data = mod.getData();
 
-        // 1. Shift + Clique com mão vazia: Exibe status e equipamentos
+        // 1. Shift + Clique com mão vazia: Exibe status, ferramentas e equipamentos
         if (player.isSneaking() && held.isEmpty()) {
             player.sendMessage(Text.literal("§6=== 📦 STATUS DO JACINTO ITEMAKINO BAÚ ==="), false);
             player.sendMessage(Text.literal("§fVida: §a" + String.format("%.0f", jacinto.getHealth()) + "/20 ❤"), false);
             player.sendMessage(Text.literal("§fTarefa Atual: §e" + (mod.getMiner().isMining() ? "Minerando " + mod.getMiner().getTargetDisplayName() : (mod.getOrganizer().isBusy() ? "Organizando Baús" : "Patrulhando / Ocioso"))), false);
-            player.sendMessage(Text.literal("§fArma/Ferramenta: §e" + getStackDisplayName(jacinto.getMainHandStack())), false);
-            player.sendMessage(Text.literal("§fEscudo/Mão Secundária: §e" + getStackDisplayName(jacinto.getOffHandStack())), false);
-            player.sendMessage(Text.literal("§fArmadura: §b" +
+
+            ItemStack effSword = data.getEffectiveSword();
+            ItemStack effPick = data.getEffectivePickaxe();
+            ItemStack effShovel = data.getEffectiveShovel();
+            int pickTier = JacintoMiningCompatibility.getPickaxeMiningLevel(effPick);
+
+            player.sendMessage(Text.literal("§f🗡️ Espada de Combate: §e" + getStackDisplayName(effSword) + (JacintoData.isDefaultTool(effSword) ? " §7(Padrão Infinita)" : "")), false);
+            player.sendMessage(Text.literal("§f⛏️ Picareta de Mineração: §e" + getStackDisplayName(effPick) + " §b[Tier " + JacintoMiningCompatibility.getTierName(pickTier) + "]" + (JacintoData.isDefaultTool(effPick) ? " §7(Padrão Infinita)" : "")), false);
+            player.sendMessage(Text.literal("§f🪵 Pá de Escavação: §e" + getStackDisplayName(effShovel) + (JacintoData.isDefaultTool(effShovel) ? " §7(Padrão Infinita)" : "")), false);
+            player.sendMessage(Text.literal("§f🛡️ Escudo/Offhand: §e" + getStackDisplayName(jacinto.getOffHandStack())), false);
+            player.sendMessage(Text.literal("§f🦺 Armadura: §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.HEAD)) + " §7| §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.CHEST)) + " §7| §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.LEGS)) + " §7| §b" +
                     getStackDisplayName(jacinto.getEquippedStack(EquipmentSlot.FEET))), false);
             player.sendMessage(Text.literal("§fTotal de Itens Organizados na Carreira: §a" + data.totalItemsOrganized + " itens"), false);
             player.sendMessage(Text.literal("§fTotal de Minérios Extraídos na Carreira: §b" + data.totalBlocksMined + " blocos"), false);
-            player.sendMessage(Text.literal("§7(Dica: Clique com armaduras ou armas na mão dele para equipá-lo!)"), false);
+            player.sendMessage(Text.literal("§7(Dica: Clique com espadas, picaretas, pás ou armaduras para equipá-lo!)"), false);
             jacinto.playSound(SoundEvents.ENTITY_VILLAGER_YES, 1.0f, 1.0f);
             return;
         }
 
-        // 2. Jogador segurando armadura ou arma: Equipa no Jacinto
+        // 2. Jogador segurando Espada:
+        if (held.getItem() instanceof SwordItem) {
+            ItemStack oldSword = data.getSavedSword();
+            ItemStack toEquip = held.split(1);
+            data.saveSword(toEquip);
+
+            if (!mod.getMiner().isMining()) {
+                jacinto.equipStack(EquipmentSlot.MAINHAND, toEquip.copy());
+            }
+
+            if (!oldSword.isEmpty() && !JacintoData.isDefaultTool(oldSword)) {
+                if (!player.getInventory().insertStack(oldSword)) {
+                    player.dropItem(oldSword, false);
+                }
+            }
+
+            jacinto.getWorld().playSound(null, jacinto.getX(), jacinto.getY(), jacinto.getZ(),
+                    SoundEvents.ITEM_ARMOR_EQUIP_DIAMOND, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            jacinto.getWorld().addParticle(ParticleTypes.HAPPY_VILLAGER, jacinto.getX(), jacinto.getY() + 1.2, jacinto.getZ(), 0, 0.1, 0);
+
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fOpa patrão §b" + player.getName().getString() +
+                    "§f! Essa espada §b" + toEquip.getName().getString() + "§f vai defender a base com tudo! Quando quebrar, voltarei para a minha de madeira infinita."), false);
+            return;
+        }
+
+        // 3. Jogador segurando Picareta:
+        if (held.getItem() instanceof PickaxeItem) {
+            ItemStack oldPick = data.getSavedPickaxe();
+            ItemStack toEquip = held.split(1);
+            data.savePickaxe(toEquip);
+
+            if (mod.getMiner().isMining()) {
+                jacinto.equipStack(EquipmentSlot.MAINHAND, toEquip.copy());
+            }
+
+            if (!oldPick.isEmpty() && !JacintoData.isDefaultTool(oldPick)) {
+                if (!player.getInventory().insertStack(oldPick)) {
+                    player.dropItem(oldPick, false);
+                }
+            }
+
+            int tier = JacintoMiningCompatibility.getPickaxeMiningLevel(toEquip);
+            String tierName = JacintoMiningCompatibility.getTierName(tier);
+
+            jacinto.getWorld().playSound(null, jacinto.getX(), jacinto.getY(), jacinto.getZ(),
+                    SoundEvents.ITEM_ARMOR_EQUIP_DIAMOND, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            jacinto.getWorld().addParticle(ParticleTypes.HAPPY_VILLAGER, jacinto.getX(), jacinto.getY() + 1.2, jacinto.getZ(), 0, 0.1, 0);
+
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fValeu patrão §b" + player.getName().getString() +
+                    "§f! Equipei a §b" + toEquip.getName().getString() + " §7(Nível " + tierName + ")§f! Agora consigo minerar minérios desse nível. Ao quebrar, volto para a de madeira infinita."), false);
+            return;
+        }
+
+        // 4. Jogador segurando Pá:
+        if (held.getItem() instanceof ShovelItem) {
+            ItemStack oldShovel = data.getSavedShovel();
+            ItemStack toEquip = held.split(1);
+            data.saveShovel(toEquip);
+
+            if (!oldShovel.isEmpty() && !JacintoData.isDefaultTool(oldShovel)) {
+                if (!player.getInventory().insertStack(oldShovel)) {
+                    player.dropItem(oldShovel, false);
+                }
+            }
+
+            jacinto.getWorld().playSound(null, jacinto.getX(), jacinto.getY(), jacinto.getZ(),
+                    SoundEvents.ITEM_ARMOR_EQUIP_DIAMOND, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            jacinto.getWorld().addParticle(ParticleTypes.HAPPY_VILLAGER, jacinto.getX(), jacinto.getY() + 1.2, jacinto.getZ(), 0, 0.1, 0);
+
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §fOpa, uma pá de qualidade! §b" + toEquip.getName().getString() +
+                    "§f guardada para quando eu cavar terra e cascalho!"), false);
+            return;
+        }
+
+        // 5. Jogador segurando Armadura ou Escudo: Equipa no Jacinto
         EquipmentSlot targetSlot = getSlotForItem(held);
         if (targetSlot != null) {
             ItemStack oldEquip = jacinto.getEquippedStack(targetSlot).copy();
@@ -502,8 +587,8 @@ public class JacintoNpc {
             jacinto.setEquipmentDropChance(targetSlot, 0.0f);
             data.saveEquipment(targetSlot, toEquip);
 
-            // Devolve o item antigo ao jogador ou dropa na frente
-            if (!oldEquip.isEmpty()) {
+            // Devolve o item antigo ao jogador se não for ferramenta padrão
+            if (!oldEquip.isEmpty() && !JacintoData.isDefaultTool(oldEquip)) {
                 if (!player.getInventory().insertStack(oldEquip)) {
                     player.dropItem(oldEquip, false);
                 }

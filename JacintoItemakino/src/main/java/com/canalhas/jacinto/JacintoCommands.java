@@ -60,6 +60,9 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                 .then(CommandManager.literal("cancelar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                 .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
+                .then(CommandManager.literal("compatibilidade").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                .then(CommandManager.literal("guia").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                .then(CommandManager.literal("tabela").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
                 .then(CommandManager.argument("item", StringArgumentType.greedyString())
                         .executes(c -> handleMinerarWithChest(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
                 .executes(c -> handleMinerarWithChest(c.getSource(), mod, null))
@@ -86,9 +89,15 @@ public final class JacintoCommands {
                         .then(CommandManager.literal("stop").executes(c -> handleMinerarStop(c.getSource(), mod)))
                         .then(CommandManager.literal("parar").executes(c -> handleMinerarStop(c.getSource(), mod)))
                         .then(CommandManager.literal("status").executes(c -> handleMinerarStatus(c.getSource(), mod)))
+                        .then(CommandManager.literal("compatibilidade").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                        .then(CommandManager.literal("guia").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                        .then(CommandManager.literal("tabela").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
                         .then(CommandManager.argument("item", StringArgumentType.greedyString())
                                 .executes(c -> handleMinerarWithChest(c.getSource(), mod, StringArgumentType.getString(c, "item"))))
                         .executes(c -> handleMinerarWithChest(c.getSource(), mod, null)))
+                .then(CommandManager.literal("compatibilidade").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                .then(CommandManager.literal("guia").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
+                .then(CommandManager.literal("tabela").executes(c -> handleMinerarCompatibilidade(c.getSource(), mod)))
                 .then(CommandManager.literal("parar").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("stop").executes(c -> handlePararGeral(c.getSource(), mod)))
                 .then(CommandManager.literal("chamar").executes(c -> handleJacintoChamar(c.getSource(), mod)))
@@ -304,6 +313,15 @@ public final class JacintoCommands {
             src.sendFeedback(() -> Text.literal("§a[Jacinto] Varredura concluída! §e" + purged + "§a cópia(s) duplicada(s) ou órfã(s) foram removidas do mundo."), true);
         } else {
             src.sendFeedback(() -> Text.literal("§a[Jacinto] Varredura concluída! Nenhum clone duplicado encontrado. Apenas 1 Jacinto ativo na firma."), false);
+        }
+        return 1;
+    }
+
+    private static int handleMinerarCompatibilidade(ServerCommandSource src, JacintoMod mod) {
+        ItemStack currentPick = mod.getData().getEffectivePickaxe();
+        java.util.List<String> guide = JacintoMiningCompatibility.getFormattedCompatibilityGuide(currentPick);
+        for (String line : guide) {
+            src.sendFeedback(() -> Text.literal(line), false);
         }
         return 1;
     }

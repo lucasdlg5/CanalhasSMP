@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
@@ -58,6 +60,11 @@ public class JacintoData {
 
     // Equipamentos salvos como SNBT (String NBT) para preservar encantamentos, durabilidade e atributos
     public Map<String, String> equipmentSnbt = new HashMap<>();
+
+    // Ferramentas dedicadas fornecidas por jogadores (espada, picareta, pá)
+    public String customSwordSnbt = null;
+    public String customPickaxeSnbt = null;
+    public String customShovelSnbt = null;
 
     // Regras de permissão de baús: colocar / retirar itens
     public static class ChestRule {
@@ -204,5 +211,109 @@ public class JacintoData {
             LOG.warn("[Jacinto] Falha ao ler SNBT para slot {}: {}", slot, e.getMessage());
             return ItemStack.EMPTY;
         }
+    }
+
+    /* =========================================================================
+     *  GERENCIAMENTO DE FERRAMENTAS (ESPADA, PICARETA, PÁ)
+     *  - Padrão de Madeira: Durabilidade Infinita (Unbreakable)
+     *  - Ferramentas de Jogadores: Usadas até quebrar; ao quebrar, voltam para a de madeira!
+     * ========================================================================= */
+
+    public void saveSword(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || isDefaultTool(stack)) {
+            customSwordSnbt = null;
+        } else {
+            NbtCompound tag = new NbtCompound();
+            stack.writeNbt(tag);
+            customSwordSnbt = tag.toString();
+        }
+        save();
+    }
+
+    public ItemStack getSavedSword() {
+        return parseItemFromSnbt(customSwordSnbt);
+    }
+
+    public void savePickaxe(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || isDefaultTool(stack)) {
+            customPickaxeSnbt = null;
+        } else {
+            NbtCompound tag = new NbtCompound();
+            stack.writeNbt(tag);
+            customPickaxeSnbt = tag.toString();
+        }
+        save();
+    }
+
+    public ItemStack getSavedPickaxe() {
+        return parseItemFromSnbt(customPickaxeSnbt);
+    }
+
+    public void saveShovel(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || isDefaultTool(stack)) {
+            customShovelSnbt = null;
+        } else {
+            NbtCompound tag = new NbtCompound();
+            stack.writeNbt(tag);
+            customShovelSnbt = tag.toString();
+        }
+        save();
+    }
+
+    public ItemStack getSavedShovel() {
+        return parseItemFromSnbt(customShovelSnbt);
+    }
+
+    private static ItemStack parseItemFromSnbt(String snbt) {
+        if (snbt == null || snbt.isBlank()) return ItemStack.EMPTY;
+        try {
+            NbtCompound tag = StringNbtReader.parse(snbt);
+            return ItemStack.fromNbt(tag);
+        } catch (Exception e) {
+            return ItemStack.EMPTY;
+        }
+    }
+
+    public static boolean isDefaultTool(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        NbtCompound tag = stack.getNbt();
+        return tag != null && tag.getBoolean("Unbreakable") &&
+                (stack.getItem() == Items.WOODEN_SWORD || stack.getItem() == Items.WOODEN_PICKAXE || stack.getItem() == Items.WOODEN_SHOVEL);
+    }
+
+    public static ItemStack createDefaultWoodenSword() {
+        ItemStack stack = new ItemStack(Items.WOODEN_SWORD);
+        stack.getOrCreateNbt().putBoolean("Unbreakable", true);
+        stack.setCustomName(Text.literal("§eEspada de Madeira da Firma"));
+        return stack;
+    }
+
+    public static ItemStack createDefaultWoodenPickaxe() {
+        ItemStack stack = new ItemStack(Items.WOODEN_PICKAXE);
+        stack.getOrCreateNbt().putBoolean("Unbreakable", true);
+        stack.setCustomName(Text.literal("§ePicareta de Madeira da Firma"));
+        return stack;
+    }
+
+    public static ItemStack createDefaultWoodenShovel() {
+        ItemStack stack = new ItemStack(Items.WOODEN_SHOVEL);
+        stack.getOrCreateNbt().putBoolean("Unbreakable", true);
+        stack.setCustomName(Text.literal("§ePá de Madeira da Firma"));
+        return stack;
+    }
+
+    public ItemStack getEffectiveSword() {
+        ItemStack s = getSavedSword();
+        return !s.isEmpty() ? s : createDefaultWoodenSword();
+    }
+
+    public ItemStack getEffectivePickaxe() {
+        ItemStack p = getSavedPickaxe();
+        return !p.isEmpty() ? p : createDefaultWoodenPickaxe();
+    }
+
+    public ItemStack getEffectiveShovel() {
+        ItemStack sh = getSavedShovel();
+        return !sh.isEmpty() ? sh : createDefaultWoodenShovel();
     }
 }

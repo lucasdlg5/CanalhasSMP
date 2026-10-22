@@ -131,6 +131,30 @@ public class JacintoMiner {
         this.rawQuery = query != null ? query.trim() : "andesito";
         this.targetItem = item != null ? item : JacintoOrganizer.matchItemName(this.rawQuery);
         this.targetDisplayName = displayName != null ? displayName : resolveDisplayName(this.rawQuery);
+
+        // Validação da Picareta vs Nível do Bloco (Mining Tier Compatibility)
+        ItemStack currentPick = mod.getData().getEffectivePickaxe();
+        JacintoMiningCompatibility.CompatibilityResult comp = JacintoMiningCompatibility.check(
+                currentPick, this.targetItem, this.rawQuery, this.targetDisplayName
+        );
+
+        if (!comp.canMine) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, não consigo minerar §6§l[" + comp.targetName + "]§c no momento!"), false);
+                player.sendMessage(Text.literal("§fMotivo: §e" + comp.explanation), false);
+                player.sendMessage(Text.literal("§7Se eu tentar minerar com essa ferramenta, o bloco vai esfarelar e nada será dropado!"), false);
+                player.sendMessage(Text.literal("§aDica: Me entregue uma picareta de §b" + comp.requiredTierName + "§a ou superior clicando em mim com o botão direito!"), false);
+                player.sendMessage(Text.literal("§7(Digite §e/minerar compatibilidade§7 para consultar o guia de picaretas da firma)."), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+            }
+            if (entity != null) {
+                entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+            }
+            return false;
+        }
+
         this.isMining = true;
         this.hasMiningChest = true;
         this.targetChestPos = chestPos;
@@ -241,6 +265,30 @@ public class JacintoMiner {
 
         this.rawQuery = query.trim();
         this.targetDisplayName = resolveDisplayName(this.rawQuery, customDisplayName);
+
+        // Validação da Picareta vs Nível do Bloco (Mining Tier Compatibility)
+        ItemStack currentPick = mod.getData().getEffectivePickaxe();
+        JacintoMiningCompatibility.CompatibilityResult comp = JacintoMiningCompatibility.check(
+                currentPick, this.targetItem, this.rawQuery, this.targetDisplayName
+        );
+
+        if (!comp.canMine) {
+            if (player != null) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, não consigo minerar §6§l[" + comp.targetName + "]§c no momento!"), false);
+                player.sendMessage(Text.literal("§fMotivo: §e" + comp.explanation), false);
+                player.sendMessage(Text.literal("§7Se eu tentar minerar com essa ferramenta, o bloco vai esfarelar e nada será dropado!"), false);
+                player.sendMessage(Text.literal("§aDica: Me entregue uma picareta de §b" + comp.requiredTierName + "§a ou superior clicando em mim com o botão direito!"), false);
+                player.sendMessage(Text.literal("§7(Digite §e/minerar compatibilidade§7 para consultar o guia de picaretas da firma)."), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+            }
+            if (entity != null) {
+                entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+            }
+            return false;
+        }
+
         this.isMining = true;
         this.requestingPlayerUuid = player != null ? player.getUuid() : null;
         this.targetOrePos = null;
@@ -324,6 +372,10 @@ public class JacintoMiner {
         HuskEntity entity = mod.getNpc().getEntity();
         if (entity != null && entity.isAlive()) {
             entity.getNavigation().stop();
+            // Reverte a mão principal para a Espada (padrão ou customizada) ao parar de minerar
+            ItemStack sword = mod.getData().getEffectiveSword();
+            entity.equipStack(EquipmentSlot.MAINHAND, sword);
+            mod.getData().saveEquipment(EquipmentSlot.MAINHAND, sword);
         }
 
         String msg = "§e[Jacinto Itemakino Baú] §fParei a picareta, patrão! Total coletado nesta sessão: §a" +
@@ -544,6 +596,9 @@ public class JacintoMiner {
                     mod.getData().carriedMinedCount = carriedItemCount;
                 }
                 mod.getData().save();
+
+                // Aplica desgaste e verifica quebra na ferramenta (ferramentas padrão infinitas nunca quebram)
+                applyToolWear(entity, world);
 
                 // Efeito sonoro de conquista ao minerar
                 world.playSound(null, targetOrePos, SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
@@ -809,22 +864,86 @@ public class JacintoMiner {
     }
 
     /**
-     * Garante que o Jacinto esteja com uma picareta equipada
+     * Garante que o Jacinto esteja com sua picareta equipada (customizada ou padrão infinita)
      */
     private void ensurePickaxeEquipped(HuskEntity entity) {
         if (entity == null) return;
         ItemStack held = entity.getMainHandStack();
         if (held.isEmpty() || !(held.getItem() instanceof MiningToolItem)) {
-            // Restaura equipamento salvo se for picareta, senão concede Picareta de Diamante
-            ItemStack saved = mod.getData().getSavedEquipment(EquipmentSlot.MAINHAND);
-            if (!saved.isEmpty() && saved.getItem() instanceof MiningToolItem) {
-                entity.equipStack(EquipmentSlot.MAINHAND, saved.copy());
-            } else {
-                ItemStack pickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
-                entity.equipStack(EquipmentSlot.MAINHAND, pickaxe);
-                mod.getData().saveEquipment(EquipmentSlot.MAINHAND, pickaxe);
-            }
+            ItemStack pickaxe = mod.getData().getEffectivePickaxe();
+            entity.equipStack(EquipmentSlot.MAINHAND, pickaxe);
+            mod.getData().saveEquipment(EquipmentSlot.MAINHAND, pickaxe);
             entity.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
+        }
+    }
+
+    /**
+     * Aplica desgaste na picareta do Jacinto. Se a picareta quebrar:
+     * 1. Limpa a picareta customizada nos dados
+     * 2. Reverte automaticamente para a Picareta de Madeira padrão (infinita)
+     * 3. Se a picareta de madeira não tiver nível para continuar minerando o minério atual, avisa e pausa.
+     */
+    private void applyToolWear(HuskEntity entity, ServerWorld world) {
+        if (entity == null || world == null) return;
+        ItemStack heldTool = entity.getMainHandStack();
+        if (heldTool.isEmpty() || !(heldTool.getItem() instanceof MiningToolItem)) return;
+
+        // Ferramentas padrão de madeira com Unbreakable:true nunca desgastam
+        if (JacintoData.isDefaultTool(heldTool) || !heldTool.isDamageable()) {
+            return;
+        }
+
+        // Aplica dano à ferramenta dada pelo jogador
+        boolean broke = heldTool.damage(1, world.getRandom(), null);
+        if (broke || heldTool.getDamage() >= heldTool.getMaxDamage()) {
+            // Efeitos de quebra
+            world.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    SoundEvents.ENTITY_ITEM_BREAK, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            world.spawnParticles(ParticleTypes.CRIT,
+                    entity.getX(), entity.getY() + 1.0, entity.getZ(),
+                    15, 0.2, 0.2, 0.2, 0.1);
+
+            // Descarta a picareta customizada quebrada
+            mod.getData().customPickaxeSnbt = "";
+            mod.getData().save();
+
+            // Reverte imediatamente para a Picareta de Madeira padrão (infinita)
+            ItemStack defaultPick = mod.getData().getEffectivePickaxe();
+            entity.equipStack(EquipmentSlot.MAINHAND, defaultPick);
+            mod.getData().saveEquipment(EquipmentSlot.MAINHAND, defaultPick);
+
+            String breakNotice = "§6==================================================\n" +
+                    "§e[Jacinto Itemakino Baú] §c⚠️ Patrão! A picareta que você me deu quebrou de tanto trabalhar!\n" +
+                    "§7Reverti imediatamente para a minha fiel §fPicareta de Madeira Padrão (Infinita)§7 da firma!\n" +
+                    "§6==================================================";
+
+            ServerPlayerEntity p = requestingPlayerUuid != null && world.getServer() != null
+                    ? world.getServer().getPlayerManager().getPlayer(requestingPlayerUuid) : null;
+            if (p != null) {
+                p.sendMessage(Text.literal(breakNotice), false);
+            } else if (world.getServer() != null) {
+                world.getServer().getPlayerManager().broadcast(Text.literal(breakNotice), false);
+            }
+
+            // Checa se o minério atual é compatível com a picareta de madeira padrão
+            JacintoMiningCompatibility.CompatibilityResult comp = JacintoMiningCompatibility.check(
+                    defaultPick, this.targetItem, this.rawQuery, this.targetDisplayName
+            );
+
+            if (!comp.canMine) {
+                String cantContinueMsg = "§6==================================================\n" +
+                        "§e[Jacinto Itemakino Baú] §cMineração de §6[" + comp.targetName + "]§c suspensa!\n" +
+                        "§fMotivo: " + comp.explanation + "\n" +
+                        "§aMe entregue uma nova picareta de §b" + comp.requiredTierName + "§a ou superior (botão direito em mim) para continuar!\n" +
+                        "§7(Consulte a tabela com §e/minerar compatibilidade§7).\n" +
+                        "§6==================================================";
+                if (p != null) {
+                    p.sendMessage(Text.literal(cantContinueMsg), false);
+                } else if (world.getServer() != null) {
+                    world.getServer().getPlayerManager().broadcast(Text.literal(cantContinueMsg), false);
+                }
+                stopMining(null);
+            }
         }
     }
 
@@ -928,6 +1047,10 @@ public class JacintoMiner {
         mod.getData().setIdleTask();
         if (entity != null) {
             entity.getNavigation().stop();
+            // Reverte a mão principal para a Espada (padrão ou customizada) ao concluir a tarefa
+            ItemStack sword = mod.getData().getEffectiveSword();
+            entity.equipStack(EquipmentSlot.MAINHAND, sword);
+            mod.getData().saveEquipment(EquipmentSlot.MAINHAND, sword);
         }
 
         if (targetChestPos != null) {
