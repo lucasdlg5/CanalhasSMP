@@ -1,10 +1,12 @@
 package com.canalhas.jacinto;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
 import net.minecraft.block.enums.ChestType;
@@ -30,13 +32,15 @@ import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Motor de Organização Inteligente de Baús do Jacinto:
- * - Lê a placa indicada pelo jogador
- * - Identifica o baú de destino e o item a ser agrupado
- * - Varrer os baús vizinhos em raio de 24 blocos
- * - PREVENÇÃO TOTAL DE LOOP: O baú de destino (e sua metade dupla) é estritamente ignorado na busca
+ * - Lê a placa ou examina o baú indicado pelo jogador
+ * - Suporta identificação em Português, Inglês e por item exemplo dentro do baú (incluindo Baús Duplos)
+ * - Identificação resiliente a pequenas variações (ex: Andesito -> Andesite) sem colisões com substrings curtas
+ * - Varre os baús vizinhos em raio de 24 blocos
+ * - PREVENÇÃO TOTAL DE LOOP: O baú de destino (e ambas as metades de baús duplos) é estritamente ignorado na busca
  * - Suporta parada instantânea via /organizar stop
  */
 public class JacintoOrganizer {
@@ -59,12 +63,173 @@ public class JacintoOrganizer {
     private int totalTransferred = 0;
     private int workCooldown = 0;
 
+    // Dicionário ampliado Português -> Item
+    private static final Map<String, Item> PT_DICT = new HashMap<>();
+
+    static {
+        // Pedras, Rochas e Construção
+        PT_DICT.put("andesito", Items.ANDESITE);
+        PT_DICT.put("andesito polido", Items.POLISHED_ANDESITE);
+        PT_DICT.put("granito", Items.GRANITE);
+        PT_DICT.put("granito polido", Items.POLISHED_GRANITE);
+        PT_DICT.put("diorito", Items.DIORITE);
+        PT_DICT.put("diorito polido", Items.POLISHED_DIORITE);
+        PT_DICT.put("pedra", Items.STONE);
+        PT_DICT.put("pedra lisa", Items.SMOOTH_STONE);
+        PT_DICT.put("pedregulho", Items.COBBLESTONE);
+        PT_DICT.put("pedregulho com musgo", Items.MOSSY_COBBLESTONE);
+        PT_DICT.put("tijolos de pedra", Items.STONE_BRICKS);
+        PT_DICT.put("tijolo", Items.BRICKS);
+        PT_DICT.put("tijolos", Items.BRICKS);
+        PT_DICT.put("terra", Items.DIRT);
+        PT_DICT.put("terra arada", Items.FARMLAND);
+        PT_DICT.put("grama", Items.GRASS_BLOCK);
+        PT_DICT.put("areia", Items.SAND);
+        PT_DICT.put("areia vermelha", Items.RED_SAND);
+        PT_DICT.put("arenito", Items.SANDSTONE);
+        PT_DICT.put("cascalho", Items.GRAVEL);
+        PT_DICT.put("argila", Items.CLAY);
+        PT_DICT.put("basalto", Items.BASALT);
+        PT_DICT.put("basalto polido", Items.POLISHED_BASALT);
+        PT_DICT.put("tufo", Items.TUFF);
+        PT_DICT.put("ardosia", Items.DEEPSLATE);
+        PT_DICT.put("ardosia polida", Items.POLISHED_DEEPSLATE);
+        PT_DICT.put("calcario", Items.CALCITE);
+        PT_DICT.put("pedra negra", Items.BLACKSTONE);
+        PT_DICT.put("pedra negra polida", Items.POLISHED_BLACKSTONE);
+        PT_DICT.put("obsidiana", Items.OBSIDIAN);
+        PT_DICT.put("pedra luminosa", Items.GLOWSTONE);
+        PT_DICT.put("vidro", Items.GLASS);
+        PT_DICT.put("painel de vidro", Items.GLASS_PANE);
+        PT_DICT.put("gelo", Items.ICE);
+        PT_DICT.put("gelo compactado", Items.PACKED_ICE);
+        PT_DICT.put("gelo azul", Items.BLUE_ICE);
+        PT_DICT.put("neve", Items.SNOW_BLOCK);
+
+        // Minérios e Metais
+        PT_DICT.put("diamante", Items.DIAMOND);
+        PT_DICT.put("bloco de diamante", Items.DIAMOND_BLOCK);
+        PT_DICT.put("ferro", Items.IRON_INGOT);
+        PT_DICT.put("barra de ferro", Items.IRON_INGOT);
+        PT_DICT.put("ferro bruto", Items.RAW_IRON);
+        PT_DICT.put("bloco de ferro", Items.IRON_BLOCK);
+        PT_DICT.put("pepita de ferro", Items.IRON_NUGGET);
+        PT_DICT.put("ouro", Items.GOLD_INGOT);
+        PT_DICT.put("barra de ouro", Items.GOLD_INGOT);
+        PT_DICT.put("ouro bruto", Items.RAW_GOLD);
+        PT_DICT.put("bloco de ouro", Items.GOLD_BLOCK);
+        PT_DICT.put("pepita de ouro", Items.GOLD_NUGGET);
+        PT_DICT.put("cobre", Items.COPPER_INGOT);
+        PT_DICT.put("barra de cobre", Items.COPPER_INGOT);
+        PT_DICT.put("cobre bruto", Items.RAW_COPPER);
+        PT_DICT.put("bloco de cobre", Items.COPPER_BLOCK);
+        PT_DICT.put("carvao", Items.COAL);
+        PT_DICT.put("bloco de carvao", Items.COAL_BLOCK);
+        PT_DICT.put("carvao vegetal", Items.CHARCOAL);
+        PT_DICT.put("redstone", Items.REDSTONE);
+        PT_DICT.put("po de redstone", Items.REDSTONE);
+        PT_DICT.put("bloco de redstone", Items.REDSTONE_BLOCK);
+        PT_DICT.put("lapis", Items.LAPIS_LAZULI);
+        PT_DICT.put("lapis lazuli", Items.LAPIS_LAZULI);
+        PT_DICT.put("bloco de lapis", Items.LAPIS_BLOCK);
+        PT_DICT.put("esmeralda", Items.EMERALD);
+        PT_DICT.put("bloco de esmeralda", Items.EMERALD_BLOCK);
+        PT_DICT.put("netherita", Items.NETHERITE_INGOT);
+        PT_DICT.put("barra de netherita", Items.NETHERITE_INGOT);
+        PT_DICT.put("detritos ancestrais", Items.ANCIENT_DEBRIS);
+        PT_DICT.put("sucata de netherita", Items.NETHERITE_SCRAP);
+        PT_DICT.put("quartzo", Items.QUARTZ);
+        PT_DICT.put("bloco de quartzo", Items.QUARTZ_BLOCK);
+        PT_DICT.put("ametista", Items.AMETHYST_SHARD);
+
+        // Madeiras e Vegetação
+        PT_DICT.put("madeira", Items.OAK_LOG);
+        PT_DICT.put("tronco de carvalho", Items.OAK_LOG);
+        PT_DICT.put("tabuas de carvalho", Items.OAK_PLANKS);
+        PT_DICT.put("carvalho", Items.OAK_PLANKS);
+        PT_DICT.put("pinheiro", Items.SPRUCE_PLANKS);
+        PT_DICT.put("tronco de pinheiro", Items.SPRUCE_LOG);
+        PT_DICT.put("eucalipto", Items.BIRCH_PLANKS);
+        PT_DICT.put("tronco de eucalipto", Items.BIRCH_LOG);
+        PT_DICT.put("selva", Items.JUNGLE_PLANKS);
+        PT_DICT.put("tronco de selva", Items.JUNGLE_LOG);
+        PT_DICT.put("acacia", Items.ACACIA_PLANKS);
+        PT_DICT.put("tronco de acacia", Items.ACACIA_LOG);
+        PT_DICT.put("cerejeira", Items.CHERRY_PLANKS);
+        PT_DICT.put("tronco de cerejeira", Items.CHERRY_LOG);
+        PT_DICT.put("mangue", Items.MANGROVE_PLANKS);
+        PT_DICT.put("tronco de mangue", Items.MANGROVE_LOG);
+        PT_DICT.put("bambu", Items.BAMBOO);
+        PT_DICT.put("graveto", Items.STICK);
+        PT_DICT.put("gravetos", Items.STICK);
+
+        // Drops de Mobs e Fazenda
+        PT_DICT.put("osso", Items.BONE);
+        PT_DICT.put("ossos", Items.BONE);
+        PT_DICT.put("farinha de osso", Items.BONE_MEAL);
+        PT_DICT.put("linha", Items.STRING);
+        PT_DICT.put("polvora", Items.GUNPOWDER);
+        PT_DICT.put("pena", Items.FEATHER);
+        PT_DICT.put("penas", Items.FEATHER);
+        PT_DICT.put("couro", Items.LEATHER);
+        PT_DICT.put("carne podre", Items.ROTTEN_FLESH);
+        PT_DICT.put("teia", Items.COBWEB);
+        PT_DICT.put("olho de aranha", Items.SPIDER_EYE);
+        PT_DICT.put("perola do end", Items.ENDER_PEARL);
+        PT_DICT.put("vara de blaze", Items.BLAZE_ROD);
+        PT_DICT.put("po de blaze", Items.BLAZE_POWDER);
+        PT_DICT.put("lagrima de ghast", Items.GHAST_TEAR);
+        PT_DICT.put("slime", Items.SLIME_BALL);
+        PT_DICT.put("bola de slime", Items.SLIME_BALL);
+        PT_DICT.put("bloco de slime", Items.SLIME_BLOCK);
+        PT_DICT.put("trigo", Items.WHEAT);
+        PT_DICT.put("semente de trigo", Items.WHEAT_SEEDS);
+        PT_DICT.put("sementes", Items.WHEAT_SEEDS);
+        PT_DICT.put("cenoura", Items.CARROT);
+        PT_DICT.put("batata", Items.POTATO);
+        PT_DICT.put("beterraba", Items.BEETROOT);
+        PT_DICT.put("cana de acucar", Items.SUGAR_CANE);
+        PT_DICT.put("acucar", Items.SUGAR);
+        PT_DICT.put("cacau", Items.COCOA_BEANS);
+        PT_DICT.put("melancia", Items.MELON_SLICE);
+        PT_DICT.put("abobora", Items.PUMPKIN);
+        PT_DICT.put("maca", Items.APPLE);
+        PT_DICT.put("pao", Items.BREAD);
+        PT_DICT.put("carne", Items.BEEF);
+        PT_DICT.put("bife", Items.COOKED_BEEF);
+        PT_DICT.put("frango", Items.CHICKEN);
+        PT_DICT.put("frango assado", Items.COOKED_CHICKEN);
+        PT_DICT.put("porco", Items.PORKCHOP);
+        PT_DICT.put("peixe", Items.COD);
+        PT_DICT.put("salmao", Items.SALMON);
+        PT_DICT.put("tocha", Items.TORCH);
+        PT_DICT.put("flecha", Items.ARROW);
+        PT_DICT.put("arco", Items.BOW);
+        PT_DICT.put("livro", Items.BOOK);
+        PT_DICT.put("papel", Items.PAPER);
+        PT_DICT.put("balde", Items.BUCKET);
+        PT_DICT.put("frasco", Items.GLASS_BOTTLE);
+    }
+
     public JacintoOrganizer(JacintoMod mod) {
         this.mod = mod;
     }
 
     public boolean isBusy() {
         return isBusy;
+    }
+
+    /**
+     * Obtém o inventário completo do bloco (suporta Baús Duplos unificados de 54 slots, barris, shulkers, etc.)
+     */
+    public static Inventory getInventoryAtPos(ServerWorld world, BlockPos pos) {
+        if (world == null || pos == null) return null;
+        Inventory inv = HopperBlockEntity.getInventoryAt(world, pos);
+        if (inv != null) return inv;
+
+        BlockEntity be = world.getBlockEntity(pos);
+        if (be instanceof Inventory i) return i;
+        return null;
     }
 
     /**
@@ -85,7 +250,7 @@ public class JacintoOrganizer {
 
         HitResult hit = player.raycast(6.0, 0, false);
         if (hit.getType() != HitResult.Type.BLOCK) {
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para uma placa na frente ou no baú que deseja organizar e tente novamente!"), false);
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, olhe para uma placa na frente ou para o baú que deseja organizar e tente novamente!"), false);
             return false;
         }
 
@@ -102,8 +267,8 @@ public class JacintoOrganizer {
             collectSignLines(signBe, rawLines);
             foundChestPos = findAttachedChest(serverWorld, hitPos);
         }
-        // 2. Caso tenha mirado diretamente no Baú que contém a placa
-        else if (hitBe instanceof Inventory) {
+        // 2. Caso tenha mirado diretamente no Baú (ou barril)
+        else if (getInventoryAtPos(serverWorld, hitPos) != null) {
             foundChestPos = hitPos;
             SignBlockEntity nearbySign = findNearbySign(serverWorld, hitPos);
             if (nearbySign != null) {
@@ -119,7 +284,7 @@ public class JacintoOrganizer {
         // Tenta descobrir o item alvo através do texto da placa ou do conteúdo existente no baú
         Item identifiedItem = identifyItemFromSignOrChest(serverWorld, foundChestPos, rawLines);
         if (identifiedItem == null || identifiedItem == Items.AIR) {
-            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item guardar nesta placa! Escreva o nome do item na placa (ex: §eDiamante§c, §eFerro§c, §ePedra§c) ou coloque ao menos um exemplar dentro do baú."), false);
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cNão consegui identificar qual item guardar nesta placa! Escreva o nome do item na placa (ex: §eDiamante§c, §eFerro§c, §eAndesito§c) ou coloque ao menos um exemplar dentro do baú."), false);
             return false;
         }
 
@@ -147,7 +312,7 @@ public class JacintoOrganizer {
         this.sourceChests.clear();
         this.excludedChestPositions.clear();
 
-        // ADICIONA O BAÚ ALVO À LISTA DE EXCLUSÃO (LOOP PREVENTION)
+        // ADICIONA O BAÚ ALVO À LISTA DE EXCLUSÃO (LOOP PREVENTION - AMBAS AS METADES)
         this.excludedChestPositions.add(foundChestPos);
         BlockPos otherHalf = getDoubleChestOtherHalf(serverWorld, foundChestPos);
         if (otherHalf != null) {
@@ -165,6 +330,7 @@ public class JacintoOrganizer {
         if (sourceChests.isEmpty()) {
             player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §eNão encontrei nenhum outro baú num raio de 24 blocos que contenha §b[" + targetItemDisplayName + "]§e!"), false);
             this.isBusy = false;
+            mod.getData().setIdleTask();
             return true;
         }
 
@@ -196,15 +362,15 @@ public class JacintoOrganizer {
         }
 
         BlockPos sourcePos = sourceChests.get(currentChestIndex);
-        BlockEntity sourceBe = world.getBlockEntity(sourcePos);
-        BlockEntity targetBe = world.getBlockEntity(targetChestPos);
+        Inventory targetInv = getInventoryAtPos(world, targetChestPos);
+        Inventory sourceInv = getInventoryAtPos(world, sourcePos);
 
-        if (!(targetBe instanceof Inventory targetInv)) {
+        if (targetInv == null) {
             finishOrganizing(true, "O baú de destino foi removido ou destruído!");
             return;
         }
 
-        if (!(sourceBe instanceof Inventory sourceInv)) {
+        if (sourceInv == null) {
             // Baú de origem sumiu, pula para o próximo
             currentChestIndex++;
             workCooldown = 5;
@@ -228,19 +394,13 @@ public class JacintoOrganizer {
         int movedInThisChest = transferMatchingItems(sourceInv, targetInv, targetItem);
         totalTransferred += movedInThisChest;
 
-        // Efeito sonoro no destino
-        if (movedInThisChest > 0) {
-            world.playSound(null, targetChestPos.getX(), targetChestPos.getY(), targetChestPos.getZ(),
-                    SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 0.6f, 1.2f);
-        }
-
-        // Verifica se o baú alvo lotou
+        // Se o baú de destino lotou completamente
         if (isInventoryFullOfItem(targetInv, targetItem)) {
-            finishOrganizing(true, "O baú de destino lotou até a boca! Não cabe mais nada.");
+            finishOrganizing(true, "O baú de destino lotou até a tampa!");
             return;
         }
 
-        // Avança para o próximo baú de origem
+        // Avança para o próximo baú da fila
         currentChestIndex++;
         if (currentChestIndex < sourceChests.size()) {
             BlockPos nextPos = sourceChests.get(currentChestIndex);
@@ -306,43 +466,44 @@ public class JacintoOrganizer {
      * Transfere itens do tipo selecionado do inventário de origem para o de destino
      */
     private int transferMatchingItems(Inventory source, Inventory target, Item matchItem) {
-        int movedCount = 0;
+        int moved = 0;
         for (int i = 0; i < source.size(); i++) {
-            ItemStack stack = source.getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == matchItem) {
-                int countToMove = stack.getCount();
-                ItemStack remaining = insertStack(target, stack.copy());
-                int moved = countToMove - remaining.getCount();
+            ItemStack srcStack = source.getStack(i);
+            if (!srcStack.isEmpty() && srcStack.getItem() == matchItem) {
+                int countBefore = srcStack.getCount();
+                ItemStack remaining = insertItemIntoInventory(target, srcStack);
+                int transferred = countBefore - remaining.getCount();
+                moved += transferred;
 
-                if (moved > 0) {
-                    movedCount += moved;
-                    if (remaining.isEmpty()) {
-                        source.setStack(i, ItemStack.EMPTY);
-                    } else {
-                        source.setStack(i, remaining);
-                    }
-                    source.markDirty();
-                    target.markDirty();
+                if (remaining.isEmpty()) {
+                    source.setStack(i, ItemStack.EMPTY);
+                } else {
+                    source.setStack(i, remaining);
                 }
+                source.markDirty();
 
-                if (!remaining.isEmpty()) {
-                    // O baú de destino lotou
+                if (isInventoryFullOfItem(target, matchItem)) {
                     break;
                 }
             }
         }
-        return movedCount;
+        return moved;
     }
 
-    private ItemStack insertStack(Inventory inv, ItemStack stack) {
-        // Primeiro tenta empilhar em slots existentes com o mesmo item
+    /**
+     * Insere item no inventário respeitando regras de empilhamento de slots existentes
+     */
+    private ItemStack insertItemIntoInventory(Inventory inv, ItemStack stack) {
+        if (stack.isEmpty()) return ItemStack.EMPTY;
+
+        // Primeiro tenta mesclar em pilhas existentes do mesmo item
         for (int i = 0; i < inv.size(); i++) {
             ItemStack cur = inv.getStack(i);
             if (!cur.isEmpty() && ItemStack.canCombine(cur, stack)) {
                 int max = Math.min(inv.getMaxCountPerStack(), cur.getMaxCount());
-                int space = max - cur.getCount();
-                if (space > 0) {
-                    int toAdd = Math.min(space, stack.getCount());
+                int canAdd = max - cur.getCount();
+                if (canAdd > 0) {
+                    int toAdd = Math.min(canAdd, stack.getCount());
                     cur.increment(toAdd);
                     stack.decrement(toAdd);
                     inv.markDirty();
@@ -383,19 +544,25 @@ public class JacintoOrganizer {
     }
 
     /**
-     * Varrer blocos de inventário no raio de ação, excluindo o baú de destino
+     * Varrer blocos de inventário no raio de ação, excluindo ambas as metades do baú de destino
      */
     private void scanSourceChests(ServerWorld world, BlockPos center, int radius) {
         sourceChests.clear();
+        Set<BlockPos> visitedDoubleChests = new HashSet<>();
+
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -8; dy <= 8; dy++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     BlockPos p = center.add(dx, dy, dz);
                     if (excludedChestPositions.contains(p)) continue;
+                    if (visitedDoubleChests.contains(p)) continue;
 
-                    BlockEntity be = world.getBlockEntity(p);
-                    if (be instanceof Inventory inv) {
-                        // Verifica se este baú possui o item desejado
+                    Inventory inv = getInventoryAtPos(world, p);
+                    if (inv != null) {
+                        BlockPos other = getDoubleChestOtherHalf(world, p);
+                        if (other != null) {
+                            visitedDoubleChests.add(other);
+                        }
                         if (containsItem(inv, targetItem)) {
                             sourceChests.add(p);
                         }
@@ -429,30 +596,60 @@ public class JacintoOrganizer {
     private BlockPos findAttachedChest(ServerWorld world, BlockPos signPos) {
         BlockState signState = world.getBlockState(signPos);
 
-        // Se for placa de parede, o bloco atrás dela é o principal candidato
+        // 1. Se for placa de parede, o bloco atrás dela é o principal candidato
         if (signState.getBlock() instanceof WallSignBlock) {
             Direction backDir = signState.get(WallSignBlock.FACING).getOpposite();
             BlockPos backPos = signPos.offset(backDir);
-            if (world.getBlockEntity(backPos) instanceof Inventory) {
+            if (getInventoryAtPos(world, backPos) != null) {
                 return backPos;
             }
         }
 
-        // Checa todas as 6 direções vizinhas (baixo, cima, lados)
+        // 2. Checa as 6 direções diretas (baixo, cima, lados)
         for (Direction dir : Direction.values()) {
             BlockPos p = signPos.offset(dir);
-            if (world.getBlockEntity(p) instanceof Inventory) {
+            if (getInventoryAtPos(world, p) != null) {
                 return p;
+            }
+        }
+
+        // 3. Checa raio de 2 blocos (ex: placa no chão em frente ao baú ou placa suspensa)
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    BlockPos p = signPos.add(dx, dy, dz);
+                    if (getInventoryAtPos(world, p) != null) {
+                        return p;
+                    }
+                }
             }
         }
         return null;
     }
 
     private SignBlockEntity findNearbySign(ServerWorld world, BlockPos chestPos) {
-        for (Direction dir : Direction.values()) {
-            BlockPos p = chestPos.offset(dir);
-            if (world.getBlockEntity(p) instanceof SignBlockEntity signBe) {
-                return signBe;
+        SignBlockEntity s = scanNearbySigns(world, chestPos);
+        if (s != null) return s;
+
+        // Se for baú duplo, checa também ao redor da outra metade!
+        BlockPos otherHalf = getDoubleChestOtherHalf(world, chestPos);
+        if (otherHalf != null) {
+            s = scanNearbySigns(world, otherHalf);
+            if (s != null) return s;
+        }
+        return null;
+    }
+
+    private SignBlockEntity scanNearbySigns(ServerWorld world, BlockPos pos) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    BlockPos p = pos.add(dx, dy, dz);
+                    BlockEntity be = world.getBlockEntity(p);
+                    if (be instanceof SignBlockEntity signBe) {
+                        return signBe;
+                    }
+                }
             }
         }
         return null;
@@ -470,10 +667,42 @@ public class JacintoOrganizer {
     }
 
     /**
-     * Identifica o item pretendido a partir dos textos da placa ou do baú
+     * Identifica o item pretendido com máxima precisão:
+     * 1. Se o baú já contém itens E a placa possui texto, compara as palavras da placa com os itens do baú
+     * 2. Tenta casar o texto da placa com o dicionário em PT-BR e IDs oficiais do Minecraft (com tolerância fonética/Levenshtein)
+     * 3. Se a placa for genérica, decorada ou em branco, usa o primeiro item do baú como exemplar
      */
     private Item identifyItemFromSignOrChest(ServerWorld world, BlockPos chestPos, List<String> rawLines) {
-        // 1. Tenta identificar diretamente a partir dos textos da placa
+        Inventory chestInv = getInventoryAtPos(world, chestPos);
+        List<ItemStack> itemsInChest = new ArrayList<>();
+        if (chestInv != null) {
+            for (int i = 0; i < chestInv.size(); i++) {
+                ItemStack st = chestInv.getStack(i);
+                if (!st.isEmpty()) {
+                    itemsInChest.add(st);
+                }
+            }
+        }
+
+        // 1. Se a placa tem texto e o baú já tem itens, dá prioridade aos itens presentes no baú
+        if (!rawLines.isEmpty() && !itemsInChest.isEmpty()) {
+            for (ItemStack st : itemsInChest) {
+                Item item = st.getItem();
+                String itemPath = Registries.ITEM.getId(item).getPath().replace("_", " ");
+                String itemName = normalize(st.getName().getString());
+                for (String line : rawLines) {
+                    String clean = normalize(line);
+                    if (clean.equals(itemPath) || clean.equals(itemName)
+                            || levenshtein(clean, itemPath) <= 2
+                            || containsWholeWord(clean, itemPath)
+                            || containsWholeWord(clean, itemName)) {
+                        return item;
+                    }
+                }
+            }
+        }
+
+        // 2. Tenta identificar diretamente a partir dos textos da placa via dicionário e registro
         for (String line : rawLines) {
             Item match = matchItemName(line);
             if (match != null && match != Items.AIR) {
@@ -481,32 +710,9 @@ public class JacintoOrganizer {
             }
         }
 
-        // 2. Se a placa não casou diretamente, mas o baú já tem itens dentro,
-        // verifica se algum item do baú bate com as palavras da placa
-        BlockEntity be = world.getBlockEntity(chestPos);
-        if (be instanceof Inventory inv) {
-            for (int i = 0; i < inv.size(); i++) {
-                ItemStack s = inv.getStack(i);
-                if (!s.isEmpty()) {
-                    String itemName = s.getName().getString().toLowerCase(Locale.ROOT);
-                    String itemPath = Registries.ITEM.getId(s.getItem()).getPath().toLowerCase(Locale.ROOT);
-                    for (String line : rawLines) {
-                        String cleanLine = normalize(line);
-                        if (cleanLine.contains(normalize(itemName)) || normalize(itemName).contains(cleanLine)
-                                || cleanLine.contains(itemPath) || itemPath.contains(cleanLine)) {
-                            return s.getItem();
-                        }
-                    }
-                }
-            }
-
-            // 3. Se a placa estava em branco ou com texto decorativo, mas o baú tem itens, pega o primeiro item do baú
-            for (int i = 0; i < inv.size(); i++) {
-                ItemStack s = inv.getStack(i);
-                if (!s.isEmpty()) {
-                    return s.getItem();
-                }
-            }
+        // 3. Se a placa não casou ou estava decorativa/em branco, mas o baú já possui itens, usa o primeiro exemplar
+        if (!itemsInChest.isEmpty()) {
+            return itemsInChest.get(0).getItem();
         }
 
         return null;
@@ -516,70 +722,85 @@ public class JacintoOrganizer {
         if (input == null || input.isBlank()) return null;
         String clean = normalize(input);
 
-        // Dicionário comum de minérios e itens em Português
-        Map<String, Item> dict = new HashMap<>();
-        dict.put("diamante", Items.DIAMOND);
-        dict.put("bloco de diamante", Items.DIAMOND_BLOCK);
-        dict.put("ferro", Items.IRON_INGOT);
-        dict.put("barra de ferro", Items.IRON_INGOT);
-        dict.put("ferro bruto", Items.RAW_IRON);
-        dict.put("bloco de ferro", Items.IRON_BLOCK);
-        dict.put("ouro", Items.GOLD_INGOT);
-        dict.put("barra de ouro", Items.GOLD_INGOT);
-        dict.put("ouro bruto", Items.RAW_GOLD);
-        dict.put("cobre", Items.COPPER_INGOT);
-        dict.put("barra de cobre", Items.COPPER_INGOT);
-        dict.put("cobre bruto", Items.RAW_COPPER);
-        dict.put("carvao", Items.COAL);
-        dict.put("redstone", Items.REDSTONE);
-        dict.put("lapis", Items.LAPIS_LAZULI);
-        dict.put("lapis lazuli", Items.LAPIS_LAZULI);
-        dict.put("esmeralda", Items.EMERALD);
-        dict.put("netherita", Items.NETHERITE_INGOT);
-        dict.put("barra de netherita", Items.NETHERITE_INGOT);
-        dict.put("quartzo", Items.QUARTZ);
-        dict.put("pedra", Items.STONE);
-        dict.put("pedregulho", Items.COBBLESTONE);
-        dict.put("terra", Items.DIRT);
-        dict.put("areia", Items.SAND);
-        dict.put("cascalho", Items.GRAVEL);
-        dict.put("madeira", Items.OAK_LOG);
-        dict.put("tronco de carvalho", Items.OAK_LOG);
-        dict.put("tabuas de carvalho", Items.OAK_PLANKS);
-        dict.put("vidro", Items.GLASS);
-        dict.put("ossos", Items.BONE);
-        dict.put("osso", Items.BONE);
-        dict.put("linha", Items.STRING);
-        dict.put("polvora", Items.GUNPOWDER);
-        dict.put("trigo", Items.WHEAT);
-        dict.put("cenoura", Items.CARROT);
-        dict.put("batata", Items.POTATO);
-        dict.put("peixe", Items.COD);
-        dict.put("carne", Items.BEEF);
-
-        for (Map.Entry<String, Item> entry : dict.entrySet()) {
-            if (clean.equals(entry.getKey()) || clean.contains(entry.getKey())) {
+        // 1. Dicionário PT-BR: primeiro correspondência exata
+        for (Map.Entry<String, Item> entry : PT_DICT.entrySet()) {
+            if (clean.equals(entry.getKey())) {
                 return entry.getValue();
             }
         }
 
-        // Tenta achar diretamente pelo ID de registro do Minecraft
+        // 2. Registries.ITEM: correspondência exata por caminho de registro (ex: "andesite", "diamond")
         for (Item it : Registries.ITEM) {
             String path = Registries.ITEM.getId(it).getPath().replace("_", " ");
-            if (clean.equals(path) || clean.contains(path)) {
-                return it;
-            }
-            String ptName = normalize(new ItemStack(it).getName().getString());
-            if (clean.equals(ptName) || clean.contains(ptName)) {
+            if (clean.equals(path)) {
                 return it;
             }
         }
+
+        // 3. Similaridade fonética (Levenshtein <= 2) para variações mínimas (ex: andesito -> andesite, diorito -> diorite)
+        Item bestFuzzy = null;
+        int bestDist = Integer.MAX_VALUE;
+        for (Item it : Registries.ITEM) {
+            String path = Registries.ITEM.getId(it).getPath().replace("_", " ");
+            if (Math.abs(path.length() - clean.length()) <= 2) {
+                int dist = levenshtein(clean, path);
+                if (dist <= 2 && dist < bestDist) {
+                    bestDist = dist;
+                    bestFuzzy = it;
+                }
+            }
+        }
+        if (bestFuzzy != null) {
+            return bestFuzzy;
+        }
+
+        // 4. Correspondência de palavra inteira no dicionário PT (ex: "Bau de Andesito" -> andesito)
+        for (Map.Entry<String, Item> entry : PT_DICT.entrySet()) {
+            if (containsWholeWord(clean, entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        // 5. Correspondência de palavra inteira nos IDs do Minecraft (comprimento >= 4 para evitar "and", "in", "to")
+        for (Item it : Registries.ITEM) {
+            String path = Registries.ITEM.getId(it).getPath().replace("_", " ");
+            if (path.length() >= 4 && containsWholeWord(clean, path)) {
+                return it;
+            }
+        }
+
         return null;
     }
 
-    private String normalize(String s) {
+    private static boolean containsWholeWord(String text, String word) {
+        if (text == null || word == null || word.isBlank()) return false;
+        return Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)
+                .matcher(text)
+                .find();
+    }
+
+    private static int levenshtein(String a, String b) {
+        int[] costs = new int[b.length() + 1];
+        for (int j = 0; j < costs.length; j++) costs[j] = j;
+        for (int i = 1; i <= a.length(); i++) {
+            costs[0] = i;
+            int nw = i - 1;
+            for (int j = 1; j <= b.length(); j++) {
+                int cj = Math.min(1 + Math.min(costs[j], costs[j - 1]),
+                        a.charAt(i - 1) == b.charAt(j - 1) ? nw : nw + 1);
+                nw = costs[j];
+                costs[j] = cj;
+            }
+        }
+        return costs[b.length()];
+    }
+
+    private static String normalize(String s) {
         if (s == null) return "";
         String n = Normalizer.normalize(s.toLowerCase(Locale.ROOT), Normalizer.Form.NFD);
-        return n.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "").replaceAll("[^a-z0-9 ]", " ").trim().replaceAll(" +", " ");
+        return n.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .replaceAll("[^a-z0-9 ]", " ")
+                .trim()
+                .replaceAll(" +", " ");
     }
 }

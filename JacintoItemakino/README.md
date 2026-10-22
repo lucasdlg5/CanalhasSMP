@@ -184,10 +184,10 @@ Mod construído sobre o **Fabric Loom 1.7** para Minecraft **1.20.1** (Java 17):
 gradlew.bat build -x test
 ```
 O arquivo JAR é gerado em:
-`JacintoItemakino/build/libs/jacinto-itemakino-1.1.0.jar`
+`JacintoItemakino/build/libs/jacinto-itemakino-1.1.1.jar`
 
 ### 2. Instalação:
-1. Copie o arquivo `jacinto-itemakino-1.1.0.jar` para a pasta `mods/` do servidor.
+1. Copie o arquivo `jacinto-itemakino-1.1.1.jar` para a pasta `mods/` do servidor.
 2. Inicie ou reinicie o servidor.
 3. Não requer instalação no cliente dos jogadores (100% server-side).
 
