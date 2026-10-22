@@ -56,6 +56,12 @@ public class ModSourceBackupManager {
                 copyDirectoryFiltered(senhorCumminsSrc, targetBackupDir.resolve("SenhorCummins"));
             }
 
+            // 1.1 Projeto completo do mod JacintoItemakino (código-fonte, gradle, build/libs)
+            Path jacintoSrc = workspaceRootDir.resolve("JacintoItemakino");
+            if (Files.isDirectory(jacintoSrc)) {
+                copyDirectoryFiltered(jacintoSrc, targetBackupDir.resolve("JacintoItemakino"));
+            }
+
             // 2. Projeto completo do CanalhasServerDashboard (código-fonte C#, .csproj, publish/)
             Path dashboardSrc = workspaceRootDir.resolve("CanalhasServerDashboard");
             if (Files.isDirectory(dashboardSrc)) {
@@ -68,12 +74,20 @@ public class ModSourceBackupManager {
                 Files.copy(batFile, targetBackupDir.resolve("INICIAR_PAINEL_CANALHAS.bat"), StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // 4. JAR compilado ativo na pasta mods do servidor
+            // 4. JARs compilados ativos na pasta mods do servidor
+            Path jarTargetDir = targetBackupDir.resolve("mods_jar");
+            Files.createDirectories(jarTargetDir);
+
             Path activeJar = serverDir.resolve("mods").resolve("senhor-cummins-1.0.0.jar");
             if (Files.isRegularFile(activeJar)) {
-                Path jarTargetDir = targetBackupDir.resolve("mods_jar");
-                Files.createDirectories(jarTargetDir);
                 Files.copy(activeJar, jarTargetDir.resolve("senhor-cummins-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(activeJar, targetBackupDir.resolve("senhor-cummins-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            Path jacintoJar = serverDir.resolve("mods").resolve("jacinto-itemakino-1.0.0.jar");
+            if (Files.isRegularFile(jacintoJar)) {
+                Files.copy(jacintoJar, jarTargetDir.resolve("jacinto-itemakino-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(jacintoJar, targetBackupDir.resolve("jacinto-itemakino-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
             }
 
             // 5. Configurações, memória de longo prazo (memoria.json), Mural e ícone do servidor
@@ -83,6 +97,11 @@ public class ModSourceBackupManager {
             Path cumminsConfigDir = serverDir.resolve("config").resolve("senhor-cummins");
             if (Files.isDirectory(cumminsConfigDir)) {
                 copyDirectoryFiltered(cumminsConfigDir, configBackupDir.resolve("senhor-cummins"));
+            }
+
+            Path jacintoConfigDir = serverDir.resolve("config").resolve("jacinto");
+            if (Files.isDirectory(jacintoConfigDir)) {
+                copyDirectoryFiltered(jacintoConfigDir, configBackupDir.resolve("jacinto"));
             }
 
             Path muralFile = serverDir.resolve("MURAL_NOVIDADES.json");

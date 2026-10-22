@@ -23,6 +23,9 @@ import java.util.List;
 public class CumminsMod implements ModInitializer {
     public static final Logger LOG = LoggerFactory.getLogger("SenhorCummins");
 
+    public static final net.minecraft.util.Identifier MONITORING_MUSIC_ID = new net.minecraft.util.Identifier("cummins", "music.monitoring");
+    public static final net.minecraft.sound.SoundEvent MONITORING_MUSIC_EVENT = net.minecraft.sound.SoundEvent.of(MONITORING_MUSIC_ID);
+
     private Path configFile;
     private CumminsConfig config;
     private ContextStore context;
@@ -191,8 +194,41 @@ public class CumminsMod implements ModInitializer {
             if (dailyHighlights != null) dailyHighlights.onChatMessage(sender.getGameProfile().getName(), message.getContent().getString());
             brain.onChat(sender, message.getContent().getString());
         });
-        ServerMessageEvents.COMMAND_MESSAGE.register((message, source, params) ->
-            brain.onCommandMessage(source.getName(), message.getContent().getString()));
+        ServerMessageEvents.COMMAND_MESSAGE.register((message, source, params) -> {
+            String content = message.getContent().getString().trim();
+            boolean isConsole = source.getEntity() == null || source.getName().equalsIgnoreCase("Server");
+            String lower = content.toLowerCase(java.util.Locale.ROOT);
+
+            boolean isAdmin = isConsole
+                    || lower.startsWith("administrador")
+                    || lower.startsWith("[administrador]")
+                    || lower.startsWith("admin")
+                    || lower.startsWith("[admin]")
+                    || lower.startsWith("administrator");
+
+            if (isAdmin && !content.isEmpty()) {
+                String displayMsg = content;
+                String[] prefixes = {"[administrador]", "administrador", "[admin]", "admin", "administrator"};
+                for (String pfx : prefixes) {
+                    if (lower.startsWith(pfx)) {
+                        displayMsg = displayMsg.substring(pfx.length()).trim();
+                        if (displayMsg.startsWith(":") || displayMsg.startsWith("-")) {
+                            displayMsg = displayMsg.substring(1).trim();
+                        }
+                        break;
+                    }
+                }
+                if (displayMsg.isBlank()) {
+                    displayMsg = content;
+                }
+                net.minecraft.server.MinecraftServer srv = source.getServer();
+                if (srv != null) {
+                    CumminsCommands.broadcastAdminScreenMessage(srv, displayMsg);
+                }
+            }
+
+            brain.onCommandMessage(source.getName(), content);
+        });
         ServerMessageEvents.GAME_MESSAGE.register((server, message, overlay) -> {
             if (dailyHighlights != null) dailyHighlights.onGameMessage(message);
             if (!overlay) brain.onGameMessage(message);
@@ -257,12 +293,14 @@ public class CumminsMod implements ModInitializer {
                 jinqiuzineo.summonOrTeleportTo(handler.player);
             }
             if (tvManager != null) tvManager.onPlayerJoin(handler.player);
+            CumminsCommands.onPlayerJoin(handler.player);
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             brain.onLeave(handler.player);
             playtime.onPlayerLeave(handler.player);
             if (networkMonitor != null) networkMonitor.onPlayerDisconnect(handler.player);
             if (tvManager != null) tvManager.onPlayerLeave(handler.player);
+            CumminsCommands.onPlayerLeave(handler.player);
             server.execute(() -> {
                 if (pipira != null) pipira.onPlayerLeave(handler.player);
                 if (juninho != null) juninho.onPlayerLeave(handler.player);
@@ -334,6 +372,7 @@ public class CumminsMod implements ModInitializer {
             if (tourGuide != null) tourGuide.onTick(body.getCat(), server);
             if (tvManager != null) tvManager.onTick(server);
             if (modBackup != null) modBackup.checkPeriodicSync();
+            CumminsCommands.tickAdminBossBar(server);
             checkShiftReport(server);
         });
 
@@ -370,6 +409,7 @@ public class CumminsMod implements ModInitializer {
         if (tourGuide != null) tourGuide.load();
         if (rh != null) rh.load();
         if (contracts != null) contracts.load();
+        if (tvManager != null) tvManager.load();
         if (networkMonitor != null) {
             networkMonitor.stop();
             if (config.networkMonitor != null && config.networkMonitor.enabled) {

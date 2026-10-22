@@ -22,8 +22,10 @@ CanalhasSMP/versions/
 CanalhasSMP/att-debug/
 CanalhasSMP/*.jar
 !CanalhasSMP/mods/senhor-cummins-*.jar
+!CanalhasSMP/mods/jacinto-itemakino-*.jar
 CanalhasSMP/mods/*.jar
 !CanalhasSMP/mods/senhor-cummins-*.jar
+!CanalhasSMP/mods/jacinto-itemakino-*.jar
 CanalhasSMP/usercache.json
 CanalhasSMP/usernamecache.json
 CanalhasSMP/whitelist.json
@@ -100,3 +102,12 @@ $RECYCLE.BIN/
 *.log
 spark_report*.json
 !README.md
+
+
+# Jacinto Itemakino (Mod Fabric)
+JacintoItemakino/.gradle/
+JacintoItemakino/build/
+JacintoItemakino/.tools/
+JacintoItemakino/bin/
+JacintoItemakino/out/
+JacintoItemakino/*.log

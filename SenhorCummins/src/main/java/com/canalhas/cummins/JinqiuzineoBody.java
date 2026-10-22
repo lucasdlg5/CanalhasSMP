@@ -60,7 +60,29 @@ public class JinqiuzineoBody {
     private long lastDefenseAt = 0;
     private long petPauseUntil = 0;
     private boolean manuallyDismissed = false;
+    private String variantName = "white";
     private final Random random = new Random();
+
+    public boolean setVariantName(String name) {
+        if (name == null || name.isBlank()) return false;
+        String normalized = name.toLowerCase(java.util.Locale.ROOT).trim();
+        Identifier id = new Identifier("minecraft", normalized);
+        if (!Registries.CAT_VARIANT.containsId(id)) return false;
+        CatVariant v = Registries.CAT_VARIANT.get(id);
+        if (v != null) {
+            this.variantName = normalized;
+            CatEntity cat = getCat();
+            if (cat != null) {
+                cat.setVariant(v);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
 
     public JinqiuzineoBody(CumminsMod mod) {
         this.mod = mod;
@@ -586,11 +608,11 @@ public class JinqiuzineoBody {
         cat.setPersistent();
         cat.setCollarColor(DyeColor.PURPLE);
 
-        // Pelagem de Tigre Branco (White Cat puro com heterocromia)
-        CatVariant variant = Registries.CAT_VARIANT.get(CatVariant.WHITE);
-        if (variant == null) {
-            variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "white"));
-        }
+        // Pelagem de Tigre Branco (padrão white / branco puro, configurável dinamicamente)
+        Identifier variantId = new Identifier("minecraft", variantName);
+        CatVariant variant = Registries.CAT_VARIANT.containsId(variantId)
+                ? Registries.CAT_VARIANT.get(variantId)
+                : Registries.CAT_VARIANT.get(CatVariant.WHITE);
         if (variant != null) {
             cat.setVariant(variant);
         }

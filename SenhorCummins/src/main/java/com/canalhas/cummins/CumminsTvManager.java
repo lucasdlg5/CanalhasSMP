@@ -47,6 +47,10 @@ public class CumminsTvManager {
     // Rastreamento de movimento dos jogadores para detecção de AFK
     private final Map<UUID, PlayerMovementTracker> movementTrackers = new ConcurrentHashMap<>();
 
+    // Rastreamento dos jogadores atualmente spectados para o Easter Egg da música monitoring.mp3 (volume 1%)
+    private final Set<UUID> spectatedPlayerUuids = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Integer> spectatedTicks = new ConcurrentHashMap<>();
+
     public enum TvCameraMode {
         FIRST_PERSON("1ª Pessoa (Olhos)", "olhos", "🎥"),
         DRONE("Drone Traseiro", "drone", "🚁"),
@@ -175,6 +179,13 @@ public class CumminsTvManager {
         SpectatorSession session = sessions.get(spectator.getUuid());
         if (session == null || mode == null) return false;
         session.cameraMode = mode;
+        if (session.currentTarget != null && !session.currentTarget.isRemoved()) {
+            if (mode == TvCameraMode.FIRST_PERSON) {
+                forceCameraAttach(spectator, session.currentTarget);
+            } else {
+                forceCameraDetach(spectator);
+            }
+        }
         spectator.sendMessage(Text.literal("§6📺 [Canalhas TV]§r Modo de visão alterado para: §e" + mode.icon + " " + mode.displayName), false);
         return true;
     }
@@ -185,6 +196,13 @@ public class CumminsTvManager {
         TvCameraMode[] all = TvCameraMode.values();
         int nextIdx = (session.cameraMode.ordinal() + 1) % all.length;
         session.cameraMode = all[nextIdx];
+        if (session.currentTarget != null && !session.currentTarget.isRemoved()) {
+            if (session.cameraMode == TvCameraMode.FIRST_PERSON) {
+                forceCameraAttach(spectator, session.currentTarget);
+            } else {
+                forceCameraDetach(spectator);
+            }
+        }
         spectator.sendMessage(Text.literal("§6📺 [Canalhas TV]§r Modo de visão: §e" + session.cameraMode.icon + " " + session.cameraMode.displayName), false);
         return session.cameraMode;
     }
@@ -307,6 +325,9 @@ public class CumminsTvManager {
 
     public void forceCameraAttach(ServerPlayerEntity spectator, Entity target) {
         if (spectator == null || target == null || target.isRemoved()) return;
+        if (spectator.getWorld() != target.getWorld()) {
+            spectator.teleport((ServerWorld) target.getWorld(), target.getX(), target.getY(), target.getZ(), target.getYaw(), target.getPitch());
+        }
         spectator.setCameraEntity(target);
         if (spectator.networkHandler != null) {
             spectator.networkHandler.sendPacket(new SetCameraEntityS2CPacket(target));
@@ -334,10 +355,14 @@ public class CumminsTvManager {
 
         if (target.getWorld() instanceof ServerWorld targetWorld) {
             boolean diffWorld = spectator.getWorld() != targetWorld;
-            // Sempre teleporta o avatar espectador para junto do alvo para manter chunks carregados
-            spectator.teleport(targetWorld, target.getX(), target.getY() + 0.1, target.getZ(), target.getYaw(), target.getPitch());
-            if (diffWorld) {
-                session.dimensionTransitionCooldownTicks = 60; // 3s de re-sincronização contínua pós-troca de dimensão
+            double distSq = diffWorld ? Double.MAX_VALUE : spectator.squaredDistanceTo(target);
+            // Só teleporta o avatar físico se estiver em outra dimensão OU a mais de 64 blocos de distância
+            // para que os chunks sejam enviados antes do acoplamento
+            if (diffWorld || distSq > 64.0 * 64.0) {
+                spectator.teleport(targetWorld, target.getX(), target.getY() + 0.1, target.getZ(), target.getYaw(), target.getPitch());
+                if (diffWorld) {
+                    session.dimensionTransitionCooldownTicks = 40; // 2s de re-sincronização contínua pós-portal
+                }
             }
         }
 
@@ -346,7 +371,7 @@ public class CumminsTvManager {
         session.orbitAngleDeg = target.getYaw();
         session.ticksSinceLastAttachPacket = 0;
 
-        // Se estiver em 1ª pessoa, força o envio do pacote de câmera
+        // Se estiver em 1ª pessoa, acopla nativamente aos olhos da entidade
         if (session.cameraMode == TvCameraMode.FIRST_PERSON) {
             forceCameraAttach(spectator, target);
         } else {
@@ -404,6 +429,9 @@ public class CumminsTvManager {
         if (server.getTicks() % 20 == 0) {
             updatePlayerMovement(server);
         }
+
+        // Easter Egg: Gerencia o áudio de monitoramento (monitoring.mp3 a 1% de volume)
+        updateMonitoringMusic(server);
 
         if (sessions.isEmpty()) return;
 
@@ -485,23 +513,22 @@ public class CumminsTvManager {
         session.ticksSinceLastAttachPacket++;
 
         if (mode == TvCameraMode.FIRST_PERSON) {
-            // Modo 1ª Pessoa nativo: anexa aos olhos da entidade
-            // 1. O avatar físico do espectador DEVE acompanhar o alvo de perto!
-            // Se o espectador físico ficar para trás no mundo, o servidor para de enviar chunks e a entidade desaparece do cliente!
-            double distSq = spectator.squaredDistanceTo(target);
-            if (distSq > 3.0 * 3.0) {
-                spectator.teleport((ServerWorld) target.getWorld(), target.getX(), target.getY() + 0.1, target.getZ(), target.getYaw(), target.getPitch());
-            }
+            // Modo 1ª Pessoa nativo:
+            // O Minecraft sincroniza nativamente no ServerPlayerEntity.tick() o updatePositionAndAngles e chunkManager.
+            // NUNCA chamar spectator.teleport() no mesmo mundo aqui, pois o teleport nativo reseta cameraEntity para 'this',
+            // desanexando o espectador e travando a visão na posição anterior!
 
-            // 2. Transição de dimensão e auto-recuperação (heartbeat)
+            // 1. Transição pós-troca de dimensão
             if (session.dimensionTransitionCooldownTicks > 0) {
                 session.dimensionTransitionCooldownTicks--;
-                if (session.dimensionTransitionCooldownTicks % 5 == 0) {
+                if (session.dimensionTransitionCooldownTicks % 10 == 0) {
                     forceCameraAttach(spectator, target);
                 }
-            } else if (distSq > 16.0 * 16.0 || spectator.getCameraEntity() != target || session.ticksSinceLastAttachPacket >= 40) {
-                // Heartbeat a cada 2s para restabelecer a visão instantaneamente caso o cliente desanexe
-                session.ticksSinceLastAttachPacket = 0;
+                return;
+            }
+
+            // 2. Se a câmera desanexou (ex: renascimento do alvo ou desconexão do pacote), re-anexa:
+            if (spectator.getCameraEntity() != target && !spectator.isSneaking()) {
                 forceCameraAttach(spectator, target);
             }
             return;
@@ -620,23 +647,143 @@ public class CumminsTvManager {
         }
     }
 
+    public boolean isBot(String name) {
+        if (name == null) return false;
+        String trimmed = name.trim();
+        // Jamais considere jodevil ou _iodevil como bot de transmissão
+        if (trimmed.equalsIgnoreCase("jodevil") || trimmed.equalsIgnoreCase("_iodevil")) {
+            return false;
+        }
+        if (trimmed.equalsIgnoreCase("CanalhasTV") || trimmed.equalsIgnoreCase("CanalhaTV")) {
+            return true;
+        }
+        if (config.botNick != null && !config.botNick.isBlank()) {
+            String configured = config.botNick.trim();
+            if (!configured.equalsIgnoreCase("jodevil") && !configured.equalsIgnoreCase("_iodevil")) {
+                return trimmed.equalsIgnoreCase(configured);
+            }
+        }
+        return false;
+    }
+
     public void onPlayerJoin(ServerPlayerEntity player) {
         if (player == null) return;
         String name = player.getGameProfile().getName();
-        if (config.autoStartOnJoin && config.botNick != null && name.equalsIgnoreCase(config.botNick.trim())) {
+        if (config.autoStartOnJoin && isBot(name)) {
             CumminsMod.LOG.info("[CumminsTV] Conta de transmissão '{}' conectou! Ativando modo TV automático...", name);
             player.getServer().execute(() -> startTv(player));
+        } else if (name.equalsIgnoreCase("jodevil") || name.equalsIgnoreCase("_iodevil")) {
+            // Se jodevil entrar e estiver em modo espectador pela sessão antiga indevida, encerra a TV e restaura Sobrevivência
+            player.getServer().execute(() -> {
+                if (sessions.containsKey(player.getUuid())) {
+                    stopTv(player);
+                } else if (player.isSpectator()) {
+                    player.changeGameMode(GameMode.SURVIVAL);
+                    player.sendMessage(Text.literal("§6📺 [Canalhas TV]§a Seu modo de jogo foi restaurado para Sobrevivência!"), false);
+                }
+            });
         }
     }
 
     public void onPlayerLeave(ServerPlayerEntity player) {
         if (player == null) return;
-        sessions.remove(player.getUuid());
+        SpectatorSession session = sessions.remove(player.getUuid());
+        if (session != null && !isBot(player.getGameProfile().getName())) {
+            GameMode restoreMode = session.originalGameMode != null && session.originalGameMode != GameMode.SPECTATOR
+                    ? session.originalGameMode : GameMode.SURVIVAL;
+            player.changeGameMode(restoreMode);
+        }
         movementTrackers.remove(player.getUuid());
+        spectatedPlayerUuids.remove(player.getUuid());
+        spectatedTicks.remove(player.getUuid());
+    }
+
+    private void updateMonitoringMusic(MinecraftServer server) {
+        Set<UUID> currentlySpectated = new HashSet<>();
+        if (!sessions.isEmpty()) {
+            for (SpectatorSession session : sessions.values()) {
+                if (session.currentTarget instanceof ServerPlayerEntity targetPlayer && !targetPlayer.isRemoved() && targetPlayer.isAlive()) {
+                    currentlySpectated.add(targetPlayer.getUuid());
+                }
+            }
+        }
+
+        // 1. Quem acabou de virar alvo de spectate: começa a ouvir monitoring.mp3 a 1% de volume (0.01f)
+        for (UUID uuid : currentlySpectated) {
+            if (!spectatedPlayerUuids.contains(uuid)) {
+                ServerPlayerEntity p = server.getPlayerManager().getPlayer(uuid);
+                if (p != null) {
+                    startMonitoringMusic(p);
+                }
+                spectatedTicks.put(uuid, 0);
+            } else {
+                int ticks = spectatedTicks.merge(uuid, 1, Integer::sum);
+                // Duração do áudio: 176 segundos (~3520 ticks). Re-toca a cada 175s se continuar spectado (looping contínuo)
+                if (ticks >= 175 * 20) {
+                    spectatedTicks.put(uuid, 0);
+                    ServerPlayerEntity p = server.getPlayerManager().getPlayer(uuid);
+                    if (p != null) {
+                        startMonitoringMusic(p);
+                    }
+                }
+            }
+        }
+
+        // 2. Quem deixou de ser spectado (câmera trocou para outro player/pet ou spectate encerrou):
+        // Para a música imediatamente
+        for (UUID uuid : spectatedPlayerUuids) {
+            if (!currentlySpectated.contains(uuid)) {
+                spectatedTicks.remove(uuid);
+                ServerPlayerEntity p = server.getPlayerManager().getPlayer(uuid);
+                if (p != null) {
+                    stopMonitoringMusic(p);
+                }
+            }
+        }
+
+        spectatedPlayerUuids.clear();
+        spectatedPlayerUuids.addAll(currentlySpectated);
+    }
+
+    public void startMonitoringMusic(ServerPlayerEntity player) {
+        if (player == null || player.networkHandler == null) return;
+        try {
+            stopMonitoringMusic(player);
+            // Envia o pacote de som PlaySoundS2CPacket direcionado exclusivamente para o jogador
+            // Categoria: RECORDS (Jukebox / Disco)
+            // Volume: 0.01f (1% - sutil Easter Egg)
+            // Pitch: 1.0f (velocidade normal)
+            player.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket(
+                    net.minecraft.registry.entry.RegistryEntry.of(CumminsMod.MONITORING_MUSIC_EVENT),
+                    net.minecraft.sound.SoundCategory.RECORDS,
+                    player.getX(), player.getY(), player.getZ(),
+                    1.0f,
+                    1.0f,
+                    player.getRandom().nextLong()
+            ));
+        } catch (Exception ex) {
+            CumminsMod.LOG.warn("[CumminsTV] Falha ao iniciar música de monitoramento para {}: {}", player.getGameProfile().getName(), ex.getMessage());
+        }
+    }
+
+    public void stopMonitoringMusic(ServerPlayerEntity player) {
+        if (player == null || player.networkHandler == null) return;
+        try {
+            player.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.StopSoundS2CPacket(
+                    CumminsMod.MONITORING_MUSIC_ID,
+                    net.minecraft.sound.SoundCategory.RECORDS
+            ));
+        } catch (Exception ex) {
+            CumminsMod.LOG.warn("[CumminsTV] Falha ao parar música de monitoramento para {}: {}", player.getGameProfile().getName(), ex.getMessage());
+        }
     }
 
     public void setBotNick(String nick) {
-        this.config.botNick = nick != null ? nick.trim() : "CanalhasTV";
+        String clean = nick != null ? nick.trim() : "CanalhasTV";
+        if (clean.equalsIgnoreCase("jodevil") || clean.equalsIgnoreCase("_iodevil")) {
+            clean = "CanalhasTV";
+        }
+        this.config.botNick = clean;
         save();
     }
 

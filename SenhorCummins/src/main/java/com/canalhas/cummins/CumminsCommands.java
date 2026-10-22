@@ -2,11 +2,19 @@ package com.canalhas.cummins;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.entity.boss.BossBar;
+import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
+import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 
 import java.util.List;
@@ -276,6 +284,10 @@ public final class CumminsCommands {
                             send(c.getSource(), "§6[Cummins]§r Corpo felino do Senhor Cummins recolhido!");
                             return 1;
                         }))
+                        .then(CommandManager.literal("cor")
+                                .executes(c -> showCatVariantsHelp(c.getSource(), "cummins gato", mod.config().body != null && mod.config().body.variant != null ? mod.config().body.variant : "jellie"))
+                                .then(CommandManager.argument("variante", StringArgumentType.word()).executes(c ->
+                                        setCumminsVariantCommand(c.getSource(), mod, StringArgumentType.getString(c, "variante")))))
                 )
                 .then(buildVitoriaLiteral("vitoria", mod))
                 .then(buildVitoriaLiteral("Vitoria", mod))
@@ -636,6 +648,31 @@ public final class CumminsCommands {
         // Mutirão da Firma (/mutirao)
         d.register(CommandManager.literal("mutirao")
                 .executes(c -> showMutiraoCommand(c.getSource(), mod)));
+
+        // Anúncio do Administrador (/administrador <mensagem> e /anuncio <mensagem>)
+        d.register(CommandManager.literal("administrador")
+                .requires(s -> s.hasPermissionLevel(2))
+                .then(CommandManager.argument("mensagem", StringArgumentType.greedyString()).executes(c -> {
+                    String msg = StringArgumentType.getString(c, "mensagem").trim();
+                    broadcastAdminScreenMessage(c.getSource().getServer(), msg);
+                    c.getSource().getServer().getPlayerManager().broadcast(
+                            Text.literal("§6[Administrador]§r " + msg),
+                            false
+                    );
+                    return 1;
+                })));
+
+        d.register(CommandManager.literal("anuncio")
+                .requires(s -> s.hasPermissionLevel(2))
+                .then(CommandManager.argument("mensagem", StringArgumentType.greedyString()).executes(c -> {
+                    String msg = StringArgumentType.getString(c, "mensagem").trim();
+                    broadcastAdminScreenMessage(c.getSource().getServer(), msg);
+                    c.getSource().getServer().getPlayerManager().broadcast(
+                            Text.literal("§6[Administrador]§r " + msg),
+                            false
+                    );
+                    return 1;
+                })));
     }
 
     private static void updateMotdInServerProperties(String newMotd) {
@@ -834,7 +871,11 @@ public final class CumminsCommands {
                 .then(CommandManager.literal("summon").executes(c -> summonJavidizineoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("despawn").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("recolher").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)))
-                .then(CommandManager.literal("dismiss").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)));
+                .then(CommandManager.literal("dismiss").executes(c -> despawnJavidizineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("cor")
+                        .executes(c -> showCatVariantsHelp(c.getSource(), "javidizineo", mod.javidizineo() != null ? mod.javidizineo().getVariantName() : "red"))
+                        .then(CommandManager.argument("variante", StringArgumentType.word()).executes(c ->
+                                setJavidizineoVariantCommand(c.getSource(), mod, StringArgumentType.getString(c, "variante")))));
     }
 
     private static int summonJavidizineoCommand(ServerCommandSource src, CumminsMod mod) {
@@ -874,7 +915,11 @@ public final class CumminsCommands {
                 .then(CommandManager.literal("summon").executes(c -> summonJinqiuzineoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("despawn").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)))
                 .then(CommandManager.literal("recolher").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)))
-                .then(CommandManager.literal("dismiss").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)));
+                .then(CommandManager.literal("dismiss").executes(c -> despawnJinqiuzineoCommand(c.getSource(), mod)))
+                .then(CommandManager.literal("cor")
+                        .executes(c -> showCatVariantsHelp(c.getSource(), "jinqiuzineo", mod.jinqiuzineo() != null ? mod.jinqiuzineo().getVariantName() : "white"))
+                        .then(CommandManager.argument("variante", StringArgumentType.word()).executes(c ->
+                                setJinqiuzineoVariantCommand(c.getSource(), mod, StringArgumentType.getString(c, "variante")))));
     }
 
     private static int summonJinqiuzineoCommand(ServerCommandSource src, CumminsMod mod) {
@@ -905,6 +950,142 @@ public final class CumminsCommands {
         }
         List<ServerPlayerEntity> list = src.getServer().getPlayerManager().getPlayerList();
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    private static int showCatVariantsHelp(ServerCommandSource src, String commandPrefix, String currentVariant) {
+        send(src, "§6=== 🐱 CORES / PELAGENS DE GATO DISPONÍVEIS ===");
+        send(src, "§fPelagem atual: §e" + currentVariant);
+        send(src, "§7Opções válidas no Minecraft:");
+        send(src, "  §f• §ewhite §7(Branco puro)");
+        send(src, "  §f• §ered §7(Ruivo / Laranja)");
+        send(src, "  §f• §eblack §7(Preto com olhos verdes)");
+        send(src, "  §f• §eall_black §7(Preto absoluto)");
+        send(src, "  §f• §esiamese §7(Siamês)");
+        send(src, "  §f• §ecalico §7(Tricolor Rajado)");
+        send(src, "  §f• §epersian §7(Persa creme/amarelado)");
+        send(src, "  §f• §eragdoll §7(Ragdoll)");
+        send(src, "  §f• §ebritish_shorthair §7(Cinza azulado)");
+        send(src, "  §f• §ejellie §7(Cinza e branco)");
+        send(src, "  §f• §etabby §7(Listrado marrom clássico)");
+        send(src, "§eUse: §6/" + commandPrefix + " cor <nome_da_opcao>");
+        return 1;
+    }
+
+    private static int setJavidizineoVariantCommand(ServerCommandSource src, CumminsMod mod, String variant) {
+        if (mod.javidizineo() == null) return 0;
+        boolean ok = mod.javidizineo().setVariantName(variant);
+        if (ok) {
+            send(src, "§6[Javidizineo]§r Pelagem do leãozinho alterada com sucesso para §e" + variant.toLowerCase(Locale.ROOT) + "§r! 🦁✨");
+            return 1;
+        } else {
+            send(src, "§c[Javidizineo] Pelagem '" + variant + "' inválida!");
+            return showCatVariantsHelp(src, "javidizineo", mod.javidizineo().getVariantName());
+        }
+    }
+
+    private static int setJinqiuzineoVariantCommand(ServerCommandSource src, CumminsMod mod, String variant) {
+        if (mod.jinqiuzineo() == null) return 0;
+        boolean ok = mod.jinqiuzineo().setVariantName(variant);
+        if (ok) {
+            send(src, "§5[Jinqiuzineo]§r Pelagem do tigre carcereiro alterada com sucesso para §e" + variant.toLowerCase(Locale.ROOT) + "§r! 🐯✨");
+            return 1;
+        } else {
+            send(src, "§c[Jinqiuzineo] Pelagem '" + variant + "' inválida!");
+            return showCatVariantsHelp(src, "jinqiuzineo", mod.jinqiuzineo().getVariantName());
+        }
+    }
+
+    private static int setCumminsVariantCommand(ServerCommandSource src, CumminsMod mod, String variant) {
+        if (mod.body() == null) return 0;
+        boolean ok = mod.body().setVariant(variant);
+        if (ok) {
+            send(src, "§6[Cummins]§r Pelagem do Senhor Cummins alterada com sucesso para §e" + variant.toLowerCase(Locale.ROOT) + "§r! 🐱☕");
+            return 1;
+        } else {
+            send(src, "§c[Cummins] Pelagem '" + variant + "' inválida!");
+            return showCatVariantsHelp(src, "cummins gato", mod.config().body != null && mod.config().body.variant != null ? mod.config().body.variant : "jellie");
+        }
+    }
+
+    private static ServerBossBar adminBossBar = null;
+    private static int adminBossBarTicksRemaining = 0;
+    private static int adminBossBarTotalTicks = 140; // 7 segundos (140 ticks)
+
+    public static synchronized void broadcastAdminScreenMessage(MinecraftServer server, String message) {
+        if (server == null || message == null || message.isBlank()) return;
+
+        String clean = message.trim();
+        Text bossBarText = Text.literal("§6§l📢 [ADMINISTRADOR] §f§l" + clean);
+
+        adminBossBarTotalTicks = 140; // 7 segundos de exibição suave no topo da tela
+        adminBossBarTicksRemaining = adminBossBarTotalTicks;
+
+        if (adminBossBar == null) {
+            adminBossBar = new ServerBossBar(bossBarText, BossBar.Color.YELLOW, BossBar.Style.PROGRESS);
+        } else {
+            adminBossBar.setName(bossBarText);
+            adminBossBar.setPercent(1.0f);
+            adminBossBar.setVisible(true);
+        }
+
+        // Limpa qualquer Title central caso ainda estivesse na tela para não tampar a visão
+        TitleFadeS2CPacket clearFade = new TitleFadeS2CPacket(0, 0, 0);
+        TitleS2CPacket clearTitle = new TitleS2CPacket(Text.empty());
+        SubtitleS2CPacket clearSubtitle = new SubtitleS2CPacket(Text.empty());
+
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            if (player == null || player.networkHandler == null) continue;
+            try {
+                player.networkHandler.sendPacket(clearFade);
+                player.networkHandler.sendPacket(clearTitle);
+                player.networkHandler.sendPacket(clearSubtitle);
+
+                adminBossBar.addPlayer(player);
+
+                // Efeito sonoro elegante de sino para chamar atenção sem assustar
+                player.networkHandler.sendPacket(new PlaySoundS2CPacket(
+                        SoundEvents.BLOCK_NOTE_BLOCK_BELL,
+                        SoundCategory.VOICE,
+                        player.getX(), player.getY(), player.getZ(),
+                        1.0f,
+                        1.0f,
+                        player.getRandom().nextLong()
+                ));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public static synchronized void tickAdminBossBar(MinecraftServer server) {
+        if (adminBossBar == null || adminBossBarTicksRemaining <= 0) return;
+
+        adminBossBarTicksRemaining--;
+        if (adminBossBarTicksRemaining <= 0) {
+            adminBossBar.clearPlayers();
+            adminBossBar.setVisible(false);
+        } else {
+            float pct = (float) adminBossBarTicksRemaining / (float) adminBossBarTotalTicks;
+            adminBossBar.setPercent(Math.max(0.0f, Math.min(1.0f, pct)));
+
+            if (server != null) {
+                for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                    if (player != null && !adminBossBar.getPlayers().contains(player)) {
+                        adminBossBar.addPlayer(player);
+                    }
+                }
+            }
+        }
+    }
+
+    public static synchronized void onPlayerJoin(ServerPlayerEntity player) {
+        if (adminBossBar != null && adminBossBarTicksRemaining > 0 && player != null) {
+            adminBossBar.addPlayer(player);
+        }
+    }
+
+    public static synchronized void onPlayerLeave(ServerPlayerEntity player) {
+        if (adminBossBar != null && player != null) {
+            adminBossBar.removePlayer(player);
+        }
     }
 
     private static void send(ServerCommandSource src, String msg) {

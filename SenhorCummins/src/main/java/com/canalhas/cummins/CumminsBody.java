@@ -1477,6 +1477,24 @@ public class CumminsBody {
         } catch (Exception ignored) {}
     }
 
+    public boolean setVariant(String name) {
+        if (name == null || name.isBlank()) return false;
+        String normalized = name.toLowerCase(Locale.ROOT).trim();
+        Identifier id = new Identifier("minecraft", normalized);
+        if (!Registries.CAT_VARIANT.containsId(id)) return false;
+        CatVariant v = Registries.CAT_VARIANT.get(id);
+        if (v != null) {
+            mod.config().body.variant = normalized;
+            mod.saveConfig();
+            CatEntity cat = getCat();
+            if (cat != null) {
+                cat.setVariant(v);
+            }
+            return true;
+        }
+        return false;
+    }
+
     private CatVariant resolveVariant(String name) {
         Identifier id = new Identifier("minecraft", (name == null || name.isBlank()) ? "jellie" : name.toLowerCase(Locale.ROOT).trim());
         CatVariant v = Registries.CAT_VARIANT.get(id);

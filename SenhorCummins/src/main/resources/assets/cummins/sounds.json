@@ -1,0 +1,11 @@
+{
+  "music.monitoring": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cummins:music/monitoring",
+        "stream": true
+      }
+    ]
+  }
+}

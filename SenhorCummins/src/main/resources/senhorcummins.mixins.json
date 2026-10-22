@@ -5,7 +5,8 @@
   "mixins": [
     "EntityStepSoundMixin",
     "WolfStepSoundMixin",
-    "KoboldNpeFixMixin"
+    "KoboldNpeFixMixin",
+    "ChunkTicketManagerNpeFixMixin"
   ],
   "injectors": {
     "defaultRequire": 1

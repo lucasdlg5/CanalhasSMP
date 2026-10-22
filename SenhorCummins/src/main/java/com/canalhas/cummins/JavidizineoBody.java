@@ -62,7 +62,29 @@ public class JavidizineoBody {
     private long lastDefenseAt = 0;
     private long petPauseUntil = 0;
     private boolean manuallyDismissed = false;
+    private String variantName = "red";
     private final Random random = new Random();
+
+    public boolean setVariantName(String name) {
+        if (name == null || name.isBlank()) return false;
+        String normalized = name.toLowerCase(java.util.Locale.ROOT).trim();
+        Identifier id = new Identifier("minecraft", normalized);
+        if (!Registries.CAT_VARIANT.containsId(id)) return false;
+        CatVariant v = Registries.CAT_VARIANT.get(id);
+        if (v != null) {
+            this.variantName = normalized;
+            CatEntity cat = getCat();
+            if (cat != null) {
+                cat.setVariant(v);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
 
     public JavidizineoBody(CumminsMod mod) {
         this.mod = mod;
@@ -578,11 +600,11 @@ public class JavidizineoBody {
         cat.setPersistent();
         cat.setCollarColor(DyeColor.ORANGE);
 
-        // Pelagem alaranjada/dourada (Red Tabby) estilo mini leão de Shamash — diferente de Cummins (cinza Jellie)
-        CatVariant variant = Registries.CAT_VARIANT.get(CatVariant.RED);
-        if (variant == null) {
-            variant = Registries.CAT_VARIANT.get(new Identifier("minecraft", "red"));
-        }
+        // Pelagem de leãozinho (padrão red / ruivo alaranjado, configurável dinamicamente)
+        Identifier variantId = new Identifier("minecraft", variantName);
+        CatVariant variant = Registries.CAT_VARIANT.containsId(variantId)
+                ? Registries.CAT_VARIANT.get(variantId)
+                : Registries.CAT_VARIANT.get(CatVariant.RED);
         if (variant != null) {
             cat.setVariant(variant);
         }
