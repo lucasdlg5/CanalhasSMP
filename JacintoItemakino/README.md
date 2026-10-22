@@ -244,4 +244,11 @@ O mod está integrado nativamente ao gerenciador de backup do ecossistema Canalh
 
 ---
 
+## 📋 Backlog & Issues Conhecidas
+
+Para acompanhar a lista de melhorias planejadas, sugestões e problemas conhecidos (como suporte a encantamentos Fortuna/Silk Touch, mineração no Nether e integração com dashboard), consulte a central oficial:
+👉 [**Quadro de Issues & Sugestões da Firma (ISSUES.md)**](../ISSUES.md)
+
+---
+
 *Desenvolvido com carinho para a firma CanalhasSMP.* 📦⛏️❤️
