@@ -614,6 +614,8 @@ public class JacintoMiner {
             BlockState state = world.getBlockState(targetOrePos);
             if (!isTargetBlock(state, targetOrePos) || !canSafeBreak(world, targetOrePos)) {
                 // Bloco já foi minerado, sumiu ou virou claim/proibido
+                ignoredOres.add(targetOrePos);
+                targetHighlight.clear();
                 targetOrePos = null;
                 navigationTarget = null;
                 digProgressTicks = 0;
@@ -701,6 +703,8 @@ public class JacintoMiner {
 
             // Re-valida segurança contra Claims e Proteção de Construções antes de quebrar
             if (!canSafeBreak(world, targetOrePos)) {
+                ignoredOres.add(targetOrePos);
+                targetHighlight.clear();
                 targetOrePos = null;
                 navigationTarget = null;
                 return;
@@ -757,6 +761,9 @@ public class JacintoMiner {
                 if (hasMiningChest && carriedItemCount >= maxCap) {
                     isReturningToChest = true;
                 }
+            } else {
+                // Se a quebra falhou (ex: bloqueado por proteção do mundo), adiciona a ignorados
+                ignoredOres.add(targetOrePos);
             }
 
             targetHighlight.clear();
@@ -786,6 +793,9 @@ public class JacintoMiner {
             }
         }
 
+        // Se o Jacinto estiver em base protegida (chunk protegido por claim ou acima da camada subterrânea segura)
+        boolean inProtectedBase = center.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y || JacintoClaimHelper.isPosClaimed(world, center);
+
         for (int dx = -radius; dx <= radius; dx += 2) {
             for (int dz = -radius; dz <= radius; dz += 2) {
                 for (int y = minY; y <= maxY; y += 2) {
@@ -812,6 +822,11 @@ public class JacintoMiner {
                             continue;
                         }
 
+                        // Se estiver na base, só persegue blocos com ar transitável para não ficar olhando para a parede
+                        if (inProtectedBase && !hasWalkableAirAdjacent(world, pos)) {
+                            continue;
+                        }
+
                         double d = center.getSquaredDistance(pos);
                         if (d < closestDistSq) {
                             closestDistSq = d;
@@ -823,6 +838,20 @@ public class JacintoMiner {
         }
 
         return bestPos;
+    }
+
+    private boolean hasWalkableAirAdjacent(ServerWorld world, BlockPos pos) {
+        Direction[] dirs = {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP, Direction.DOWN};
+        for (Direction dir : dirs) {
+            BlockPos adj = pos.offset(dir);
+            BlockState adjState = world.getBlockState(adj);
+            if (adjState.isAir()) {
+                if (!world.getBlockState(adj.down()).isAir()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -875,6 +904,7 @@ public class JacintoMiner {
                 if (JacintoClaimHelper.isPosClaimed(world, current) || current.getY() > JacintoClaimHelper.SAFE_SUBTERRANEAN_MAX_Y) {
                     BlockPos mineStart = findSafeSubterraneanStartPos(world, current, optimalY);
                     if (mineStart != null) {
+                        prepareSafeSubterraneanChamber(world, mineStart);
                         entity.teleport(world, mineStart.getX() + 0.5, mineStart.getY(), mineStart.getZ() + 0.5, Collections.emptySet(), entity.getYaw(), 0.0f);
                         world.playSound(null, mineStart, SoundEvents.BLOCK_WOODEN_DOOR_OPEN, SoundCategory.NEUTRAL, 0.8f, 1.2f);
                         world.spawnParticles(ParticleTypes.POOF, mineStart.getX() + 0.5, mineStart.getY() + 0.5, mineStart.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.05);
@@ -907,6 +937,19 @@ public class JacintoMiner {
 
     private BlockPos findSafeSubterraneanStartPos(ServerWorld world, BlockPos start, int targetY) {
         Direction dir = explorationDirection != null ? explorationDirection : Direction.NORTH;
+        // 1. Procura caverna natural segura (fora de claim)
+        for (int dist = 16; dist <= 48; dist += 8) {
+            BlockPos probe = start.offset(dir, dist);
+            for (int dy = -4; dy <= 4; dy++) {
+                BlockPos candidate = new BlockPos(probe.getX(), targetY + dy, probe.getZ());
+                if (!JacintoClaimHelper.isPosClaimed(world, candidate)) {
+                    if (world.getBlockState(candidate).isAir() && world.getBlockState(candidate.up()).isAir() && !world.getBlockState(candidate.down()).isAir()) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        // 2. Fallback: ponto sólido fora de claim
         for (int dist = 16; dist <= 48; dist += 8) {
             BlockPos candidate = start.offset(dir, dist);
             BlockPos targetPos = new BlockPos(candidate.getX(), targetY, candidate.getZ());
@@ -915,6 +958,14 @@ public class JacintoMiner {
             }
         }
         return new BlockPos(start.getX(), targetY, start.getZ());
+    }
+
+    private void prepareSafeSubterraneanChamber(ServerWorld world, BlockPos center) {
+        world.setBlockState(center, Blocks.AIR.getDefaultState());
+        world.setBlockState(center.up(), Blocks.AIR.getDefaultState());
+        if (world.getBlockState(center.down()).isAir() || world.getBlockState(center.down()).isOf(Blocks.LAVA)) {
+            world.setBlockState(center.down(), Blocks.COBBLESTONE.getDefaultState());
+        }
     }
 
     /**
@@ -936,6 +987,37 @@ public class JacintoMiner {
                     faceBlock(entity, targetChestPos);
                     world.playSound(null, stand, SoundEvents.BLOCK_WOODEN_DOOR_OPEN, SoundCategory.NEUTRAL, 0.8f, 1.2f);
                     world.spawnParticles(ParticleTypes.POOF, stand.getX() + 0.5, stand.getY() + 0.5, stand.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.05);
+                    stuckTicks = 0;
+                    lastPosition = entity.getPos();
+                    return;
+                }
+            }
+
+            // Se estiver indo até um minério alvo e ficar preso por mais de 40 ticks
+            if (!isReturningToChest && targetOrePos != null) {
+                Direction dirToTarget = Direction.fromRotation(entity.getYaw());
+                BlockPos obsFeet = entity.getBlockPos().offset(dirToTarget);
+                BlockPos obsHead = obsFeet.up();
+
+                boolean obstacleCleared = false;
+                if (canSafeBreak(world, obsHead) && !world.getBlockState(obsHead).isAir()) {
+                    safeBreakBlock(world, entity, obsHead);
+                    obstacleCleared = true;
+                }
+                if (canSafeBreak(world, obsFeet) && !world.getBlockState(obsFeet).isAir()) {
+                    safeBreakBlock(world, entity, obsFeet);
+                    obstacleCleared = true;
+                }
+
+                // Se o obstáculo não pode ser quebrado (ex: claim ou parede de base protegida)
+                // ou se já passaram 40 ticks preso:
+                if (!obstacleCleared || stuckTicks >= 40) {
+                    LOG.info("[JacintoMiner] Alvo em {} inalcançável/bloqueado. Recalculando e buscando nova rota...", targetOrePos);
+                    ignoredOres.add(targetOrePos);
+                    targetHighlight.clear();
+                    targetOrePos = null;
+                    navigationTarget = null;
+                    entity.getNavigation().stop();
                     stuckTicks = 0;
                     lastPosition = entity.getPos();
                     return;
