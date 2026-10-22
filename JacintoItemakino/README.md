@@ -71,33 +71,29 @@ flowchart TD
 > **Regra Obrigatória:** O Jacinto precisa saber onde guardar o que minerar! Para qualquer comando de mineração (`/minerar`), você **deve estar olhando diretamente para o Baú ou Barril** de destino. Se você rodar o comando sem olhar para um baú, o Jacinto avisará de forma clara e direta:
 > `[Jacinto Itemakino Baú] Patrão, você precisa estar olhando diretamente para um baú (ou barril) para que eu possa iniciar a mineração e saber onde guardar os itens!`
 
-Você pode iniciar a mineração de duas formas:
+Você pode iniciar a mineração de três formas intuitivas:
 
-### Opção 1: 💬 Olhar para o Baú e Digitar o Item
-Olhe diretamente para o baú onde deseja que os itens sejam guardados e digite o comando com o nome do item/bloco (em português, inglês ou ID):
+### Opção 1: 📦 Olhar para o Baú com 1 Item (Detecção Automática)
+Se o baú já contém apenas um tipo de item (por exemplo: 219x Andesito, ou um único Diamante), basta olhar diretamente para ele e digitar:
 ```minecraft
-/minerar Andesito
+/minerar
 ```
-- **Outros exemplos populares:**
-  - `/minerar diamante` (ou `diamond`)
-  - `/minerar ferro` (ou `iron`, `raw_iron`)
-  - `/minerar ouro` (ou `gold`)
-  - `/minerar pedra` (ou `pedregulho`, `cobblestone`)
-  - `/minerar carvao` (ou `coal`)
-  - `/minerar cobre` (ou `copper`)
-  - `/minerar redstone`
-  - `/minerar lapis`
-  - `/minerar esmeralda`
-  - `/minerar ancient_debris` (ou `debris`, `netherite`)
-  - `/minerar quartzo` (ou `quartz`)
+- Jacinto inspeciona o baú e identifica automaticamente o item exclusivo para minerar e encher aquele baú!
+- **Aviso de Mistura:** Se houver mais de um tipo de item misturado no baú (ex: Andesito e Terra), Jacinto avisará didaticamente para você arrumar o baú deixando apenas o item pretendido e rodar o comando novamente.
 
 ### Opção 2: 🖼️ Olhar para o Baú com Moldura (Modo Visual)
-1. Coloque uma **Moldura** no baú contendo o item pretendido (por exemplo: um bloco de **Andesito**, como no armazém da firma).
-2. Olhe diretamente para o baú (ou para a moldura nele) e digite apenas:
+1. Coloque uma **Moldura** no baú contendo o item pretendido (por exemplo: um bloco de **Andesito**).
+2. Olhe diretamente para o baú e digite apenas:
    ```minecraft
    /minerar
    ```
 3. O Jacinto detecta a moldura no baú, reconhece o item e inicia a mineração com destino àquele mesmo baú!
+
+### Opção 3: 💬 Olhar para o Baú e Digitar o Item
+Olhe diretamente para o baú e digite o comando com o nome do item/bloco (em português, inglês ou ID):
+```minecraft
+/minerar Andesito
+```
 
 ---
 

@@ -153,7 +153,19 @@ public final class JacintoCommands {
             return 0;
         }
 
-        // 2. Determina o item pretendido
+        // 2. Inspeciona o inventário do baú mirado
+        Inventory inv = JacintoOrganizer.getInventoryAtPos(player.getServerWorld(), chestPos);
+        java.util.Set<Item> distinctItems = new java.util.HashSet<>();
+        if (inv != null) {
+            for (int i = 0; i < inv.size(); i++) {
+                ItemStack st = inv.getStack(i);
+                if (!st.isEmpty() && st.getItem() != Items.AIR) {
+                    distinctItems.add(st.getItem());
+                }
+            }
+        }
+
+        // 3. Determina o item pretendido
         Item targetItem = null;
         String query = itemArg;
         String displayName = null;
@@ -165,15 +177,70 @@ public final class JacintoCommands {
             } else {
                 displayName = query.trim();
             }
+
+            // Se o baú já tem itens e há mais de um tipo de item misturado nele:
+            if (distinctItems.size() > 1) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, há mais de um tipo de item dentro deste baú!"), false);
+                player.sendMessage(Text.literal("§fEncontrei §e" + distinctItems.size() + " itens diferentes§f misturados aqui."), false);
+                player.sendMessage(Text.literal("§ePor favor, arrume o baú deixando apenas o item que deseja guardar e rode o comando novamente!"), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                return 0;
+            }
+
+            // Se há exatamente 1 tipo de item no baú e ele é diferente do solicitado:
+            if (distinctItems.size() == 1 && targetItem != null) {
+                Item existing = distinctItems.iterator().next();
+                if (existing != targetItem) {
+                    String existingName = new ItemStack(existing).getName().getString();
+                    player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, este baú já contém [" + existingName + "]! Arrume o baú ou aponte para um baú de [" + displayName + "] para rodar o comando."), false);
+                    return 0;
+                }
+            }
         } else {
-            // Se rodou sem argumentos (/minerar), tenta ler a moldura afixada no baú mirado
+            // Se rodou sem argumentos (/minerar):
+            // A. Primeiro verifica se há moldura com item afixada no baú
             ItemFrameEntity frame = mod.getOrganizer().findAttachedItemFrame(player.getServerWorld(), chestPos);
             if (frame != null && !frame.getHeldItemStack().isEmpty()) {
                 targetItem = frame.getHeldItemStack().getItem();
                 displayName = frame.getHeldItemStack().getName().getString();
                 query = JacintoMiner.resolveQueryFromItem(targetItem);
-            } else {
-                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, especifique o que deseja minerar para guardar neste baú (ex: §e/minerar Andesito§c) ou coloque uma moldura com o item nele!"), false);
+
+                // Se houver itens no baú com moldura, verifica se há mistura de múltiplos itens
+                if (distinctItems.size() > 1) {
+                    player.sendMessage(Text.literal("§6=================================================="), false);
+                    player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, há mais de um tipo de item dentro deste baú!"), false);
+                    player.sendMessage(Text.literal("§fEncontrei §e" + distinctItems.size() + " itens diferentes§f misturados aqui."), false);
+                    player.sendMessage(Text.literal("§ePor favor, arrume o baú deixando apenas o item da moldura [" + displayName + "] e rode o comando novamente!"), false);
+                    player.sendMessage(Text.literal("§6=================================================="), false);
+                    return 0;
+                }
+            }
+            // B. Se não há moldura, inspeciona o conteúdo do baú:
+            else if (distinctItems.size() == 1) {
+                // EXATAMENTE UM ITEM DENTRO DO BAÚ (ex: baú com Andesito)
+                targetItem = distinctItems.iterator().next();
+                displayName = new ItemStack(targetItem).getName().getString();
+                query = JacintoMiner.resolveQueryFromItem(targetItem);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §aIdentifiquei o item pelo conteúdo do baú: §6§l[" + displayName + "]§a!"), false);
+            }
+            // C. Mais de um tipo de item dentro do baú sem moldura
+            else if (distinctItems.size() > 1) {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, há mais de um tipo de item dentro deste baú!"), false);
+                player.sendMessage(Text.literal("§fEncontrei §e" + distinctItems.size() + " itens diferentes§f misturados aqui."), false);
+                player.sendMessage(Text.literal("§ePor favor, arrume o baú deixando apenas o item que deseja minerar e rode o comando novamente!"), false);
+                player.sendMessage(Text.literal("§7(Ou coloque uma moldura no baú com o item de referência)."), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                return 0;
+            }
+            // D. Baú completamente vazio e sem moldura
+            else {
+                player.sendMessage(Text.literal("§6=================================================="), false);
+                player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §cPatrão, este baú está completamente vazio e sem moldura!"), false);
+                player.sendMessage(Text.literal("§fPara iniciar sem digitar o nome, coloque §e1 exemplar do item§f dentro do baú (ou afixe uma moldura nele)."), false);
+                player.sendMessage(Text.literal("§7Você também pode especificar diretamente: §e/minerar <item>§7 (ex: §e/minerar Andesito§7)."), false);
+                player.sendMessage(Text.literal("§6=================================================="), false);
                 return 0;
             }
         }
@@ -183,15 +250,14 @@ public final class JacintoCommands {
             return 0;
         }
 
-        // 3. Verifica se o baú já está cheio deste item
-        Inventory inv = JacintoOrganizer.getInventoryAtPos(player.getServerWorld(), chestPos);
+        // 4. Verifica se o baú já está cheio deste item
         if (inv != null && targetItem != null && JacintoOrganizer.isInventoryFullOfItem(inv, targetItem)) {
             String name = displayName != null ? displayName : "este item";
             player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §ePatrão, este baú já está completamente CHEIO de [" + name + "]! Esvazie um pouco ou aponte para outro baú antes de iniciar a mineração."), false);
             return 0;
         }
 
-        // 4. Inicia mineração passiva com baú de destino
+        // 5. Inicia mineração passiva com baú de destino
         mod.getMiner().startMiningWithChest(player, targetItem, displayName, query, chestPos);
         return 1;
     }
@@ -205,8 +271,9 @@ public final class JacintoCommands {
     private static int handleMinerarHelp(ServerCommandSource src, JacintoMod mod) {
         src.sendFeedback(() -> Text.literal("§6=== ⛏️ JACINTO ITEMAKINO - MINERAÇÃO PASSIVA ==="), false);
         src.sendFeedback(() -> Text.literal("§fComo usar: Olhe diretamente para o baú onde deseja guardar e use:"), false);
-        src.sendFeedback(() -> Text.literal("§61. Com argumento: §e/minerar <item> §7(ex: /minerar Andesito, /minerar Diamante, /minerar Ferro)"), false);
+        src.sendFeedback(() -> Text.literal("§61. Baú com 1 item: §fBasta olhar para o baú e digitar §e/minerar §7(Jacinto detecta o item exclusivo do baú!)"), false);
         src.sendFeedback(() -> Text.literal("§62. Com Moldura: §fColoque a moldura com o item no baú, olhe para ele e digite §e/minerar"), false);
+        src.sendFeedback(() -> Text.literal("§63. Com argumento: §e/minerar <item> §7(ex: /minerar Andesito, /minerar Diamante, /minerar Ferro)"), false);
         src.sendFeedback(() -> Text.literal("§7(O Jacinto minerará passivamente e guardará no baú até enchê-lo; ao ficar cheio, entra em IDLE!)"), false);
         src.sendFeedback(() -> Text.literal("§fOutros comandos: §e/minerar stop§7 | §e/minerar status"), false);
         return 1;
