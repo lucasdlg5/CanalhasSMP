@@ -74,20 +74,21 @@ public class ModSourceBackupManager {
                 Files.copy(batFile, targetBackupDir.resolve("INICIAR_PAINEL_CANALHAS.bat"), StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // 4. JARs compilados ativos na pasta mods do servidor
+            // 4. JARs compilados ativos na pasta mods do servidor (busca dinâmica por padrão de versão)
             Path jarTargetDir = targetBackupDir.resolve("mods_jar");
             Files.createDirectories(jarTargetDir);
 
-            Path activeJar = serverDir.resolve("mods").resolve("senhor-cummins-1.0.0.jar");
-            if (Files.isRegularFile(activeJar)) {
-                Files.copy(activeJar, jarTargetDir.resolve("senhor-cummins-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(activeJar, targetBackupDir.resolve("senhor-cummins-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            Path jacintoJar = serverDir.resolve("mods").resolve("jacinto-itemakino-1.0.0.jar");
-            if (Files.isRegularFile(jacintoJar)) {
-                Files.copy(jacintoJar, jarTargetDir.resolve("jacinto-itemakino-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(jacintoJar, targetBackupDir.resolve("jacinto-itemakino-1.0.0.jar"), StandardCopyOption.REPLACE_EXISTING);
+            Path modsFolder = serverDir.resolve("mods");
+            if (Files.isDirectory(modsFolder)) {
+                try (var stream = Files.newDirectoryStream(modsFolder, "*.jar")) {
+                    for (Path jar : stream) {
+                        String name = jar.getFileName().toString();
+                        if (name.startsWith("senhor-cummins-") || name.startsWith("jacinto-itemakino-")) {
+                            Files.copy(jar, jarTargetDir.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+                            Files.copy(jar, targetBackupDir.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                }
             }
 
             // 5. Configurações, memória de longo prazo (memoria.json), Mural e ícone do servidor
