@@ -1,46 +1,1181 @@
 {
-  "jacintoUuid": "c0d91b63-5121-4bd3-a603-f97c07d96f7b",
-  "baseX": -525.5129659597934,
-  "baseY": 64.0,
-  "baseZ": -312.4713326250725,
+  "jacintoUuid": "4dd921c5-1db9-4c01-af58-d213fe4ce973",
+  "baseX": -463.16339928409127,
+  "baseY": 55.0,
+  "baseZ": -310.48129168322225,
   "baseDimension": "minecraft:overworld",
   "baseSet": true,
-  "totalItemsOrganized": 10108,
-  "totalBlocksMined": 0,
+  "totalItemsOrganized": 60497,
+  "totalBlocksMined": 1563,
   "currentTask": "IDLE",
-  "miningTarget": "andesito",
+  "miningTarget": "stone",
   "miningDimension": "minecraft:overworld",
-  "miningX": -509.8050093559329,
-  "miningY": 49.0,
-  "miningZ": -205.762441574981,
+  "miningX": -458.74125517336074,
+  "miningY": 10.049999952316284,
+  "miningZ": -326.6710875675655,
   "hasMiningChest": true,
-  "miningChestX": -518,
-  "miningChestY": 49,
-  "miningChestZ": -199,
+  "miningChestX": -463,
+  "miningChestY": 55,
+  "miningChestZ": -312,
   "miningChestDimension": "minecraft:overworld",
-  "carriedMinedCount": 0,
+  "carriedMinedCount": 29,
+  "jodevilLoreChestCreated": true,
+  "jodevilLoreChestX": -676,
+  "jodevilLoreChestY": 94,
+  "jodevilLoreChestZ": -273,
+  "jodevilLoreChestDimension": "minecraft:overworld",
   "equipmentSnbt": {
-    "mainhand": "{Count:1b,id:\"minecraft:wooden_sword\",tag:{Damage:0,Unbreakable:1b,display:{Name:'{\"text\":\"§eEspada de Madeira da Firma\"}'}}}",
+    "mainhand": "{Count:1b,id:\"soulsweapons:mjolnir\",tag:{Damage:112,Enchantments:[{id:\"mcdw:rampaging\",lvl:4s},{id:\"mcdw:jungle_poison\",lvl:5s},{id:\"mcdw:leeching\",lvl:4s},{id:\"deeperdarker:catalysis\",lvl:5s},{id:\"mcdw:guarding_strike\",lvl:3s}],RepairCost:0,Unbreakable:1b,display:{Name:'{\"text\":\"Mjölnir que n volta\"}'},raining:0b}}",
     "feet": "{Count:1b,id:\"minecraft:leather_boots\",tag:{Damage:0}}",
     "legs": "{Count:1b,id:\"minecraft:leather_leggings\",tag:{Damage:0}}",
     "chest": "{Count:1b,id:\"minecraft:leather_chestplate\",tag:{Damage:0}}",
     "head": "{Count:1b,id:\"minecraft:leather_helmet\",tag:{Damage:0}}"
   },
+  "customPickaxeSnbt": "{Count:1b,id:\"minecraft:diamond_pickaxe\",tag:{Damage:1166,RepairCost:31,Tiered:{Tier:\"tiered:uncommon_tool_3\"},itemborders_colors:{bottom:\"0x76c462\",top:\"0x76c462\"}}}",
+  "customShovelSnbt": "{Count:1b,id:\"minecraft:diamond_shovel\",tag:{Damage:1262,Tiered:{Tier:\"tiered:common_tool_4\"},durable:-0.1d,itemborders_colors:{bottom:\"0xc7c7c7\",top:\"0xc7c7c7\"}}}",
   "chestRules": {
     "minecraft:overworld:-521,49,-199": {
-      "canInsert": true,
-      "canExtract": false
-    },
-    "minecraft:overworld:-526,49,-202": {
-      "canInsert": true,
+      "canInsert": false,
       "canExtract": false
     },
     "minecraft:overworld:-520,49,-199": {
-      "canInsert": true,
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-531,58,-241": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-531,57,-239": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-531,57,-238": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-531,57,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-226": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-227": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-228": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-231": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-230": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-233": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-236": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-239": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-241": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-244": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-535,63,-243": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,61,-228": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,61,-227": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,61,-228": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,61,-229": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,61,-230": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,61,-231": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-521,61,-232": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-520,61,-232": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,61,-232": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-527,61,-232": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-529,61,-234": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-530,61,-234": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,61,-234": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,61,-234": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,61,-235": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,61,-235": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-527,61,-235": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,61,-235": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-527,61,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,61,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-529,61,-238": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-530,61,-238": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,61,-238": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-527,61,-238": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-522,61,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-521,61,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-522,61,-235": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,63,-223": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-513,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-517,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-518,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-520,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-521,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-524,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,63,-221": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-529,62,-213": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,63,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,65,-204": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,65,-205": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-528,65,-206": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-537,62,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,56,-211": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-526,49,-202": {
+      "canInsert": false,
       "canExtract": false
     },
     "minecraft:overworld:-527,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-525,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-524,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-523,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-522,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-521,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-520,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-519,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-518,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-517,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-516,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-515,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-514,49,-202": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-498,49,-203": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-514,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-515,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-517,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-518,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-523,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-524,49,-199": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-514,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-512,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-511,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-510,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-509,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-508,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-507,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-506,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-505,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-504,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-503,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-502,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-501,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-500,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-499,53,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-498,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-498,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-498,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-498,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-497,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-497,50,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-497,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-496,52,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-496,51,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-496,49,-214": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-518,49,-172": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-549,49,-237": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-555,43,-171": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-556,43,-171": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-553,43,-171": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-554,43,-171": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-186": {
       "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-185": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-177": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-178": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-177": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-178": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-180": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-181": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-180": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-181": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-180": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-181": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-185": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-186": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-189": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-190": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-189": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-190": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-189": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-190": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-192": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-193": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-192": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-193": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-192": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-193": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-192": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-193": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-194": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-195": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-194": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-195": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-194": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-195": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-196": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-197": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-196": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-197": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-196": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-197": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-198": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-198": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-198": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-198": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-199": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-200": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-201": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-200": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-201": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-200": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-201": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-200": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-201": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-202": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-203": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-202": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-203": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-202": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-203": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-202": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-203": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-204": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-205": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-204": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-205": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-204": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-205": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-204": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-205": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-177": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-178": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-181": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-180": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-194": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-195": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-187": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-188": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-187": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-188": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-187": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,42,-188": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-187": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,41,-188": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-190": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-189": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-197": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,44,-196": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-186": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-550,43,-185": {
+      "canInsert": true,
+      "canExtract": false
+    },
+    "minecraft:overworld:-677,95,-271": {
+      "canInsert": false,
+      "canExtract": false
+    },
+    "minecraft:overworld:-676,94,-273": {
+      "canInsert": false,
       "canExtract": false
     }
   }

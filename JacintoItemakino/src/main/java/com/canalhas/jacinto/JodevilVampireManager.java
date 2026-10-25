@@ -53,6 +53,8 @@ public class JodevilVampireManager {
 
     // Ponto de spawn salvo nos dados do jogador Jodevil (extraído do playerdata)
     public static final BlockPos DEFAULT_JODEVIL_SPAWN = new BlockPos(-678, 94, -271);
+    // Posição ao lado da cama/caixão no piso de pedra (afastado da cama, em Y=94)
+    public static final BlockPos DEFAULT_JODEVIL_CHEST_POS = new BlockPos(-676, 94, -273);
 
     // 1 minuto = 60 segundos = 1200 ticks
     private static final int SUN_DAMAGE_INTERVAL_TICKS = 1200;
@@ -230,7 +232,7 @@ public class JodevilVampireManager {
         t.append(Text.literal("§7astro-rei cozinha lentamente sua dignidade, drenando\n"));
         t.append(Text.literal("§c1 ponto de sangue a cada minuto§7 sob o céu aberto.\n"));
         t.append(Text.literal("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"));
-        t.append(Text.literal("§6📖 Relíquia: §eHá um Baú em seu leito de repouso (-678, 94, -271)\n"));
+        t.append(Text.literal("§6📖 Relíquia: §eHá um Baú ao lado de seu leito (-676, 94, -273)\n"));
         t.append(Text.literal("§e   com o livro completo das Crônicas de sua transformação!"));
         return t;
     }
@@ -245,7 +247,7 @@ public class JodevilVampireManager {
                         .setStyle(Style.EMPTY
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, buildDebuffLoreHoverText()))
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vampiro"))))
-                .append(Text.literal("\n  §7Um baú com as §eCrônicas do Sangue Duvidoso§7 aguarda em seu leito.\n"))
+                .append(Text.literal("\n  §7Um baú com as §eCrônicas do Sangue Duvidoso§7 aguarda ao lado do seu leito.\n"))
                 .append(Text.literal("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"));
         player.sendMessage(msg, false);
     }
@@ -255,18 +257,20 @@ public class JodevilVampireManager {
     }
 
     /**
-     * Cria o Baú no ponto de spawn salvo de Jodevil (-678, 94, -271) e deposita o Livro de Lore.
+     * Cria o Baú alguns blocos ao lado da cama de Jodevil (-675, 94, -273) e deposita o Livro de Lore.
      */
     public BlockPos ensureLoreChestSpawned(MinecraftServer server, boolean forceRecreate) {
         JacintoData data = mod.getData();
-        if (data.jodevilLoreChestCreated && !forceRecreate) {
+        // Se estava salvo na posição antiga em cima da cama (Y=95), força relocação para o piso (Y=94)
+        boolean wasBuggedAboveBed = (data.jodevilLoreChestY == 95 && data.jodevilLoreChestZ == -271);
+        if (data.jodevilLoreChestCreated && !forceRecreate && !wasBuggedAboveBed) {
             return new BlockPos(data.jodevilLoreChestX, data.jodevilLoreChestY, data.jodevilLoreChestZ);
         }
 
         ServerWorld overworld = server.getOverworld();
         if (overworld == null) return null;
 
-        // Determina o ponto de spawn salvo de Jodevil (usa o player online se tiver cama ativa, senão o salvo no .dat)
+        // Determina o ponto de spawn salvo de Jodevil
         BlockPos targetSpawn = DEFAULT_JODEVIL_SPAWN;
         ServerPlayerEntity onlineJodevil = null;
         for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
@@ -282,12 +286,24 @@ public class JodevilVampireManager {
         // Garante que o chunk esteja carregado
         overworld.getChunk(targetSpawn.getX() >> 4, targetSpawn.getZ() >> 4);
 
-        // Escolhe a posição ideal ao lado ou exatamente no ponto de spawn sem destruir camas ou baús existentes
+        // Remove qualquer baú antigo que tenha ficado em cima da cama (-677, 95, -271 ou -678, 95, -271)
+        for (BlockPos aboveBed : new BlockPos[]{new BlockPos(-677, 95, -271), new BlockPos(-678, 95, -271)}) {
+            if (overworld.getBlockState(aboveBed).getBlock() instanceof ChestBlock) {
+                BlockEntity oldBe = overworld.getBlockEntity(aboveBed);
+                if (oldBe instanceof ChestBlockEntity oldChest) {
+                    oldChest.clear();
+                }
+                overworld.setBlockState(aboveBed, Blocks.AIR.getDefaultState(), 3);
+                data.setChestRule(overworld.getRegistryKey().getValue().toString(), aboveBed, true, true);
+            }
+        }
+
+        // Escolhe a posição ideal a alguns blocos ao lado da cama no piso firme (nunca em cima da cama)
         BlockPos chestPos = findSafeChestSpotNearSpawn(overworld, targetSpawn);
 
         BlockState existingState = overworld.getBlockState(chestPos);
         if (!(existingState.getBlock() instanceof ChestBlock)) {
-            overworld.setBlockState(chestPos, Blocks.CHEST.getDefaultState(), 3);
+            overworld.setBlockState(chestPos, Blocks.CHEST.getDefaultState().with(ChestBlock.FACING, Direction.NORTH), 3);
         }
 
         BlockEntity be = overworld.getBlockEntity(chestPos);
@@ -295,7 +311,6 @@ public class JodevilVampireManager {
             chest.setCustomName(Text.literal("§4§l⚰️ Relíquias Noturnas de Conde Jodevil"));
 
             ItemStack loreBook = createVampireLoreBook();
-            // Coloca o livro no centro do baú (slot 13) ou no primeiro slot livre caso o baú já tivesse itens
             if (chest.getStack(13).isEmpty() || chest.getStack(13).isOf(Items.WRITTEN_BOOK)) {
                 chest.setStack(13, loreBook);
             } else {
@@ -324,11 +339,11 @@ public class JodevilVampireManager {
         data.jodevilLoreChestDimension = overworld.getRegistryKey().getValue().toString();
         data.save();
 
-        LOG.info("[JodevilVampire] Baú de Lore Vampírica criado com sucesso em ({}, {}, {})!",
+        LOG.info("[JodevilVampire] Baú de Lore Vampírica posicionado ao lado da cama em ({}, {}, {})!",
                 chestPos.getX(), chestPos.getY(), chestPos.getZ());
 
         if (onlineJodevil != null) {
-            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um baú antigo contendo o tomo §c\"Crônicas do Sangue Duvidoso\"§7 foi deixado junto ao seu leito em §e(" +
+            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um baú antigo contendo o tomo §c\"Crônicas do Sangue Duvidoso\"§7 foi posicionado ao lado do seu leito em §e(" +
                     chestPos.getX() + ", " + chestPos.getY() + ", " + chestPos.getZ() + ")§7."), false);
         }
 
@@ -336,50 +351,28 @@ public class JodevilVampireManager {
     }
 
     private BlockPos findSafeChestSpotNearSpawn(ServerWorld world, BlockPos spawnPos) {
-        // 1. Se já houver um baú da lore em um raio de 2 blocos, reutiliza
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    BlockPos p = spawnPos.add(dx, dy, dz);
-                    if (world.getBlockState(p).getBlock() instanceof ChestBlock) {
-                        BlockEntity be = world.getBlockEntity(p);
-                        if (be instanceof ChestBlockEntity chest && chest.hasCustomName()) {
-                            String name = chest.getCustomName().getString();
-                            if (name.contains("Jodevil") || name.contains("Relíquias")) {
-                                return p;
-                            }
-                        }
-                    }
-                }
+        // 1. Se o ponto de spawn for próximo da cama padrão (-678, 94, -271), prioriza (-675, 94, -273) (3 blocos ao lado no piso)
+        if (spawnPos.isWithinDistance(DEFAULT_JODEVIL_SPAWN, 6.0)) {
+            if (isValidNewChestSpot(world, DEFAULT_JODEVIL_CHEST_POS) ||
+                world.getBlockState(DEFAULT_JODEVIL_CHEST_POS).getBlock() instanceof ChestBlock) {
+                return DEFAULT_JODEVIL_CHEST_POS;
             }
         }
 
-        // 2. Se o próprio ponto salvo for ar ou substituível (e não for cama), usa ele mesmo
-        if (isValidNewChestSpot(world, spawnPos)) {
-            return spawnPos;
-        }
-
-        // 3. Procura nos blocos cardeais e diagonais imediatos ao redor da cama/ponto de spawn
-        int[][] offsets = {
-                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
-                {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
-                {2, 0}, {-2, 0}, {0, 2}, {0, -2}
+        // 2. Procura no MESMO nível do piso (dy = 0) a 2-4 blocos de distância da cama para nunca ficar colado ou em cima dela
+        int[][] sideOffsets = {
+                {2, -2}, {3, -2}, {0, -3}, {1, -3}, {-1, -3},
+                {3, -1}, {3, 0}, {2, -3}, {-2, -2}, {-2, -3},
+                {4, -2}, {4, -1}
         };
-        for (int[] off : offsets) {
-            for (int dy : new int[]{0, 1, -1}) {
-                BlockPos candidate = spawnPos.add(off[0], dy, off[1]);
-                if (isValidNewChestSpot(world, candidate)) {
-                    return candidate;
-                }
+        for (int[] off : sideOffsets) {
+            BlockPos candidate = spawnPos.add(off[0], 0, off[1]);
+            if (isValidNewChestSpot(world, candidate) || world.getBlockState(candidate).getBlock() instanceof ChestBlock) {
+                return candidate;
             }
         }
 
-        // Fallback seguro: 1 bloco acima do ponto de spawn caso tudo ao redor esteja ocupado
-        BlockPos above = spawnPos.up();
-        if (world.getBlockState(above).isAir()) {
-            return above;
-        }
-        return spawnPos;
+        return DEFAULT_JODEVIL_CHEST_POS;
     }
 
     private boolean isValidNewChestSpot(ServerWorld world, BlockPos pos) {
@@ -387,8 +380,24 @@ public class JodevilVampireManager {
         if (!state.isAir() && !state.isReplaceable()) {
             return false;
         }
-        BlockState below = world.getBlockState(pos.down());
-        return below.isSolidBlock(world, pos.down()) || !below.isAir();
+        if (!world.getBlockState(pos.up()).isAir()) {
+            return false;
+        }
+        BlockPos belowPos = pos.down();
+        BlockState below = world.getBlockState(belowPos);
+        // NUNCA colocar em cima de camas, baús ou blocos com BlockEntity
+        if (below.getBlock() instanceof net.minecraft.block.BedBlock || world.getBlockEntity(belowPos) != null) {
+            return false;
+        }
+        // Garante distância mínima horizontal da cama para não atrapalhar o jogador ao dormir/acordar
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (world.getBlockState(pos.add(dx, 0, dz)).getBlock() instanceof net.minecraft.block.BedBlock) {
+                    return false;
+                }
+            }
+        }
+        return below.isFullCube(world, belowPos) || below.isSolidBlock(world, belowPos);
     }
 
     /**

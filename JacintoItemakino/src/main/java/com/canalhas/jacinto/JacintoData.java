@@ -58,11 +58,11 @@ public class JacintoData {
     public String miningChestDimension = "minecraft:overworld";
     public int carriedMinedCount = 0;
 
-    // Baú de Lore Vampírica do Jodevil (criado no ponto de spawn salvo dele)
+    // Baú de Lore Vampírica do Jodevil (criado ao lado do ponto de spawn salvo dele)
     public boolean jodevilLoreChestCreated = false;
-    public int jodevilLoreChestX = -678;
+    public int jodevilLoreChestX = -676;
     public int jodevilLoreChestY = 94;
-    public int jodevilLoreChestZ = -271;
+    public int jodevilLoreChestZ = -273;
     public String jodevilLoreChestDimension = "minecraft:overworld";
 
     // Equipamentos salvos como SNBT (String NBT) para preservar encantamentos, durabilidade e atributos
