@@ -116,6 +116,7 @@ public final class JacintoCommands {
                 .executes(c -> handleVampiroLore(c.getSource(), mod))
                 .then(CommandManager.literal("lore").executes(c -> handleVampiroLore(c.getSource(), mod)))
                 .then(CommandManager.literal("bau").executes(c -> handleVampiroBau(c.getSource(), mod)))
+                .then(CommandManager.literal("livro").executes(c -> handleVampiroLivro(c.getSource(), mod)))
         );
     }
 
@@ -132,8 +133,20 @@ public final class JacintoCommands {
     private static int handleVampiroBau(ServerCommandSource src, JacintoMod mod) {
         BlockPos pos = mod.getVampireManager().ensureLoreChestSpawned(src.getServer(), true);
         if (pos != null) {
-            src.sendFeedback(() -> Text.literal("§4🦇 [Crônicas do Sangue Duvidoso] §aBaú de relíquias e Livro de Lore verificados/restaurados no ponto de spawn salvo de Jodevil: §e(" +
+            src.sendFeedback(() -> Text.literal("§4🦇 [Crônicas do Sangue Duvidoso] §aBaú de relíquias e Livro de Lore verificados/restaurados ao lado do leito de Jodevil: §e(" +
                     pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")§a!"), false);
+        }
+        return 1;
+    }
+
+    private static int handleVampiroLivro(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player != null) {
+            ItemStack book = JodevilVampireManager.createVampireLoreBook();
+            if (!player.getInventory().insertStack(book)) {
+                player.dropItem(book, false);
+            }
+            player.sendMessage(Text.literal("§4🦇 [Crônicas do Sangue Duvidoso] §aVocê recebeu o §cTome of Vampiric Knowledge — Crônicas de Jodevil§a!"), false);
         }
         return 1;
     }

@@ -417,11 +417,19 @@ public class JodevilVampireManager {
         nbt.putInt("generation", 0);
         nbt.putBoolean("resolved", true);
 
+        // Aparência visual do item "Tome of Vampiric Knowledge" (death_knights:blood_spell_book) via Transmog
+        NbtCompound transmogTag = new NbtCompound();
+        transmogTag.putString("id", "death_knights:blood_spell_book");
+        transmogTag.putByte("Count", (byte) 1);
+        nbt.put("transmog:transmogItem", transmogTag);
+
         // Lore no Tooltip do item
         NbtCompound display = nbt.getCompound("display");
+        display.putString("Name", Text.Serializer.toJson(
+                Text.literal("§4§lTome of Vampiric Knowledge — Crônicas de Jodevil")));
         NbtList tooltipLore = new NbtList();
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
-                Text.literal("§7Manuscrito encadernado em couro carmesim").formatted(Formatting.GRAY))));
+                Text.literal("§7Grimório vampírico encadernado em couro carmesim").formatted(Formatting.GRAY))));
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
                 Text.literal("§7e manchado de vinho barato e alho.").formatted(Formatting.GRAY))));
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
@@ -433,116 +441,246 @@ public class JodevilVampireManager {
         display.put("Lore", tooltipLore);
         nbt.put("display", display);
 
+        // Todas as páginas possuem no máximo 11 a 12 linhas (de 14 possíveis) e <= 20 caracteres por linha
+        // para que NENHUMA palavra seja cortada no rodapé da página do Minecraft!
         String[] rawPages = new String[]{
-                // Pág 1 - Capa
-                "§4§lCRÔNICAS DO\nSANGUE DUVIDOSO§r\n" +
-                "§8━━━━━━━━━━━━━━━§r\n\n" +
-                "§0§oMemórias de um Imortal Mal-Acabado e o Desastroso Ritual de ArzanLion.§r\n\n" +
-                "§8Compilado nas Criptas da Cidadela sob a luz de velas de sebo.",
+                // Pág 1 - Capa (12 linhas)
+                "§4§lCRÔNICAS DO\n" +
+                "SANGUE DUVIDOSO§r\n" +
+                "§8━━━━━━━━━━━━━━§r\n\n" +
+                "§0§oMemórias de um\n" +
+                "Imortal Mal-Acabado\n" +
+                "e o Desastroso\n" +
+                "Ritual de ArzanLion.§r\n\n" +
+                "§8Escrito à luz de\n" +
+                "velas por Jodevil\n" +
+                "& Asminn.",
 
-                // Pág 2 - Prólogo (Estilo Entrevista com o Vampiro)
-                "§4§lI. A Confissão à Vela§r\n\n" +
-                "§0\"Vejo que preparaste a pena e o tinteiro, §9Asminn§0\", murmurou §4Jodevil§0, ajustando sua capa de veludo puído.\n\n" +
-                "\"Queres saber como abandonei a mortalidade? Senta-te. A noite é longa, e minha tragédia... é patética.\"",
+                // Pág 2 - Cap. I (12 linhas)
+                "§4§lI. A Confissão§r\n\n" +
+                "§0\"Vejo que trouxeste\n" +
+                "a pena e o tinteiro,\n" +
+                "§9Asminn§0\", murmurou\n" +
+                "§4Jodevil§0, ajustando\n" +
+                "sua capa de veludo.\n\n" +
+                "\"Queres saber como\n" +
+                "perdi a mortalidade?\n" +
+                "Senta-te. A noite é\n" +
+                "longa e patética.\"",
 
-                // Pág 3 - A Vaidade de Jodevil
-                "§4§lII. O Desejo Escarlate§r\n\n" +
-                "§0Por anos caminhei entre os vivos desejando a majestade dos Antigos.\n\n" +
-                "Eu não queria o suor da lavoura nem a velhice comum. Eu ansiava pela palidez de mármore, pelo charme hipnótico e pelo domínio da eterna meia-noite.",
+                // Pág 3 - Cap. II Parte 1 (11 linhas)
+                "§4§lII. O Desejo§r\n\n" +
+                "§0Por anos caminhei\n" +
+                "entre os vivos\n" +
+                "desejando a nobreza\n" +
+                "dos Antigos.\n\n" +
+                "Eu não queria o suor\n" +
+                "da lavoura nem a\n" +
+                "velhice comum dos\n" +
+                "mortais.",
 
-                // Pág 4 - A Linhagem Imaginada (A Rainha dos Condenados)
-                "§4§lIII. O Sonho Antigo§r\n\n" +
-                "§0Sonhava com os tronos de alabastro descritos nos pergaminhos da Mãe de Todos os Imortais.\n\n" +
-                "Imaginava-me planando sobre os telhados da província enquanto mortais sussurravam meu nome em reverência e pavor.",
+                // Pág 4 - Cap. II Parte 2 (10 linhas)
+                "§0Eu ansiava pela\n" +
+                "palidez de mármore,\n" +
+                "pelo olhar hipnótico\n" +
+                "e pelo domínio da\n" +
+                "eterna meia-noite.\n\n" +
+                "Imaginava-me sobre\n" +
+                "os telhados enquanto\n" +
+                "sussurravam meu nome\n" +
+                "em pavor e respeito.",
 
-                // Pág 5 - A Escolha do Alquimista
-                "§4§lIV. O Erro Fatal§r\n\n" +
-                "§0Como nenhuma criatura ancestral se dignou a morder-me o pescoço, recorri à única mente que prometia dobrar as leis da natureza:\n\n" +
-                "O autoproclamado Grão-Mago e ocultista de taverna, §6ArzanLion§0.",
+                // Pág 5 - Cap. III (11 linhas)
+                "§4§lIII. O Alquimista§r\n\n" +
+                "§0Como nenhum lorde\n" +
+                "noturno dignou-se a\n" +
+                "morder-me o pescoço,\n" +
+                "busquei outro meio.\n\n" +
+                "Recorri ao único que\n" +
+                "prometia dobrar a\n" +
+                "natureza: o ocultista\n" +
+                "de taverna §6ArzanLion§0.",
 
-                // Pág 6 - Diário de Asminn (Estilo Drácula de Bram Stoker)
-                "§4§lV. Diário de Asminn§r\n" +
-                "§814 de Outubro, Meia-Noite§r\n\n" +
-                "§0O vento uiva nas ameias. Vi §4Jodevil§0 descer à adega subterrânea de §6ArzanLion§0.\n\n" +
-                "Dizia ele que hoje renasceria como Príncipe das Trevas. Temo, contudo, pela sanidade de ambos.",
+                // Pág 6 - Cap. IV (12 linhas)
+                "§4§lIV. Nota de Asminn§r\n" +
+                "§814 de Outubro§r\n\n" +
+                "§0O vento uiva nas\n" +
+                "ameias. Vi §4Jodevil§0\n" +
+                "descer à adega de\n" +
+                "§6ArzanLion§0.\n\n" +
+                "Jura que renascerá\n" +
+                "como Príncipe das\n" +
+                "Trevas. Temo pela\n" +
+                "sanidade de ambos.",
 
-                // Pág 7 - O Laboratório de ArzanLion
-                "§4§lVI. O Círculo Torto§r\n\n" +
-                "§0\"Entrei no covil de §6ArzanLion§0 esperando cálices de ouro\", confessou §4Jodevil§0 com um suspiro fúnebre.\n\n" +
-                "\"Em vez disso, o círculo de giz parecia um ovo amassado, e o caldeirão cheirava suspeitamente a sopa de cebola.\"",
+                // Pág 7 - Cap. V Parte 1 (11 linhas)
+                "§4§lV. O Covil Torto§r\n\n" +
+                "§0\"Entrei na adega de\n" +
+                "§6ArzanLion§0 esperando\n" +
+                "cálices de ouro\",\n" +
+                "suspirou §4Jodevil§0.\n\n" +
+                "\"Mas o círculo de giz\n" +
+                "parecia um ovo torto\n" +
+                "e o caldeirão cheirava\n" +
+                "a sopa de cebola.\"",
 
-                // Pág 8 - Os Ingredientes Duvidosos
-                "§4§lVII. A Receita Profana§r\n\n" +
-                "§0O ritual exigia o Sangue dos Cárpatos e cinzas de três séculos.\n\n" +
-                "Mas §6ArzanLion§0, sem moedas para o mercador, improvisou: usou vinho tinto azedo, caldo de beterraba, dois dentes de alho mofados e banha de porco.",
+                // Pág 8 - Cap. V Parte 2 (10 linhas)
+                "§0O ritual exigia o\n" +
+                "Sangue dos Cárpatos\n" +
+                "e cinzas de três\n" +
+                "séculos.\n\n" +
+                "Sem moedas, §6ArzanLion§0\n" +
+                "improvisou: usou\n" +
+                "vinho barato, caldo\n" +
+                "de beterraba, alho\n" +
+                "mofado e banha.",
 
-                // Pág 9 - O Cochilo de AsterZZZz
-                "§4§lVIII. O Pergaminho§r\n\n" +
-                "§0Para piorar, o acólito §5AsterZZZz§0 adormecera sobre o grimório sagrado horas antes.\n\n" +
-                "A baba de §5AsterZZZz§0 borrou metade das runas abissais, e §6ArzanLion§0 simplesmente inventou as sílabas que faltavam no improviso.",
+                // Pág 9 - Cap. VI Parte 1 (11 linhas)
+                "§4§lVI. O Grimório§r\n\n" +
+                "§0Para piorar, o\n" +
+                "acólito §5AsterZZZz§0\n" +
+                "adormecera sobre o\n" +
+                "pergaminho sagrado.\n\n" +
+                "Sua baba borrou\n" +
+                "metade das runas, e\n" +
+                "§6ArzanLion§0 inventou as\n" +
+                "sílabas que faltavam!",
 
-                // Pág 10 - O Espirro Arcano
-                "§4§lIX. O Clímax Falho§r\n\n" +
-                "§0Quando os trovões rugiram e bebi daquele cálice duvidoso, §6ArzanLion§0 ergueu o cajado e bradou:\n" +
-                "§o\"Sanguis Noctis... ATCHIM!\"§r\n\n" +
-                "Um espirro colossal. O livro caiu no braseiro e uma fumaça cor-de-rosa tomou o salão.",
+                // Pág 10 - Cap. VI Parte 2 (11 linhas)
+                "§0Quando bebi daquele\n" +
+                "cálice duvidoso,\n" +
+                "§6ArzanLion§0 ergueu o\n" +
+                "cajado e bradou:\n\n" +
+                "§o\"Sanguis Noctis...\n" +
+                "ATCHIM!\"§r\n\n" +
+                "Um espirro colossal!\n" +
+                "O livro caiu no fogo\n" +
+                "sob fumaça rosa.",
 
-                // Pág 11 - O Despertar
-                "§4§lX. O Despertar§r\n\n" +
-                "§0Desmaiei esperando acordar com presas afiadas e a força de cem homens.\n\n" +
-                "Despertei três horas depois com uma enxaqueca terrível, gosto de vinagre na língua e §6ArzanLion§0 dizendo: §o\"Olha... tecnicamente funcionou!\"§r",
+                // Pág 11 - Cap. VII (11 linhas)
+                "§4§lVII. O Despertar§r\n\n" +
+                "§0Desmaiei esperando\n" +
+                "acordar com presas e\n" +
+                "a força de cem homens.\n\n" +
+                "Acordei com enxaqueca,\n" +
+                "gosto de vinagre na\n" +
+                "boca e §6ArzanLion§0\n" +
+                "dizendo: §o\"Olha...\n" +
+                "quase funcionou!\"§r",
 
-                // Pág 12 - Diário de Kikkawa e Luwuana
-                "§4§lXI. Cartas da Corte§r\n" +
-                "§8Relato de Kikkawa e Luwuana§r\n\n" +
-                "§0\"Naquela madrugada, vimos §4Jodevil§0 subir ao parapeito do jardim. Gritou §o'Eu sou a tormenta!'§0 e saltou tentando transformar-se em morcego.\n\n" +
-                "Não virou morcego. Caiu de cara nas roseiras.\"",
+                // Pág 12 - Cap. VIII (12 linhas)
+                "§4§lVIII. As Roseiras§r\n" +
+                "§8Por Kikkawa e Luwuana§r\n\n" +
+                "§0\"Vimos §4Jodevil§0 subir\n" +
+                "ao parapeito à noite.\n" +
+                "Gritou §o'Eu sou a\n" +
+                "tormenta!'§0 e saltou\n" +
+                "para virar morcego.\n\n" +
+                "Não virou morcego.\n" +
+                "Caiu de cara nas\n" +
+                "roseiras do jardim.\"",
 
-                // Pág 13 - O Diagnóstico
-                "§4§lXII. A Meia-Maldição§r\n\n" +
-                "§0O feitiço torto de §6ArzanLion§0 deixou-me no limbo entre os vivos e os mortos.\n\n" +
-                "Tenho a sede noturna e a palidez cadavérica, mas não comando lobos, não atravesso paredes e ainda bato o dedinho nos móveis no escuro.",
+                // Pág 13 - Cap. IX (12 linhas)
+                "§4§lIX. Meia-Maldição§r\n\n" +
+                "§0O feitiço torto de\n" +
+                "§6ArzanLion§0 deixou-me\n" +
+                "no limbo entre os\n" +
+                "vivos e os mortos.\n\n" +
+                "Tenho a sede e a\n" +
+                "palidez, mas não\n" +
+                "comando lobos e ainda\n" +
+                "bato o dedinho nos\n" +
+                "móveis no escuro.",
 
-                // Pág 14 - A Inquisição de Azarasquel e Reznozada
-                "§4§lXIII. A Prova de Fogo§r\n\n" +
-                "§0Desconfiados, §2Azarasquel§0 e §2Reznozada§0 tentaram exorcizar-me na praça com água benta e prata.\n\n" +
-                "A prata não me queimou; apenas deixou-me com coceira no pescoço, enquanto §2Reznozada§0 ria até perder o fôlego.",
+                // Pág 14 - Cap. X (12 linhas)
+                "§4§lX. A Inquisição§r\n\n" +
+                "§0Desconfiados,\n" +
+                "§2Azarasquel§0 e §2Reznozada§0\n" +
+                "testaram água benta e\n" +
+                "prata contra mim.\n\n" +
+                "A prata não me feriu;\n" +
+                "só deu coceira no\n" +
+                "pescoço, enquanto\n" +
+                "§2Reznozada§0 ria até\n" +
+                "perder o fôlego.",
 
-                // Pág 15 - A Apostas de Corvo
-                "§4§lXIV. O Primeiro Sol§r\n\n" +
-                "§0Ao alvorecer, §8Corvo§0 empoleirou-se no telhado da taverna recolhendo moedas de apostas.\n\n" +
-                "Metade da província apostava que eu explodiria em cinzas ao primeiro raio de sol; a outra metade, que nada aconteceria.",
+                // Pág 15 - Cap. XI Parte 1 (11 linhas)
+                "§4§lXI. O Sol Tirano§r\n\n" +
+                "§0Ao alvorecer, §8Corvo§0\n" +
+                "subiu ao telhado da\n" +
+                "taverna recolhendo\n" +
+                "apostas da corte.\n\n" +
+                "Metade apostava que\n" +
+                "eu explodiria ao sol;\n" +
+                "a outra metade, que\n" +
+                "nada aconteceria.",
 
-                // Pág 16 - O Sol Humilhante
-                "§4§lXV. A Queimadura Lenta§r\n\n" +
-                "§0Ambos erraram. Quando o sol tocou minha face, não houve explosão gloriosa.\n\n" +
-                "Houve apenas um chiado lento, como toucinho na frigideira. A cada minuto sob o astro-rei, sinto uma gota de minha vida evaporar.",
+                // Pág 16 - Cap. XI Parte 2 (10 linhas)
+                "§0Ambos erraram. Quando\n" +
+                "o sol tocou-me a pele,\n" +
+                "não houve explosão.\n\n" +
+                "Houve apenas um\n" +
+                "chiado lento, como\n" +
+                "toucinho na chapa.\n" +
+                "A cada minuto sob o\n" +
+                "sol, uma gota de minha\n" +
+                "vida evapora.",
 
-                // Pág 17 - A Humilhação Solar
-                "§4§lXVI. O Tributo do Sol§r\n\n" +
-                "§0\"Compreendes minha dor, §9Asminn§0?\" — choramingou §4Jodevil§0.\n\n" +
-                "\"Drácula temia a aurora porque ela o destruía em segundos! Eu temo o meio-dia porque ele me dá insolação crônica de um ponto por minuto!\"",
+                // Pág 17 - Cap. XII (12 linhas)
+                "§4§lXII. A Insolação§r\n\n" +
+                "§0\"Entendes minha dor,\n" +
+                "§9Asminn§0?\" — lamentou\n" +
+                "§4Jodevil§0.\n\n" +
+                "\"Drácula temia o sol\n" +
+                "porque o destruía em\n" +
+                "segundos! Eu temo o\n" +
+                "meio-dia porque me dá\n" +
+                "insolação de um ponto\n" +
+                "por minuto!\"",
 
-                // Pág 18 - O Encontro com Jacinto
-                "§4§lXVII. O Servo Imortal§r\n\n" +
-                "§0Em minha fúria noturna, tentei impor respeito sobre §6Jacinto§0, o incansável guardião ressecado dos cofres da cidadela.\n\n" +
-                "Mas num descuido digno de minha sina, entreguei-lhe minha relíquia de guerra mais preciosa.",
+                // Pág 18 - Cap. XIII Parte 1 (11 linhas)
+                "§4§lXIII. O Martelo§r\n\n" +
+                "§0Em minha fúria,\n" +
+                "tentei impor respeito\n" +
+                "sobre §6Jacinto§0, o\n" +
+                "servo imortal que\n" +
+                "guarda os cofres.\n\n" +
+                "Porém, num descuido,\n" +
+                "entreguei-lhe minha\n" +
+                "arma mais sagrada!",
 
-                // Pág 19 - A Humilhação de Mjölnir
-                "§4§lXVIII. O Martelo Perdido§r\n\n" +
-                "§0Um Conde das Trevas implorando a um servo de armazém que lhe devolva o martelo!\n\n" +
-                "Tentei conjurar chamas contra §6Jacinto§0, mas o maldito sequer chamuscou. Disse-me apenas para pedir com educação, enquanto toda a corte gargalhava.",
+                // Pág 19 - Cap. XIII Parte 2 (10 linhas)
+                "§0Um Conde das Trevas\n" +
+                "implorando ao servo\n" +
+                "que devolva o martelo!\n\n" +
+                "Tentei lançar chamas\n" +
+                "contra §6Jacinto§0, mas\n" +
+                "ele sequer chamuscou.\n" +
+                "Mandou-me pedir com\n" +
+                "carinho enquanto toda\n" +
+                "a corte gargalhava.",
 
-                // Pág 20 - A Defesa de ArzanLion
-                "§4§lXIX. Nota de ArzanLion§r\n" +
-                "§8Anexo deixado na porta§r\n\n" +
-                "§0\"Caro §4Jodevil§0, não aceito devoluções. Tu pediste para sofrer sob a luz do sol como um verdadeiro vampiro, e agora sofres!\n\n" +
-                "Recomendo um chapéu de palha. Com carinho, §6ArzanLion§0.\"",
+                // Pág 20 - Cap. XIV (11 linhas)
+                "§4§lXIV. Sem Reembolso§r\n" +
+                "§8Bilhete de ArzanLion§r\n\n" +
+                "§0\"Caro §4Jodevil§0, não\n" +
+                "aceito devoluções.\n" +
+                "Pediste para sofrer\n" +
+                "sob o sol como um\n" +
+                "vampiro, e sofres!\n\n" +
+                "Sugiro um chapéu de\n" +
+                "palha. — §6ArzanLion§0.\"",
 
-                // Pág 21 - Epílogo
-                "§4§lXX. O Fado Eterno§r\n\n" +
-                "§0Assim vivo eu, §4Conde Jodevil§0, único vampiro de meia-tigela destas terras.\n\n" +
-                "Enquanto o sol reinar no alto, escondo-me nas sombras; pois a cada minuto sob sua luz, pago com sangue o preço da alquimia barata.\n\n" +
+                // Pág 21 - Epílogo (12 linhas)
+                "§4§lXV. O Fado Eterno§r\n\n" +
+                "§0Assim vivo eu, §4Conde\n" +
+                "Jodevil§0, vampiro de\n" +
+                "meia-tigela do reino.\n\n" +
+                "Enquanto o sol brilha,\n" +
+                "busco as sombras; pois\n" +
+                "a cada minuto na luz,\n" +
+                "pago o preço da\n" +
+                "alquimia barata.\n" +
                 "§4§o— Fim das Crônicas —"
         };
 
