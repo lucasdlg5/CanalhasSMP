@@ -330,9 +330,9 @@ public class JodevilVampireManager {
                             if (i == 4 && st.hasNbt() && "Tomo V - O Clamor na Floresta".equals(st.getNbt().getString("title"))) {
                                 hasUpdatedArc1Title = true;
                             }
-                            if (i == 27 && st.hasNbt()
+                            if (i == 28 && st.hasNbt()
                                     && "Inquisidor Valerius".equals(st.getNbt().getString("author"))
-                                    && "Autos I - Pó Branco e Carmesim".equals(st.getNbt().getString("title"))) {
+                                    && st.getNbt().getString("title").startsWith("Autos II - Convites")) {
                                 hasUpdatedArc2Author = true;
                             }
                         }
