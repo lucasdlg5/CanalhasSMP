@@ -579,7 +579,7 @@ public final class JodevilLoreLibrary {
                         "\"Aos que abrirem este vigésimo sétimo tomo na arca ao lado do meu leito\", escreveu o próprio §4Conde Jodevil§0 com tinta carmesim na última página, \"deixo a minha bênção das sombras.\"",
                         "\"Se caminhardes por estas galerias quando a lua estiver alta, erguei uma taça à nossa corte: a §9Lorde Asminn§0, §6ArzanLion§0, §5AsterZZZz§0, §dLady Kikkawa§0, §dDama Luwuana§0, §2Azarasquel§0, §2Reznozada§0 e §8Corvo§0.\"",
                         "\"Se cruzardes com o imortal §6Jacinto§0 nos corredores, nunca lhe entregueis vossa arma favorita por engano — e, se o fizerdes, lembrai-vos de que o fogo não funciona e só o carinho devolve o que é vosso.\"",
-                        "\"E se algum dia, num futuro distante, encontrardes este castelo silencioso e virdes um vulto de chapéu de palha fugindo de uma réstia de sol atrás dos vasos... sabei que o meu coração ainda bate por aqueles que amei.\"",
+                        "\"E se algum dia, num futuro distante, encontrardes este castelo silencioso e ouvirdes o choro desafinado de um violino ecoando pelas torres vazias... sabei que o meu coração ainda bate por aqueles que amei.\"",
                         "\"Pois a eternidade pode ser longa e o sangue pode ser duvidoso, mas a lenda que escrevemos juntos jamais conhecerá o fim.\"",
                         "§4§l— FIM DO PRIMEIRO CICLO: CRÔNICAS DO SANGUE DUVIDOSO —"
                 }));

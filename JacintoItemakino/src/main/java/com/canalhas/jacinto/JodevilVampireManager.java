@@ -330,7 +330,9 @@ public class JodevilVampireManager {
                             if (i == 4 && st.hasNbt() && "Tomo V - O Clamor na Floresta".equals(st.getNbt().getString("title"))) {
                                 hasUpdatedArc1Title = true;
                             }
-                            if (i == 27 && st.hasNbt() && "Inquisidor Valerius".equals(st.getNbt().getString("author"))) {
+                            if (i == 27 && st.hasNbt()
+                                    && "Inquisidor Valerius".equals(st.getNbt().getString("author"))
+                                    && "Autos I - Pó Branco e Carmesim".equals(st.getNbt().getString("title"))) {
                                 hasUpdatedArc2Author = true;
                             }
                         }
@@ -471,7 +473,7 @@ public class JodevilVampireManager {
                     && world.getBlockState(brewPos.down()).isSolidBlock(world, brewPos.down())) {
                 world.setBlockState(brewPos, Blocks.BREWING_STAND.getDefaultState(), 3);
                 if (world.getBlockEntity(brewPos) instanceof BrewingStandBlockEntity brewBe) {
-                    brewBe.setCustomName(Text.literal("§d§l⚗️ Cabeceira — Elixir do 27º Dia"));
+                    brewBe.setCustomName(Text.literal("§d§l⚗️ Cabeceira — Vinum Lethes"));
                     ItemStack pinkChalice = createPinkElixirBottle();
                     for (int i = 0; i < 3; i++) {
                         brewBe.setStack(i, pinkChalice.copy());
@@ -505,10 +507,10 @@ public class JodevilVampireManager {
 
         NbtCompound display = nbt.getCompound("display");
         display.putString("Name", Text.Serializer.toJson(
-                Text.literal("§d§l🍷 Cálice Cor-de-Rosa (Dose do 27º Dia)")));
+                Text.literal("§d§l🍷 Vinum Lethes (Cálice da 27ª Lua)")));
         NbtList lore = new NbtList();
         lore.add(NbtString.of(Text.Serializer.toJson(
-                Text.literal("§7\"Receita de ArzanLion e AsterZZZz contra a Dor da Eternidade.\""))));
+                Text.literal("§7§o\"Para silenciar a música à meia-noite da vigésima sétima lua.\""))));
         lore.add(NbtString.of(Text.Serializer.toJson(
                 Text.literal("§8Cheira fortemente a vinho tinto de terceira, beterraba e alho."))));
         display.put("Lore", lore);
