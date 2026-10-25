@@ -101,19 +101,25 @@ public final class JodevilLoreLibrary {
     private static List<String> paginateChapter(ChapterSpec spec) {
         List<String> pages = new ArrayList<>();
 
-        // Página 1: Folha de Rosto do Capítulo
-        StringBuilder cover = new StringBuilder();
-        cover.append("§4§lCAPÍTULO ").append(spec.roman()).append("§r\n");
-        cover.append("§8━━━━━━━━━━━━━━§r\n");
+        // Página 1: Folha de Rosto do Capítulo (máximo 11-12 linhas garantidas)
+        List<String> coverLines = new ArrayList<>();
+        coverLines.add("§4§lCAPÍTULO " + spec.roman() + "§r");
+        coverLines.add("§8━━━━━━━━━━━━━━§r");
         for (String titleLine : wrapPlainText(spec.chapterTitle(), 17)) {
-            cover.append("§4§l").append(titleLine).append("§r\n");
+            coverLines.add("§4§l" + titleLine + "§r");
         }
-        cover.append("\n");
+        coverLines.add("");
         for (String subLine : wrapPlainText(spec.subtitle(), 18)) {
-            cover.append("§8§o").append(subLine).append("§r\n");
+            if (coverLines.size() < MAX_LINES_PER_PAGE - 2) {
+                coverLines.add("§8§o" + subLine + "§r");
+            }
         }
-        cover.append("\n§0").append(spec.actTitle());
-        pages.add(cover.toString().trim());
+        for (String actLine : wrapPlainText(spec.actTitle(), 18)) {
+            if (coverLines.size() < MAX_LINES_PER_PAGE) {
+                coverLines.add("§0" + actLine);
+            }
+        }
+        pages.add(String.join("\n", coverLines));
 
         // Demais páginas: Prosa literária fluindo sem cortes
         List<String> allLines = new ArrayList<>();

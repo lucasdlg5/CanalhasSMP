@@ -5,8 +5,10 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -296,7 +298,8 @@ public class JodevilVampireManager {
     }
 
     /**
-     * Cria o Baú alguns blocos ao lado da cama de Jodevil (-676, 94, -273) e deposita os 27 Livros (Capítulos I a XXVII).
+     * Cria o Baú Duplo alguns blocos ao lado da cama de Jodevil (-676, 94, -273 e -675, 94, -273)
+     * e deposita os 54 Livros (27 do Arco 1 + 27 do Arco 2: O Ciclo do Uroboro).
      */
     public BlockPos ensureLoreChestSpawned(MinecraftServer server, boolean forceRecreate) {
         JacintoData data = mod.getData();
@@ -306,20 +309,23 @@ public class JodevilVampireManager {
         // Se estava salvo na posição antiga em cima da cama (Y=95), força relocação para o piso (Y=94)
         boolean wasBuggedAboveBed = (data.jodevilLoreChestY == 95 && data.jodevilLoreChestZ == -271);
 
-        // Verifica se o baú atual já possui os 27 capítulos completos
+        // Verifica se o Baú Duplo atual já possui os 54 capítulos completos
         if (data.jodevilLoreChestCreated && !forceRecreate && !wasBuggedAboveBed) {
             BlockPos savedPos = new BlockPos(data.jodevilLoreChestX, data.jodevilLoreChestY, data.jodevilLoreChestZ);
             overworld.getChunk(savedPos.getX() >> 4, savedPos.getZ() >> 4);
-            BlockEntity existingBe = overworld.getBlockEntity(savedPos);
-            if (existingBe instanceof ChestBlockEntity existingChest) {
-                int bookCount = 0;
-                for (int i = 0; i < existingChest.size(); i++) {
-                    if (existingChest.getStack(i).isOf(Items.WRITTEN_BOOK)) {
-                        bookCount++;
+            BlockState savedState = overworld.getBlockState(savedPos);
+            if (savedState.getBlock() instanceof ChestBlock chestBlock) {
+                Inventory doubleInv = ChestBlock.getInventory(chestBlock, savedState, overworld, savedPos, true);
+                if (doubleInv != null && doubleInv.size() >= 54) {
+                    int bookCount = 0;
+                    for (int i = 0; i < doubleInv.size(); i++) {
+                        if (doubleInv.getStack(i).isOf(Items.WRITTEN_BOOK)) {
+                            bookCount++;
+                        }
                     }
-                }
-                if (bookCount >= 27) {
-                    return savedPos;
+                    if (bookCount >= 54) {
+                        return savedPos;
+                    }
                 }
             }
         }
@@ -354,38 +360,71 @@ public class JodevilVampireManager {
 
         // Escolhe a posição ideal a alguns blocos ao lado da cama no piso firme (nunca em cima da cama)
         BlockPos chestPos = findSafeChestSpotNearSpawn(overworld, targetSpawn);
+        BlockPos secondChestPos = chestPos.east();
 
-        BlockState existingState = overworld.getBlockState(chestPos);
-        if (!(existingState.getBlock() instanceof ChestBlock)) {
-            overworld.setBlockState(chestPos, Blocks.CHEST.getDefaultState().with(ChestBlock.FACING, Direction.NORTH), 3);
+        // Posiciona as duas metades do Baú Duplo olhando para o Norte (LEFT em chestPos, RIGHT em chestPos.east())
+        BlockState leftChestState = Blocks.CHEST.getDefaultState()
+                .with(ChestBlock.FACING, Direction.NORTH)
+                .with(ChestBlock.CHEST_TYPE, ChestType.LEFT);
+        BlockState rightChestState = Blocks.CHEST.getDefaultState()
+                .with(ChestBlock.FACING, Direction.NORTH)
+                .with(ChestBlock.CHEST_TYPE, ChestType.RIGHT);
+
+        overworld.setBlockState(chestPos, leftChestState, 3);
+        overworld.setBlockState(secondChestPos, rightChestState, 3);
+
+        Text customTitle = Text.literal("§4§l⚰️ Relíquias Noturnas de Conde Jodevil (54 Tomos)");
+        if (overworld.getBlockEntity(chestPos) instanceof ChestBlockEntity leftBe) {
+            leftBe.setCustomName(customTitle);
+        }
+        if (overworld.getBlockEntity(secondChestPos) instanceof ChestBlockEntity rightBe) {
+            rightBe.setCustomName(customTitle);
         }
 
-        BlockEntity be = overworld.getBlockEntity(chestPos);
-        if (be instanceof ChestBlockEntity chest) {
-            chest.setCustomName(Text.literal("§4§l⚰️ Relíquias Noturnas de Conde Jodevil"));
+        java.util.List<ItemStack> all54Books = new java.util.ArrayList<>(54);
+        all54Books.addAll(JodevilLoreLibrary.createAll27ChapterBooks());
+        all54Books.addAll(JodevilFutureLoreLibrary.createAllArc2ChapterBooks());
 
-            java.util.List<ItemStack> all27Books = JodevilLoreLibrary.createAll27ChapterBooks();
-            for (int i = 0; i < Math.min(chest.size(), all27Books.size()); i++) {
-                chest.setStack(i, all27Books.get(i));
+        Inventory doubleInv = ChestBlock.getInventory((ChestBlock) Blocks.CHEST, overworld.getBlockState(chestPos), overworld, chestPos, true);
+        if (doubleInv != null && doubleInv.size() >= 54) {
+            for (int i = 0; i < Math.min(doubleInv.size(), all54Books.size()); i++) {
+                doubleInv.setStack(i, all54Books.get(i));
             }
-            chest.markDirty();
+            doubleInv.markDirty();
+        } else {
+            // Fallback individual caso o inventário duplo não seja resolvido imediatamente
+            if (overworld.getBlockEntity(secondChestPos) instanceof ChestBlockEntity firstHalf) {
+                for (int i = 0; i < 27 && i < all54Books.size(); i++) {
+                    firstHalf.setStack(i, all54Books.get(i));
+                }
+                firstHalf.markDirty();
+            }
+            if (overworld.getBlockEntity(chestPos) instanceof ChestBlockEntity secondHalf) {
+                for (int i = 0; i < 27 && (i + 27) < all54Books.size(); i++) {
+                    secondHalf.setStack(i, all54Books.get(i + 27));
+                }
+                secondHalf.markDirty();
+            }
         }
 
-        // Protege o baú para que o Jacinto NUNCA retire os livros durante o /organizar!
-        data.setChestRule(overworld.getRegistryKey().getValue().toString(), chestPos, false, false);
+        // Protege AMBAS as metades do Baú Duplo para que o Jacinto NUNCA retire os livros durante o /organizar!
+        String dimKey = overworld.getRegistryKey().getValue().toString();
+        data.setChestRule(dimKey, chestPos, false, false);
+        data.setChestRule(dimKey, secondChestPos, false, false);
 
         data.jodevilLoreChestCreated = true;
         data.jodevilLoreChestX = chestPos.getX();
         data.jodevilLoreChestY = chestPos.getY();
         data.jodevilLoreChestZ = chestPos.getZ();
-        data.jodevilLoreChestDimension = overworld.getRegistryKey().getValue().toString();
+        data.jodevilLoreChestDimension = dimKey;
         data.save();
 
-        LOG.info("[JodevilVampire] Baú de Lore Vampírica (27 Volumes) posicionado ao lado da cama em ({}, {}, {})!",
-                chestPos.getX(), chestPos.getY(), chestPos.getZ());
+        LOG.info("[JodevilVampire] Baú Duplo de Lore Vampírica (54 Volumes: Arco 1 + Arco 2) posicionado ao lado da cama em ({}, {}, {}) e ({}, {}, {})!",
+                chestPos.getX(), chestPos.getY(), chestPos.getZ(),
+                secondChestPos.getX(), secondChestPos.getY(), secondChestPos.getZ());
 
         if (onlineJodevil != null) {
-            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um baú contendo a coleção completa de §c27 Volumes das \"Crônicas do Sangue Duvidoso\"§7 repousa ao lado do seu leito em §e(" +
+            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um Baú Duplo contendo a coleção épica de §c54 Volumes (Ciclo I: Sangue Duvidoso & Ciclo II: O Uroboro)§7 repousa ao lado do seu leito em §e(" +
                     chestPos.getX() + ", " + chestPos.getY() + ", " + chestPos.getZ() + ")§7."), false);
         }
 
