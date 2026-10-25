@@ -172,9 +172,47 @@ public class JodevilVampireManager {
 
     /**
      * Aplica exatamente 1 de dano de HP (1.0f = meio coração) ignorando redução de armadura,
+     * com 1% de chance de Combustão Solar Instantânea (morte imediata ao sol!),
      * acompanhado de efeitos visuais/sonoros góticos e a lore do debuff.
      */
     private void applyVampireSunburn(ServerPlayerEntity player, ServerWorld world) {
+        // 1% de chance de morrer instantaneamente ao tomar o dano solar da maldição!
+        boolean instantSolarDeath = world.getRandom().nextInt(100) == 0;
+
+        if (instantSolarDeath) {
+            // Partículas cinematográficas de combustão vampírica
+            world.spawnParticles(ParticleTypes.FLAME, player.getX(), player.getY() + 1.0, player.getZ(), 45, 0.4, 0.7, 0.4, 0.08);
+            world.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.0, player.getZ(), 35, 0.4, 0.7, 0.4, 0.08);
+            world.spawnParticles(ParticleTypes.LAVA, player.getX(), player.getY() + 1.0, player.getZ(), 20, 0.3, 0.5, 0.3, 0.05);
+            world.spawnParticles(ParticleTypes.LARGE_SMOKE, player.getX(), player.getY() + 1.0, player.getZ(), 40, 0.5, 0.8, 0.5, 0.04);
+            world.spawnParticles(ParticleTypes.ASH, player.getX(), player.getY() + 1.2, player.getZ(), 60, 0.6, 0.8, 0.6, 0.1);
+
+            world.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.PLAYERS, 1.2f, 0.7f);
+            world.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.ENTITY_BAT_DEATH, SoundCategory.PLAYERS, 1.2f, 0.6f);
+
+            // Anúncio global com Hover da Lore
+            MutableText globalMsg = Text.literal("§8[§4🩸 §c§lCOMBUSTÃO VAMPÍRICA CRÍTICA (1%)§8] ")
+                    .append(Text.literal("§eO feitiço instável de §6ArzanLion§e entrou em colapso! §4Conde Jodevil§e virou cinzas instantaneamente sob o sol! 🦇☀️💀")
+                            .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, buildDebuffLoreHoverText()))));
+
+            if (world.getServer() != null) {
+                world.getServer().getPlayerManager().broadcast(globalMsg, false);
+            } else {
+                player.sendMessage(globalMsg, false);
+            }
+
+            // Morte instantânea ao sol
+            player.setOnFireFor(5);
+            player.setHealth(0.001f);
+            player.damage(world.getDamageSources().onFire(), 10000.0f);
+            if (player.isAlive()) {
+                player.kill();
+            }
+            return;
+        }
+
         float currentHealth = player.getHealth();
         if (currentHealth > 1.0f) {
             player.setHealth(currentHealth - 1.0f);
@@ -195,11 +233,11 @@ public class JodevilVampireManager {
                 SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.PLAYERS, 0.8f, 0.75f);
 
         // ActionBar imediata
-        player.sendMessage(Text.literal("§4🦇 [Maldição do Sangue Duvidoso] §cO sol escalda seu sangue! §4§l-1 HP §7(Passe o mouse no chat para ler a Lore)"), true);
+        player.sendMessage(Text.literal("§4🦇 [Maldição do Sangue Duvidoso] §cO sol escalda seu sangue! §4§l-1 HP §7(1% de chance de morte instantânea!)"), true);
 
         // Mensagem no chat com Hover da Lore completa do Debuff
         MutableText chatAlert = Text.literal("§8[§4🩸 §c§lMaldição do Sangue Duvidoso§8] ")
-                .append(Text.literal("§7O sol drenou §c1 de HP§7 da sua carcaça imortal! ")
+                .append(Text.literal("§7O sol drenou §c1 de HP§7 da sua carcaça imortal §8(1% de risco de virar cinzas na hora!) ")
                         .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, buildDebuffLoreHoverText()))))
                 .append(Text.literal("§8[§6§nLer Lore do Debuff§8]")
                         .setStyle(Style.EMPTY
@@ -217,7 +255,7 @@ public class JodevilVampireManager {
         t.append(Text.literal("§4§l🦇 MALDIÇÃO DO SANGUE DUVIDOSO §8(Debuff Permanente)\n"));
         t.append(Text.literal("§7Portador Exclusivo: §cConde Jodevil\n"));
         t.append(Text.literal("§7Autor do Desastre: §eGrão-Alquimista ArzanLion\n"));
-        t.append(Text.literal("§7Efeito Passivo: §c-1 de HP a cada 1 minuto exposto ao Sol\n"));
+        t.append(Text.literal("§7Efeito Passivo: §c-1 de HP a cada 1 min ao Sol §4(1% de Morte Instantânea!)\n"));
         t.append(Text.literal("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"));
         t.append(Text.literal("§f§o\"Tu pediste a eternidade da noite, Jodevil,\n"));
         t.append(Text.literal("§f§omas ArzanLion leu o pergaminho de cabeça para baixo.\"\n\n"));
@@ -227,10 +265,10 @@ public class JodevilVampireManager {
         t.append(Text.literal("§7ArzanLion misturou vinho barato de taverna, alho vencido,\n"));
         t.append(Text.literal("§7suco de beterraba e espirrou no meio do cântico em latim.\n\n"));
         t.append(Text.literal("§7O resultado não foi a majestade de um Lorde Nosferatu,\n"));
-        t.append(Text.literal("§7mas um §cVampirismo de Segunda Linha§7: você não vira\n"));
-        t.append(Text.literal("§7morcego nem explode em chamas cinematográficas, mas o\n"));
-        t.append(Text.literal("§7astro-rei cozinha lentamente sua dignidade, drenando\n"));
-        t.append(Text.literal("§c1 ponto de sangue a cada minuto§7 sob o céu aberto.\n"));
+        t.append(Text.literal("§7mas um §cVampirismo de Segunda Linha§7: o astro-rei cozinha\n"));
+        t.append(Text.literal("§7lentamente sua dignidade, drenando §c1 ponto de HP por minuto§7,\n"));
+        t.append(Text.literal("§7com §4§l1% de chance§7 de o feitiço entrar em curto-circuito\n"));
+        t.append(Text.literal("§7e §4reduzi-lo a cinzas instantaneamente§7 ao tomar o dano!\n"));
         t.append(Text.literal("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"));
         t.append(Text.literal("§6📖 Relíquia: §eHá um Baú ao lado de seu leito (-676, 94, -273)\n"));
         t.append(Text.literal("§e   com o livro completo das Crônicas de sua transformação!"));
@@ -241,7 +279,8 @@ public class JodevilVampireManager {
         MutableText msg = Text.literal("\n§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
                 .append(Text.literal("  §4🦇 §c§lMALDIÇÃO ATIVA: §4§lSANGUE DUVIDOSO DE ARZANLION §4🦇\n"))
                 .append(Text.literal("  §7§o\"O sol é um tirano para aqueles cujo ritual deu errado...\"\n\n"))
-                .append(Text.literal("  §fEfeito Permanente: §cAo sair ao sol, você perde §4§l1 HP§c a cada minuto.\n"))
+                .append(Text.literal("  §fEfeito Permanente: §cAo sair ao sol, você perde §4§l1 HP§c a cada minuto\n"))
+                .append(Text.literal("  §c                   (com §4§l1% de chance§c de virar cinzas na hora!).\n"))
                 .append(Text.literal("  §fLore do Debuff: "))
                 .append(Text.literal("§6§l[Passe o Mouse Aqui ou Clique para Ler]")
                         .setStyle(Style.EMPTY
@@ -615,16 +654,16 @@ public class JodevilVampireManager {
                 "a outra metade, que\n" +
                 "nada aconteceria.",
 
-                // Pág 16 - Cap. XI Parte 2 (10 linhas)
-                "§0Ambos erraram. Quando\n" +
-                "o sol tocou-me a pele,\n" +
-                "não houve explosão.\n\n" +
-                "Houve apenas um\n" +
+                // Pág 16 - Cap. XI Parte 2 (12 linhas)
+                "§0Houve apenas um\n" +
                 "chiado lento, como\n" +
-                "toucinho na chapa.\n" +
-                "A cada minuto sob o\n" +
-                "sol, uma gota de minha\n" +
-                "vida evapora.",
+                "toucinho na chapa.\n\n" +
+                "A cada minuto ao sol,\n" +
+                "minha vida evapora...\n" +
+                "com uma chance em cem\n" +
+                "de o feitiço falhar e\n" +
+                "reduzir-me a cinzas\n" +
+                "na mesma hora!",
 
                 // Pág 17 - Cap. XII (12 linhas)
                 "§4§lXII. A Insolação§r\n\n" +
