@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -47,6 +48,11 @@ public class JacintoMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 JacintoCommands.register(dispatcher, this));
 
+        // Escuta chat do servidor para interação de pedidos/devolução de itens (ex: Mjölnir)
+        ServerMessageEvents.CHAT_MESSAGE.register((message, sender, params) -> {
+            npc.handlePlayerChat(sender, message.getContent().getString());
+        });
+
         // Tick loop do servidor para movimentação, organização, mineração e respawn
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             npc.onServerTick(server);
@@ -66,11 +72,11 @@ public class JacintoMod implements ModInitializer {
             return ActionResult.PASS;
         });
 
-        // Jogadores NÃO PODEM bater no Jacinto (cancela o ataque na origem e impede farm de XP)
+        // Jogadores NÃO PODEM bater no Jacinto (cancela o ataque na origem e impede farm de XP/agressões)
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (entity != null && entity.getCommandTags().contains(JacintoNpc.JACINTO_TAG)) {
                 if (!world.isClient()) {
-                    player.sendMessage(Text.literal("§6[Jacinto Itemakino Baú] §eEi patrão §b" + player.getName().getString() + "§e, sem fogo amigo! Sou da firma, não me bata! 📦👷"), true);
+                    player.sendMessage(Text.literal("§6[Jacinto Itemakino Baú] §eEi patrão §b" + player.getName().getString() + "§e, tentar me bater ou tacar fogo não vai fazer o item cair! Pede com carinho no chat que você tem 10% de chance de eu te entregar! 📦🔨🔥"), true);
                 }
                 return ActionResult.FAIL;
             }
@@ -101,6 +107,18 @@ public class JacintoMod implements ModInitializer {
 
                 // Pets e animais domesticados NUNCA atacam Jacinto
                 if (attacker instanceof TameableEntity) {
+                    return false;
+                }
+
+                // Imunidade total a fogo, lava e calor (jogadores tentando tacar fogo para fazer o item dropar)
+                if (source.isIn(net.minecraft.registry.tag.DamageTypeTags.IS_FIRE) ||
+                    source.isOf(DamageTypes.IN_FIRE) ||
+                    source.isOf(DamageTypes.ON_FIRE) ||
+                    source.isOf(DamageTypes.LAVA) ||
+                    source.isOf(DamageTypes.HOT_FLOOR)) {
+                    if (entity instanceof HuskEntity husk) {
+                        husk.extinguish();
+                    }
                     return false;
                 }
 

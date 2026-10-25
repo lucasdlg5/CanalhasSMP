@@ -27,6 +27,7 @@ import net.minecraft.item.ShovelItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.MiningToolItem;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.scoreboard.AbstractTeam;
@@ -86,6 +87,7 @@ public class JacintoNpc {
     private int combatStuckTicks = 0;
     private Vec3d lastCombatPos = null;
     private final Map<UUID, Long> unreachableEnemies = new HashMap<>();
+    private final Map<UUID, Long> chatCooldowns = new HashMap<>();
 
     private static final String[] RESPAWN_PHRASES = {
             "§6[Jacinto Itemakino Baú] §eRapaz, fui de base rapidão... tropecei na quina do baú, mas o Jacinto já tá vivinho da silva de novo! 📦💀",
@@ -140,6 +142,11 @@ public class JacintoNpc {
                 spawnOrRespawn(server, false);
             }
             return;
+        }
+
+        // Extingue fogo imediatamente (imunidade a fogo/lava para impedir que tentem queimá-lo)
+        if (entity.isOnFire()) {
+            entity.extinguish();
         }
 
         // Garante que Jacinto NUNCA tenha jogadores ou entidades pacíficas como alvo e mantenha braços relaxados
@@ -755,6 +762,15 @@ public class JacintoNpc {
             return;
         }
 
+        // 1.5. Jogador segurando Isqueiro, Carga de Fogo ou Balde de Lava (prevenção cômica de agressão com fogo)
+        if (held.getItem() == Items.FLINT_AND_STEEL || held.getItem() == Items.FIRE_CHARGE || held.getItem() == Items.LAVA_BUCKET) {
+            player.sendMessage(Text.literal("§6[Jacinto Itemakino Baú] §e🔥 Ei patrão §b" + player.getName().getString() +
+                    "§e! Nem adianta tentar me tacar fogo ou me queimar! Casca grossa de operário não queima! " +
+                    "Se você quer o item (ou o Mjölnir do Jodevil) de volta, pede com carinho no chat que você tem 10% de chance de eu te entregar! 😂🔨"), false);
+            jacinto.playSound(SoundEvents.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return;
+        }
+
         // 2. Jogador segurando Espada:
         if (held.getItem() instanceof SwordItem) {
             ItemStack oldSword = data.getSavedSword();
@@ -863,7 +879,8 @@ public class JacintoNpc {
                 "§e[Jacinto Itemakino Baú] §fÀs suas ordens, patrão! Coloque uma placa no baú e digite §b/organizar§f que eu cuido do resto!",
                 "§e[Jacinto Itemakino Baú] §fAqui na firma o serviço é rápido. Se precisar parar no meio, só mandar um §b/organizar stop§f!",
                 "§e[Jacinto Itemakino Baú] §fDeixa qualquer monstro chegar perto desse baú pra ver se eu não mostro meu serviço!",
-                "§e[Jacinto Itemakino Baú] §fJacinto organizando, a firma prosperando! Só me dar as ordens."
+                "§e[Jacinto Itemakino Baú] §fJacinto organizando, a firma prosperando! Só me dar as ordens.",
+                "§e[Jacinto Itemakino Baú] §fSe estiver procurando pelo seu item (ou pelo Mjölnir do Jodevil), pede com jeitinho no chat! Quem sabe eu não te presenteio? Só não vale tacar fogo em mim! 😂🔨"
         };
         player.sendMessage(Text.literal(idleQuotes[random.nextInt(idleQuotes.length)]), false);
         jacinto.playSound(SoundEvents.ENTITY_VILLAGER_TRADE, 1.0f, 1.0f);
@@ -885,5 +902,150 @@ public class JacintoNpc {
     private String getStackDisplayName(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return "§7[Vazio]";
         return stack.getName().getString();
+    }
+
+    /**
+     * Trata mensagens enviadas pelos jogadores no chat do servidor direcionadas ao Jacinto
+     */
+    public void handlePlayerChat(ServerPlayerEntity sender, String rawMessage) {
+        if (sender == null || rawMessage == null || rawMessage.isBlank()) return;
+
+        if (isItemReturnRequest(rawMessage)) {
+            handleItemReturnRequest(sender);
+        }
+    }
+
+    public boolean isItemReturnRequest(String message) {
+        String msg = message.toLowerCase(java.util.Locale.ROOT).trim();
+        msg = msg.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+                 .replace("ã", "a").replace("õ", "o").replace("â", "a").replace("ê", "e")
+                 .replace("ö", "o").replace("ç", "c");
+
+        boolean mentionsJacinto = msg.contains("jacinto") || msg.contains("itemakino") || msg.contains("peao");
+        boolean mentionsAction = msg.contains("devolv") || msg.contains("me da") || msg.contains("da meu")
+                || msg.contains("dar meu") || msg.contains("passa") || msg.contains("entrega")
+                || msg.contains("de volta") || msg.contains("dropa") || msg.contains("restitui") || msg.contains("pedir");
+        boolean mentionsItem = msg.contains("item") || msg.contains("mjolnir") || msg.contains("martelo")
+                || msg.contains("arma") || msg.contains("espada") || msg.contains("jodevil");
+
+        // Caso 1: Menciona o Jacinto e pede devolução/item
+        if (mentionsJacinto && (mentionsAction || mentionsItem)) {
+            return true;
+        }
+
+        // Caso 2: Pede devolução mencionando mjolnir ou o jodevil
+        if (mentionsAction && (msg.contains("mjolnir") || msg.contains("jodevil"))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Processa a solicitação do jogador para o Jacinto devolver/presentear o item (Mjölnir do mod).
+     * Chance de 10% de sucesso.
+     * Na falha (90%), encoraja a continuar pedindo e lembra que machucá-lo ou tacar fogo não adianta.
+     */
+    public void handleItemReturnRequest(ServerPlayerEntity player) {
+        if (player == null) return;
+        UUID uuid = player.getUuid();
+        long now = System.currentTimeMillis();
+        Long lastTime = chatCooldowns.get(uuid);
+
+        if (lastTime != null && now - lastTime < 2500) { // 2.5s de cooldown anti-spam
+            player.sendMessage(Text.literal("§e[Jacinto Itemakino Baú] §7(Calma patrão! Respira fundo e pede de novo em 2 segundinhos com bastante carinho!)"), false);
+            return;
+        }
+        chatCooldowns.put(uuid, now);
+
+        boolean isJodevil = player.getName().getString().equalsIgnoreCase("Jodevil");
+        double roll = random.nextDouble();
+        boolean success = roll < 0.10; // 10% de chance
+
+        HuskEntity entity = getEntity();
+        if (entity != null && entity.getWorld() == player.getServerWorld()) {
+            entity.getLookControl().lookAt(player, 30.0f, 30.0f);
+        }
+
+        if (success) {
+            // SUCESSO (10%): Devolve ou presenteia com o Mjölnir do mod soulsweapons
+            ItemStack mjolnirStack = ItemStack.EMPTY;
+
+            // 1. Tenta recuperar o Mjölnir customizado salvo (ex: o do Jodevil com todos os encantamentos e nome)
+            ItemStack savedSword = mod.getData().getSavedSword();
+            if (!savedSword.isEmpty() && Registries.ITEM.getId(savedSword.getItem()).getPath().contains("mjolnir")) {
+                mjolnirStack = savedSword.copy();
+                mod.getData().saveSword(ItemStack.EMPTY);
+                if (entity != null) {
+                    entity.equipStack(EquipmentSlot.MAINHAND, JacintoData.createDefaultWoodenSword());
+                }
+            } else if (entity != null && Registries.ITEM.getId(entity.getMainHandStack().getItem()).getPath().contains("mjolnir")) {
+                mjolnirStack = entity.getMainHandStack().copy();
+                mod.getData().saveSword(ItemStack.EMPTY);
+                entity.equipStack(EquipmentSlot.MAINHAND, JacintoData.createDefaultWoodenSword());
+            }
+
+            // 2. Se não tinha na mão, cria uma nova do mod soulsweapons
+            if (mjolnirStack.isEmpty()) {
+                net.minecraft.item.Item item = Registries.ITEM.get(new Identifier("soulsweapons", "mjolnir"));
+                if (item != null && item != Items.AIR) {
+                    mjolnirStack = new ItemStack(item);
+                } else {
+                    mjolnirStack = new ItemStack(Items.NETHERITE_AXE);
+                    mjolnirStack.setCustomName(Text.literal("§6§lMjölnir dos Deuses"));
+                }
+            }
+
+            // Entrega no inventário do jogador ou dropa aos pés caso cheio
+            if (!player.getInventory().insertStack(mjolnirStack)) {
+                player.dropItem(mjolnirStack, false);
+            }
+
+            // Efeitos de trovão, fanfarra e partículas
+            ServerWorld pWorld = player.getServerWorld();
+            pWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 0.9f, 1.0f);
+            pWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            pWorld.spawnParticles(ParticleTypes.TOTEM_OF_UNDYING, player.getX(), player.getY() + 1.0, player.getZ(),
+                    30, 0.5, 0.8, 0.5, 0.1);
+
+            String victoryMsg;
+            if (isJodevil) {
+                victoryMsg = "§6⚡ [Jacinto Itemakino Baú] §aTÁ BOM, TÁ BOM, JODEVIL! Venceu pelo cansaço! O Jacinto tem coração mole afinal... Toma aqui seu §e§lMjölnir§a de volta! Cuida bem dele agora e para de chorar na firma! 😂📦🔨⚡";
+            } else {
+                victoryMsg = "§6⚡ [Jacinto Itemakino Baú] §aRapaz, o patrão §b" + player.getName().getString() +
+                        "§a pediu com tanto jeito e insistência que o Jacinto se comoveu! Toma aqui esse §e§lMjölnir§a da firma! Não perde de novo, hein patrão! 😂📦🔨⚡";
+            }
+            player.getServer().getPlayerManager().broadcast(Text.literal(victoryMsg), false);
+
+        } else {
+            // FALHA (90%): Encoraja a continuar pedindo e deixa claro que tacar fogo/bater não adianta nada
+            String failMsg;
+            if (isJodevil) {
+                String[] jodevilQuotes = {
+                        "§e[Jacinto Itemakino Baú] §fÔ §bJodevil§f, você me deu de presente de coração e agora quer de volta?! O Jacinto já até gravou o nome da firma nele! Mas ó, vou te dar uma colher de chá: continua pedindo educadamente no chat que quem sabe o peão aqui não amolece? E para de tentar me tacar fogo, doido! Fogo no Jacinto é só massagem! 😂📦🔥",
+                        "§e[Jacinto Itemakino Baú] §fDevolver agora, §bJodevil§f? Nem pensar! O martelo dos deuses combinou direitinho com o meu uniforme de operário! Continua pedindo com carinho que uma hora a firma libera. E já aviso: bater no Jacinto ou tentar queimar o peão não vai fazer o martelo cair não, viu? Aqui é CLT blindada! 🔥🚫🔨",
+                        "§e[Jacinto Itemakino Baú] §fAchado não é roubado, quem deu foi o §bJodevil§f e ficou relaxado! 😂 Mas não desiste não, patrão, continua pedindo no chat que quem sabe na próxima eu não te devolvo? Só guarda esse isqueiro aí que violência contra funcionário dá processo! 📜👷"
+                };
+                failMsg = jodevilQuotes[random.nextInt(jodevilQuotes.length)];
+            } else {
+                String[] generalQuotes = {
+                        "§e[Jacinto Itemakino Baú] §fÔ §b" + player.getName().getString() + "§f, devolver assim de primeira sem mais nem menos? Tá achando que é festa? Continua pedindo com carinho e insistência que quem sabe eu não amoleço! E já aviso: tacar fogo em mim ou tentar me bater não vai ajudar em nada! Casca de operário não queima! 🔥🚫",
+                        "§e[Jacinto Itemakino Baú] §fIh patrão §b" + player.getName().getString() + "§f, o Jacinto tá apegado demais nessa marreta do trovão! Mas não desiste não, vai pedindo aí no chat que uma hora a firma cede! E nem gaste seu fogo nem sua lava, que o peão aqui é à prova de incêndio! 😂🔨",
+                        "§e[Jacinto Itemakino Baú] §fNegativo, patrão! Esse Mjölnir agora é patrimônio tombado da firma! Mas continue pedindo com jeitinho... a persistência é o segredo do sucesso! Só não tenta me machucar que a firma não tolera assédio moral nem fogo amigo! 👷📦"
+                };
+                failMsg = generalQuotes[random.nextInt(generalQuotes.length)];
+            }
+
+            player.getServer().getPlayerManager().broadcast(Text.literal(failMsg), false);
+
+            if (entity != null && entity.getWorld() == player.getServerWorld()) {
+                entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                ((ServerWorld) entity.getWorld()).spawnParticles(ParticleTypes.SMOKE,
+                        entity.getX(), entity.getY() + 1.2, entity.getZ(), 8, 0.2, 0.2, 0.2, 0.02);
+            }
+        }
     }
 }

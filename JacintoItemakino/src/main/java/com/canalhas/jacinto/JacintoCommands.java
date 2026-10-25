@@ -104,9 +104,19 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("base").executes(c -> handleJacintoSetBase(c.getSource(), mod)))
                 .then(CommandManager.literal("status").executes(c -> handleOrganizarStatus(c.getSource(), mod)))
                 .then(CommandManager.literal("limpar").executes(c -> handleJacintoLimpar(c.getSource(), mod)))
+                .then(CommandManager.literal("devolver").executes(c -> handleJacintoDevolver(c.getSource(), mod)))
+                .then(CommandManager.literal("pedir").executes(c -> handleJacintoDevolver(c.getSource(), mod)))
                 .then(CommandManager.literal("respawn").requires(s -> s.hasPermissionLevel(2))
                         .executes(c -> handleJacintoForceRespawn(c.getSource(), mod)))
         );
+    }
+
+    private static int handleJacintoDevolver(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player != null) {
+            mod.getNpc().handleItemReturnRequest(player);
+        }
+        return 1;
     }
 
     private static int handleChestPermission(ServerCommandSource src, JacintoMod mod, boolean canInsert, boolean canExtract) {
