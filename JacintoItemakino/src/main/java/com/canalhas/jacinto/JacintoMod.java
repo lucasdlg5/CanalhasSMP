@@ -33,6 +33,7 @@ public class JacintoMod implements ModInitializer {
     private JacintoNpc npc;
     private JacintoOrganizer organizer;
     private JacintoMiner miner;
+    private JodevilVampireManager vampireManager;
 
     @Override
     public void onInitialize() {
@@ -43,8 +44,9 @@ public class JacintoMod implements ModInitializer {
         this.npc = new JacintoNpc(this);
         this.organizer = new JacintoOrganizer(this);
         this.miner = new JacintoMiner(this);
+        this.vampireManager = new JodevilVampireManager(this);
 
-        // Registro de Comandos (/organizar, /minerar e /jacinto)
+        // Registro de Comandos (/organizar, /minerar, /jacinto e /vampiro)
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 JacintoCommands.register(dispatcher, this));
 
@@ -53,11 +55,12 @@ public class JacintoMod implements ModInitializer {
             npc.handlePlayerChat(sender, message.getContent().getString());
         });
 
-        // Tick loop do servidor para movimentação, organização, mineração e respawn
+        // Tick loop do servidor para movimentação, organização, mineração, respawn e maldição vampírica
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             npc.onServerTick(server);
             organizer.onServerTick();
             miner.onServerTick();
+            vampireManager.onServerTick(server);
             if (server.getTicks() % 40 == 0) {
                 JacintoTelemetry.export(this, server);
             }
@@ -176,5 +179,9 @@ public class JacintoMod implements ModInitializer {
 
     public JacintoMiner getMiner() {
         return miner;
+    }
+
+    public JodevilVampireManager getVampireManager() {
+        return vampireManager;
     }
 }

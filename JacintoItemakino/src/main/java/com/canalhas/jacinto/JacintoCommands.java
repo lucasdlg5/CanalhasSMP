@@ -106,9 +106,36 @@ public final class JacintoCommands {
                 .then(CommandManager.literal("limpar").executes(c -> handleJacintoLimpar(c.getSource(), mod)))
                 .then(CommandManager.literal("devolver").executes(c -> handleJacintoDevolver(c.getSource(), mod)))
                 .then(CommandManager.literal("pedir").executes(c -> handleJacintoDevolver(c.getSource(), mod)))
+                .then(CommandManager.literal("vampiro").executes(c -> handleVampiroLore(c.getSource(), mod)))
                 .then(CommandManager.literal("respawn").requires(s -> s.hasPermissionLevel(2))
                         .executes(c -> handleJacintoForceRespawn(c.getSource(), mod)))
         );
+
+        // Comando de Lore e Maldição Vampírica do Jodevil (/vampiro)
+        d.register(CommandManager.literal("vampiro")
+                .executes(c -> handleVampiroLore(c.getSource(), mod))
+                .then(CommandManager.literal("lore").executes(c -> handleVampiroLore(c.getSource(), mod)))
+                .then(CommandManager.literal("bau").executes(c -> handleVampiroBau(c.getSource(), mod)))
+        );
+    }
+
+    private static int handleVampiroLore(ServerCommandSource src, JacintoMod mod) {
+        ServerPlayerEntity player = src.getPlayer();
+        if (player != null) {
+            mod.getVampireManager().sendFullDebuffLoreToPlayer(player);
+        } else {
+            src.sendFeedback(JodevilVampireManager::buildDebuffLoreHoverText, false);
+        }
+        return 1;
+    }
+
+    private static int handleVampiroBau(ServerCommandSource src, JacintoMod mod) {
+        BlockPos pos = mod.getVampireManager().ensureLoreChestSpawned(src.getServer(), true);
+        if (pos != null) {
+            src.sendFeedback(() -> Text.literal("§4🦇 [Crônicas do Sangue Duvidoso] §aBaú de relíquias e Livro de Lore verificados/restaurados no ponto de spawn salvo de Jodevil: §e(" +
+                    pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")§a!"), false);
+        }
+        return 1;
     }
 
     private static int handleJacintoDevolver(ServerCommandSource src, JacintoMod mod) {
