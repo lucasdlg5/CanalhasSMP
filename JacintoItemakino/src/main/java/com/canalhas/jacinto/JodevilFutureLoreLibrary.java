@@ -12,10 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ARCO 2: "O Ciclo do Uroboro — O Caçador das Sombras e a Saudade sem Nome" (27 Volumes: Tomos XXVIII a LIV).
- * Passado muitas décadas no futuro, onde um misterioso Viajante e Caçador de Sombras chega ao Castelo sobre o Mar
- * para caçar o "patético vampiro Jodevil", sem saber que sofre da amnésia cíclica do elixir defeituoso
- * e que ele próprio é o Conde Jodevil preso em um loop eterno de saudade da antiga corte.
+ * ARCO 2: "Autos da Expurgação Noturna" (27 Volumes: Tomos XXVIII a LIV).
+ * Escrito sob a perspectiva do implacável "Inquisidor Valerius", que acredita ter invadido
+ * o Castelo sobre o Mar para expurgar o Conde Jodevil e resgatar a antiga corte,
+ * num thriller gótico de investigação, armadilhas desastrosas e paranoia crescente
+ * que culmina na revelação visceral da meia-noite no Livro 27.
  */
 public final class JodevilFutureLoreLibrary {
 
@@ -36,13 +37,13 @@ public final class JodevilFutureLoreLibrary {
     ) {}
 
     /**
-     * Gera todos os livros do Arco 2 (O Ciclo do Uroboro) para compor os slots 27 a 53 do Baú Duplo.
+     * Gera todos os 27 livros do Arco 2 para compor os slots 27 a 53 do Baú Duplo.
      */
     public static List<ItemStack> createAllArc2ChapterBooks() {
         List<FutureChapterSpec> specs = new ArrayList<>(27);
-        addAct1Chapters(specs); // Livros 1 a 9 (Ato I: A Ilusão do Caçador e a Saudade sem Nome)
-        addAct2Chapters(specs); // Livros 10 a 18 (Ato II: Os Rastros do Fantasma Carmesim)
-        addAct3Chapters(specs); // Livros 19 a 27 (Ato III: O Espelho do Uroboro — O Fim é o Início)
+        addAct1Chapters(specs); // Livros 1 a 9 (Ato I: O Cerco Solitário)
+        addAct2Chapters(specs); // Livros 10 a 18 (Ato II: A Sombra no Corredor)
+        addAct3Chapters(specs); // Livros 19 a 27 (Ato III: A Hora do Julgamento)
 
         List<ItemStack> books = new ArrayList<>(specs.size());
         for (FutureChapterSpec spec : specs) {
@@ -55,12 +56,12 @@ public final class JodevilFutureLoreLibrary {
         ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
         NbtCompound nbt = book.getOrCreateNbt();
 
-        String shortTitle = "Ciclo II " + spec.roman() + " - " + spec.chapterTitle();
+        String shortTitle = "Autos " + spec.roman() + " - " + spec.chapterTitle();
         if (shortTitle.length() > 32) {
             shortTitle = shortTitle.substring(0, 32);
         }
         nbt.putString("title", shortTitle);
-        nbt.putString("author", "O Caçador Sem Nome");
+        nbt.putString("author", "Inquisidor Valerius");
         nbt.putInt("generation", 0);
         nbt.putBoolean("resolved", true);
 
@@ -70,10 +71,10 @@ public final class JodevilFutureLoreLibrary {
         transmogTag.putByte("Count", (byte) 1);
         nbt.put("transmog:transmogItem", transmogTag);
 
-        // Nome e Lore no Tooltip do item
+        // Nome e Lore no Tooltip do item (100% blindado contra spoilers)
         NbtCompound display = nbt.getCompound("display");
         display.putString("Name", Text.Serializer.toJson(
-                Text.literal("§4§lTome of Vampiric Knowledge — Ciclo II, Cap. " + spec.roman() + ": " + spec.chapterTitle())));
+                Text.literal("§4§lTome of Vampiric Knowledge — Cap. " + spec.roman() + ": " + spec.chapterTitle())));
 
         NbtList tooltipLore = new NbtList();
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
@@ -83,9 +84,9 @@ public final class JodevilFutureLoreLibrary {
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
                 Text.literal(""))));
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
-                Text.literal("§4🩸 O Ciclo do Uroboro (Livro " + spec.arcNumber() + " de 27 | Tomo Geral " + spec.globalRoman() + ")").formatted(Formatting.DARK_RED))));
+                Text.literal("§4🩸 Autos da Expurgação Noturna (Tomo " + spec.arcNumber() + " de 27 | Vol. " + spec.globalRoman() + ")").formatted(Formatting.DARK_RED))));
         tooltipLore.add(NbtString.of(Text.Serializer.toJson(
-                Text.literal("§8Manuscrito de um viajante que perdeu o próprio nome.").formatted(Formatting.DARK_GRAY))));
+                Text.literal("§8Relatório oficial de caça e extermínio no Castelo sobre o Mar.").formatted(Formatting.DARK_GRAY))));
         display.put("Lore", tooltipLore);
         nbt.put("display", display);
 
@@ -109,7 +110,7 @@ public final class JodevilFutureLoreLibrary {
 
         // Página 1: Folha de Rosto do Capítulo (máximo 11-12 linhas garantidas)
         List<String> coverLines = new ArrayList<>();
-        coverLines.add("§4§lCICLO II • " + spec.roman() + "§r");
+        coverLines.add("§4§lAUTOS • CAP. " + spec.roman() + "§r");
         coverLines.add("§8━━━━━━━━━━━━━━§r");
         for (String titleLine : wrapPlainText(spec.chapterTitle(), 17)) {
             coverLines.add("§4§l" + titleLine + "§r");
@@ -145,55 +146,44 @@ public final class JodevilFutureLoreLibrary {
             }
             currentPageLines.add(line);
             if (currentPageLines.size() >= MAX_LINES_PER_PAGE) {
-                pages.add(formatPageLines(currentPageLines));
+                pages.add("§0" + String.join("\n", currentPageLines));
                 currentPageLines.clear();
             }
         }
         if (!currentPageLines.isEmpty()) {
-            while (!currentPageLines.isEmpty() && currentPageLines.get(currentPageLines.size() - 1).isEmpty()) {
-                currentPageLines.remove(currentPageLines.size() - 1);
-            }
-            if (!currentPageLines.isEmpty()) {
-                pages.add(formatPageLines(currentPageLines));
-            }
+            pages.add("§0" + String.join("\n", currentPageLines));
         }
 
         return pages;
     }
 
-    private static String formatPageLines(List<String> lines) {
-        StringBuilder sb = new StringBuilder("§0");
-        for (int i = 0; i < lines.size(); i++) {
-            sb.append(lines.get(i));
-            if (i < lines.size() - 1) {
-                sb.append("\n");
-            }
-        }
-        return sb.toString();
-    }
-
-    private static List<String> wrapPlainText(String text, int maxCharsPerLine) {
+    private static List<String> wrapPlainText(String text, int maxVisibleChars) {
         List<String> lines = new ArrayList<>();
-        if (text == null || text.isBlank()) {
-            return lines;
-        }
-        String[] words = text.trim().split("\\s+");
+        String[] words = text.split("\\s+");
         StringBuilder current = new StringBuilder();
-        int currentVisibleLen = 0;
+        int currentVisible = 0;
 
         for (String word : words) {
-            int wordVisibleLen = visibleLength(word);
-            if (currentVisibleLen == 0) {
-                current.append(word);
-                currentVisibleLen = wordVisibleLen;
-            } else if (currentVisibleLen + 1 + wordVisibleLen <= maxCharsPerLine) {
+            int wordVisible = visibleLength(word);
+            if (currentVisible == 0) {
+                if (wordVisible <= maxVisibleChars) {
+                    current.append(word);
+                    currentVisible = wordVisible;
+                } else {
+                    int splitAt = Math.min(word.length(), maxVisibleChars - 1);
+                    lines.add(word.substring(0, splitAt) + "-");
+                    String rest = word.substring(splitAt);
+                    current.append(rest);
+                    currentVisible = visibleLength(rest);
+                }
+            } else if (currentVisible + 1 + wordVisible <= maxVisibleChars) {
                 current.append(" ").append(word);
-                currentVisibleLen += 1 + wordVisibleLen;
+                currentVisible += 1 + wordVisible;
             } else {
                 lines.add(current.toString());
                 current.setLength(0);
                 current.append(word);
-                currentVisibleLen = wordVisibleLen;
+                currentVisible = wordVisible;
             }
         }
         if (current.length() > 0) {
@@ -203,409 +193,407 @@ public final class JodevilFutureLoreLibrary {
     }
 
     private static int visibleLength(String s) {
-        int len = 0;
+        int count = 0;
         for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) == '§' && i + 1 < s.length()) {
                 i++;
-            } else {
-                len++;
+                continue;
             }
+            count++;
         }
-        return len;
+        return count;
     }
 
     // =========================================================================
-    // ATO I — LIVROS 1 A 9: A ILUSÃO DO CAÇADOR E A SAUDADE SEM NOME
+    // ATO I — LIVROS 1 A 9: O CERCO SOLITÁRIO
     // =========================================================================
     private static void addAct1Chapters(List<FutureChapterSpec> list) {
-
         // LIVRO 1 (Volume XXVIII)
         list.add(new FutureChapterSpec(1, 28, "I", "XXVIII",
-                "Ato I: A Saudade sem Nome",
+                "Ato I: O Cerco Solitário",
                 "Tinta Carmesim nos Dedos",
-                "Onde o viajante desperta ao som de um chiado com gosto de vinagre e um chapéu de palha.",
+                "Onde o Inquisidor Valerius inicia os autos de caça na antecâmara do castelo.",
                 new String[]{
-                        "Despertei com um sobressalto, o coração lento batendo como um sino submerso, enquanto um chiado agudo — §o'tsssss'§0 — subia da ponta da minha bota tocada por uma fresta de sol na janela.",
-                        "Puxei o pé para a sombra por puro reflexo antes mesmo de abrir inteiramente os olhos. Minha cabeça latejava em uma vertigem espessa, e em minha língua pairava um gosto inexplicável e amargo de vinagre barato, alho velho e sopa fria de beterraba.",
-                        "Olhei para as minhas próprias mãos pálidas sobre a escrivaninha: as pontas dos meus dedos estavam manchadas de tinta carmesim ainda úmida, embora eu não me recorde de ter escrito uma única palavra antes de adormecer.",
-                        "Ao meu lado, sobre o mármore frio, repousava um cálice vazio e um velho chapéu de palha desfiado pelo vento marinho. Não sei como vim parar nesta torre sobre o oceano morno, nem lembro o nome que minha mãe me deu.",
-                        "Sei apenas duas coisas que queimam em meu peito: primeiro, que carrego uma saudade lancinante de rostos queridos que não consigo desenhar na memória; segundo, que vim a este castelo para caçar e destruir o patético vampiro chamado §4Conde Jodevil§0.",
-                        "Se esta febre estranha dos trópicos que me faz chiar à luz do dia permitir, iniciarei minha caçada assim que o crepúsculo cair sobre as muralhas."
+                        "Despertei com um sobressalto, o coração lento batendo como um sino submerso, enquanto um chiado agudo — §o'tsssss'§0 — subia da ponta da minha bota...",
+                        "Puxei o pé imediatamente para a sombra da poltrona de veludo e sacudi a cabeça, tentando dissipar a vertigem que nublava meus sentidos. Meu nome é §9Valerius§0, Inquisidor da Ordem Noturna, e infiltrei-me neste Castelo sobre o Mar na calada da noite com uma única missão: executar o famigerado §4Conde Jodevil§0.",
+                        "O demônio certamente lançou algum gás sonífero pela fechadura quando forcei a entrada de madrugada, pois acordei com uma enxaqueca atroz e um gosto hediondo de vinagre barato, alho velho e sopa de beterraba fria grudado no céu da boca.",
+                        "Mais estranho ainda: ao olhar para minhas mãos sobre a escrivaninha, vi que as pontas dos meus dedos estavam manchadas de tinta carmesim ainda úmida, ao lado de uma taça vazia e de um ridículo chapéu de palha desfiado.",
+                        "Pelo visto, antes que o gás do vampiro me derrubasse, tentei redigir meu primeiro relatório de infiltração e acabei esbarrando no tinteiro.",
+                        "Verifiquei minha espada e minha estaca de freixo: o tirano sangrento mantém a antiga corte prisioneira em algum calabouço desta fortaleza, e não descansarei até libertar cada alma e cravar ferro no peito do Conde!"
                 }));
 
         // LIVRO 2 (Volume XXIX)
         list.add(new FutureChapterSpec(2, 29, "II", "XXIX",
-                "Ato I: A Saudade sem Nome",
-                "O Castelo Silencioso",
-                "A exploração dos salões desertos onde outrora ecoaram risos de uma corte dourada.",
+                "Ato I: O Cerco Solitário",
+                "O Banquete Interrompido",
+                "A descoberta de rastros frescos no salão principal da cidadela.",
                 new String[]{
-                        "Quando a última claridade do entardecer mergulhou nas águas escuras do mar, levantei-me da poltrona e ajustei minha capa de veludo negro — uma peça surpreendentemente bem cortada para um simples caçador de monstros.",
-                        "Por alguma razão que escapa à lógica, coloquei o chapéu de palha debaixo do braço; abandonar aquele objeto grotesco pareceu-me uma traição a um amigo antigo cujo rosto o nevoeiro da minha mente insiste em esconder.",
-                        "Desci as escadarias em espiral da fortaleza segurando um candelabro de prata. Quanta beleza melancólica habita estas pedras! As tapeçarias desbotadas pelo sal marinho falam de uma era de ouro que se foi há muitas décadas.",
-                        "Ao cruzar o grande salão de banquetes, parei diante da longa mesa vazia. Fechei os olhos e, por um fragmento de segundo, jurei ouvir o tilintar de taças de cristal e o calor de vozes familiares brindando na meia-noite.",
-                        "Por que choram os meus olhos diante de cadeiras vazias, se sou apenas um forasteiro que chegou ontem a estas terras? Que feitiço sombrio aquele maldito §4Jodevil§0 lançou sobre a atmosfera deste castelo para contagiar-me com a sua solidão?",
-                        "Juro pela minha honra de poeta e caçador: encontrarei o covil desse farsante imortal antes que a vigésima sétima lua se cumpra."
+                        "Assim que o sol mergulhou no oceano, saí da antecâmara de espada em punho — levando, por puro pragmatismo tático, aquele chapéu de palha sob o braço, caso precisasse de um disfarce camponês.",
+                        "Desci ao grande salão de banquetes esperando encontrar guardas mortos-vivos, mas deparei-me com uma cena que me gelou a espinha: a mesa principal fora posta para doze pessoas, porém apenas um prato na cabeceira estava sujo.",
+                        "Toquei o fundo da sopeira de prata: ainda estava morno! Um caldo espesso e avermelhado, cheirando fortemente a beterraba cozida e vinho azedo, escorria pela borda como se o monstro tivesse fugido segundos antes de eu abrir a porta.",
+                        "De repente, ao olhar para as onze cadeiras vazias ao redor da mesa, uma dor lancinante atravessou meu peito, tão aguda que precisei apoiar-me no espaldar de carvalho para não cair de joelhos.",
+                        "Vi em minha mente o clarão de taças erguidas, ouvi gargalhadas cristalinas e senti uma falta desesperadora daqueles rostos que o vampiro sequestrara — como se eu mesmo os amasse há décadas!",
+                        "Um ruído metálico ecoou atrás da tapeçaria do fundo; saltei sobre a mesa e rasguei o tecido com a espada, mas encontrei apenas uma passagem secreta trancada por dentro e um morcego gordo fugindo pelo teto."
                 }));
 
         // LIVRO 3 (Volume XXX)
         list.add(new FutureChapterSpec(3, 30, "III", "XXX",
-                "Ato I: A Saudade sem Nome",
-                "A Doença do Meio-Dia",
-                "Onde o caçador tenta caminhar sob a manhã e descobre sua estranha insolação.",
+                "Ato I: O Cerco Solitário",
+                "O Poço Envenenado",
+                "Onde o Inquisidor descobre a maldição solar que o impede de caçar ao meio-dia.",
                 new String[]{
-                        "No segundo dia de minha investigação, cometi a imprudência de sair ao pátio descoberto ao meio-dia para examinar as ameias voltadas para o leste.",
-                        "Mal havia dado seis passos sob o céu limpo quando senti minhas veias ferverem como óleo na caldeira. Não foi uma dor comum de viajante cansado; foi um cozimento lento, humilhante e cronometrado.",
-                        "Contei exatos sessenta batimentos do relógio de sol até que um chiado de toucinho na chapa subiu dos meus ombros, arrancando-me um gemido e drenando uma fração exata do meu vigor vital!",
-                        "Mais assustador ainda foi o pressentimento súbito e inexplicável que me gelou a espinha sob aquele calor: a certeza matemática de que, a cada minuto sob o sol, havia uma chance em cem de meu corpo inteiro explodir em cinzas no ato!",
-                        "Corri de volta para a sombra das arcadas de modo nada heroico, abanando-me com o chapéu de palha. 'Maldita peste costeira!', murmurei para mim mesmo, limpando a fuligem da testa.",
-                        "Certamente o ar viciado pelas experiências profanas que §4Conde Jodevil§0 praticou nestas torres contaminou meus pulmões mortais com alguma alergia solar passageira."
+                        "Na manhã seguinte, decidi quebrar a regra dos caçadores e vasculhar o pátio externo sob a luz plena do meio-dia, hora em que o covarde §4Jodevil§0 estaria dormindo indefeso em seu esquife.",
+                        "Mal dei três passos sob o céu aberto, porém, uma febre abominável subiu pelas minhas veias! Minha pele começou a fumegar com cheiro de toucinho na chapa e senti minha força vital ser drenada gota a gota pela claridade.",
+                        "Pior do que a queimadura lenta foi o pavor súbito e inexplicável que me paralisou: a certeza aterradora da §4Centésima Centelha§0 — o pressentimento de que, a qualquer batida do coração, um curto-circuito arcano poderia transformar meu corpo inteiro em cinzas num piscar de olhos!",
+                        "Rolei de volta para a sombra da arcada, ofegante e suando frio, enquanto apagava com as mãos a fumaça que saía da minha capa.",
+                        "'Maldita seja a perfídia de §4Jodevil§0!', rosnei, chutando um balde ao lado da cisterna. 'O canalha envenenou a água do poço do castelo com alguma praga heliofóbica para que nenhum inquisidor possa caçá-lo durante o dia!'",
+                        "Jurei não beber mais nenhuma gota d'água daquela fortaleza: até que a cabeça do Conde rolasse, a caçada aconteceria exclusivamente entre o pôr do sol e a aurora."
                 }));
 
         // LIVRO 4 (Volume XXXI)
         list.add(new FutureChapterSpec(4, 31, "IV", "XXXI",
-                "Ato I: A Saudade sem Nome",
-                "O Chapéu Sem Explicação",
-                "O mistério do chapéu de palha surrado que o caçador não consegue abandonar.",
+                "Ato I: O Cerco Solitário",
+                "A Armadilha do Chapéu",
+                "No qual Valerius tenta descartar o chapéu de palha e sofre um ataque de fúria contratual.",
                 new String[]{
-                        "Recomposto do susto matinal, passei a quarta tarde trancado na biblioteca circular, examinando o ridículo chapéu de palha que encontrara ao despertar no primeiro dia.",
-                        "Todo caçador de vampiros que se preze veste feltro negro, couro curtido ou elmos de ferro. Por que cargas d'água sinto uma afeição tão absurda por esta peça digna de um espantalho de lavoura?",
-                        "Tentei atirá-lo pela janela três vezes; nas três vezes, meu próprio braço travou no ar, tomado por um remorso inexplicável, como se desfazer-me daquela palha trançada fosse rasgar a única carta restante de um velho amigo.",
-                        "No forro interno da aba, descobri uma inscrição quase apagada pelo suor e pelas décadas: §o'Sem reembolso — Para os dias de sol.'§0",
-                        "Quem escreveria semelhante insolência num presente? E por que, ao ler essa frase mesquinha, senti um calor fraternal no peito, seguido de uma vontade súbita de reclamar de trinta e sete cláusulas contratuais?",
-                        "Coloquei o chapéu de volta sobre a mesa com um suspiro. Certamente pertenceu a alguma vítima anterior das trapaças de §4Conde Jodevil§0. Guardá-lo-ei como prova do crime."
+                        "Furioso com a emboscada solar no pátio, voltei à base de operações e decidi livrar-me daquele ridículo chapéu de palha que encontrara no primeiro dia, suspeitando que o objeto contivesse algum feitiço de rastreamento.",
+                        "Aproximei a aba desfiada das chamas da lareira para queimá-lo — mas, no exato instante em que o fogo lambeu a palha, minha própria mão esquerda agarrou meu pulso direito num golpe de defesa involuntário!",
+                        "Atordoado com o espasmo do meu próprio braço, virei o chapéu contra a luz das velas e descobri, gravada a fogo no couro interno da carneira, uma inscrição cínica: §o'Sem reembolso — Para os dias de sol.'§0",
+                        "Ao ler aquelas palavras, uma fúria completamente desproporcional subiu-me à garganta: comecei a marchar pelo quarto bradando contra 'trinta e sete cláusulas abusivas' e 'propaganda enganosa de taverna'!",
+                        "Estaquei no meio do tapete, levando a mão à boca em choque: por que diabos um Inquisidor da Ordem se importaria com o código de defesa do consumidor de um feiticeiro charlatão?!",
+                        "Antes que pudesse responder, ouvi três batidas secas vindas de dentro do armário de armas; quando o abri de golpe, encontrei apenas um pergaminho rasgado apontando para a cripta subterrânea."
                 }));
 
         // LIVRO 5 (Volume XXXII)
         list.add(new FutureChapterSpec(5, 32, "V", "XXXII",
-                "Ato I: A Saudade sem Nome",
-                "A Cripta da Rainha",
-                "Onde o caçador encontra códices antigos sobre a Mãe dos Imortais já anotados.",
+                "Ato I: O Cerco Solitário",
+                "O Segredo da Cripta",
+                "Onde o Inquisidor desce aos subterrâneos e quase é soterrado por um altar falso.",
                 new String[]{
-                        "Na quinta noite, desci às galerias da biblioteca subterrânea, onde o cheiro de pergaminho velho e cera de abelha domina o silêncio das abóbadas.",
-                        "Sobre o atril de leitura principal, encontrei aberto o lendário códice da Rainha dos Condenados — o mesmo tratado que os antigos místicos diziam conter o segredo dos tronos de alabastro e do sangue ancestral.",
-                        "Aproximei meu candelabro das páginas amareladas e notei que as margens estavam repletas de notas apaixonadas, escritas em tinta vermelha: §o'Eu nascera para esta noite! Eu terei a palidez do mármore e o domínio das sombras!'§0",
-                        "Ri com sarcasmo diante daquelas linhas. 'Que criatura vaidosa e teatral é esse §4Jodevil§0!', murmurei para as estantes vazias. 'Imaginar-se um príncipe das trevas apenas por usar veludo e dormir até tarde!'",
-                        "Contudo, ao virar a folha seguinte, percebi que meus próprios lábios recitavam de cor o parágrafo inteiro antes que meus olhos pudessem lê-lo na penumbra.",
-                        "Fechei o livro com força, sentindo um frio percorrer minha nuca. Como posso conhecer palavra por palavra o livro de cabeceira do monstro que vim exterminar?"
+                        "Seguindo o mapa rasgado, desci na quinta noite às galerias úmidas abaixo da capela, onde o cheiro de salitre misturava-se ao aroma inconfundível de alho velho.",
+                        "No centro da cripta, sobre um pedestal de basalto, repousava o lendário códice da §4Rainha dos Condenados§0 — mas, ao redor do pedestal, notei fios quase invisíveis ligados a contrapesos no teto.",
+                        "Usando a ponta da bainha, desarmei a armadilha segundos antes que uma grade enferrujada caísse sobre minha cabeça, e puxei o livro aberto.",
+                        "As margens do texto sagrado estavam cobertas de anotações furiosas em tinta carmesim: onde o livro falava do 'Sangue Real dos Cárpatos', o autor rabiscara: §o'Nota: ArzanLion usou tinto de taverna e disse que dá no mesmo!'§0",
+                        "O mais assustador, porém, aconteceu quando virei a página: sem olhar para o pergaminho, minha boca começou a recitar em voz alta o parágrafo seguinte inteiro, incluindo os erros de tradução nas margens!",
+                        "Um estrondo na escadaria fez-me apagar a lanterna; corri de volta ao topo exatamente a tempo de ver a sombra de uma capa dobrar o corredor rumo à sala das engrenagens."
                 }));
 
         // LIVRO 6 (Volume XXXIII)
         list.add(new FutureChapterSpec(6, 33, "VI", "XXXIII",
-                "Ato I: A Saudade sem Nome",
-                "A Sombra do Cronista",
-                "A descoberta de uma pena quebrada e a dor inexplicável pelo nome de Asminn.",
+                "Ato I: O Cerco Solitário",
+                "A Xícara Ainda Morna",
+                "A perseguição até o gabinete de Lorde Asminn e o mistério da presença invisível.",
                 new String[]{
-                        "Subindo das galerias inferiores, adentrei a antiga sala de mapas e engenharia da cidadela, onde grandes engrenagens de latão repousavam imóveis pelo tempo.",
-                        "Sobre uma bancada de carvalho, encontrei um tinteiro seco e uma placa de bronze gravada com o nome de §9Lorde Asminn§0, o Grande Cronista e Magistrado destas terras.",
-                        "No instante em que meus dedos pálidos tocaram as letras daquele nome, uma dor tão aguda e doce atravessou meu peito que precisei apoiar-me na parede para não cair de joelhos.",
-                        "'§9Asminn§0...', sussurrei para a sala silenciosa, e o som daquela palavra pareceu preencher a câmara inteira com o calor de mil madrugadas de conversa, de confissões à luz de velas e de uma amizade mais forte que a morte.",
-                        "Quem fora aquele homem para mim? Por que sentia eu que lhe entregara toda a história da minha vida, se sou apenas um viajante solitário que perdeu o passado?",
-                        "Enxuguei uma lágrima teimosa que manchou meu punho. 'Maldito sejas, §4Jodevil§0!', pensei com amargura. 'Foste tu que separaste este castelo da nobre presença de §9Asminn§0? Juro que honrarei a memória deste cronista!'"
+                        "Corri pelo corredor norte com a espada em riste e chutei a porta da sala de máquinas e arquivos, onde uma placa de bronze anunciava: §o'Gabinete de Lorde Asminn — Cronista e Engenheiro do Reino'§0.",
+                        "O cômodo parecia vazio, mas meus olhos de caçador captaram o impossível sobre a bancada de latão: uma vela acabara de ser apagada, soltando um fio reto de fumaça branca, e ao lado dela havia uma xícara de chá ainda morna!",
+                        "Sobre o cavalete, um pergaminho tinha uma frase interrompida pela metade, com a gota de tinta ainda brilhando: §o'Perdoa-me, meu velho amigo Asminn, pois hoje...'§0",
+                        "Olhei debaixo da mesa, atrás das estantes de engrenagens e dentro dos dutos de ventilação: não havia absolutamente nenhuma outra saída naquela sala além da porta pela qual eu acabara de entrar!",
+                        "Como poderia o autor daquela nota estar escrevendo ali segundos antes da minha chegada e evaporar no ar sem cruzar por mim no corredor?!",
+                        "Mais perturbador ainda: ao tocar o nome de §9Asminn§0 gravado no bronze, uma onda de afeto fraterno e saudade tão devastadora invadiu meu peito que precisei morder o lábio até sangrar para não gritar por ele na escuridão."
                 }));
 
         // LIVRO 7 (Volume XXXIV)
         list.add(new FutureChapterSpec(7, 34, "VII", "XXXIV",
-                "Ato I: A Saudade sem Nome",
-                "O Vinho de Terceira",
-                "Onde o caçador prova uma garrafa antiga na despensa e sente gosto de beterraba.",
+                "Ato I: O Cerco Solitário",
+                "Veneno na Despensa",
+                "Onde Valerius investiga o suprimento de sangue do vampiro e sofre um colapso gástrico.",
                 new String[]{
-                        "Na sétima noite, sentindo a garganta seca como pergaminho, vasculhei a despensa real em busca de algum néctar digno de fortalecer meu espírito para a vigília.",
-                        "Atrás de barris cobertos de teias, encontrei uma fileira de garrafas empoeiradas sem rótulo, lacradas com cera cor-de-rosa.",
-                        "Servi uma taça de cristal e ergui-a contra a luz da vela. O líquido era espesso, escuro como rubi líquido — quase semelhante ao sangue que os falsos vampiros dizem beber nas lendas.",
-                        "Levei a taça aos lábios e tomei um gole generoso. No mesmo segundo, cuspi metade no chão com uma careta de horror: era o mesmo caldo intragável de vinho azedo, beterraba cozida e alho velho que eu sentira na boca ao acordar no primeiro dia!",
-                        "'Mas que barbárie gastronômica é esta?!', exclamei, limpando a língua com o dorso da mão. 'Que tipo de psicopata guarda sopa de beterraba com vinho barato em garrafas de safra real?'",
-                        "Mais perturbador ainda foi notar que a rolha da garrafa já fora aberta e fechada dezenas de vezes recentemente. Alguém neste castelo deserto ainda andava bebendo aquela abominação todas as noites!"
+                        "Decidido a cortar os suprimentos vitais do monstro, invadi a despensa real na sétima noite, preparando-me para destruir os barris de sangue humano que §4Conde Jodevil§0 certamente estocava nas sombras.",
+                        "Em vez de sangue nobre, encontrei dezenas de garrafas tortas lacradas com cera cor-de-rosa e guardanapos bordados com o brasão da corte.",
+                        "Arranquei a rolha de uma das garrafas com os dentes e, para confirmar a natureza necromântica do fluido, tomei um gole cauteloso.",
+                        "Cuspi tudo imediatamente no chão de pedra, tossindo até lacrimejar: era o mesmíssimogororoba intragável de vinho tinto azedo, caldo de beterraba, cebola e alho murcho cujo gosto eu sentira na boca ao acordar no primeiro dia!",
+                        "'Mas que espécie de demônio das trevas alimenta-se de sopa de beterraba azeda?!', bradei, limpando a língua com a manga do casaco enquanto uma azia monumental queimava meu estômago.",
+                        "Pior: ao olhar para as garrafas vazias empilhadas num canto, contei exatamente seis garrafas consumidas nos últimos seis dias — uma por noite desde que cheguei ao castelo!"
                 }));
 
         // LIVRO 8 (Volume XXXV)
         list.add(new FutureChapterSpec(8, 35, "VIII", "XXXV",
-                "Ato I: A Saudade sem Nome",
-                "Passos no Mesmo Lugar",
-                "A estranha descoberta de pegadas na poeira que calçam o mesmo número de bota.",
+                "Ato I: O Cerco Solitário",
+                "Pegadas na Cinza",
+                "Uma caçada em tempo real pelos corredores que termina em um círculo impossível.",
                 new String[]{
-                        "Decidido a rastrear os movimentos noturnos de §4Conde Jodevil§0, espalhei cinzas finas da lareira pelo corredor principal antes de recolher-me para descansar ao amanhecer.",
-                        "Quando despertei ao cair da oitava noite — novamente com aquela maldita dor de cabeça e manchas frescas de tinta vermelha nos dedos —, corri imediatamente com meu candelabro para examinar o chão.",
-                        "Meu coração deu um salto: havia pegadas nítidas cruzando as cinzas de ponta a ponta! O vampiro estivera ali enquanto eu dormia!",
-                        "Ajoelhei-me para medir o rastro da criatura com minha adaga. O solado tinha o formato elegante das botas da velha guarda da corte, com um pequeno desgaste exatamente no calcanhar esquerdo e uma marca de queimadura na ponta do pé direito.",
-                        "Por curiosidade, encostei minha própria bota ao lado da pegada na cinza. O tamanho, o desgaste no calcanhar e a marca chamuscada na ponta eram absolutamente idênticos aos meus.",
-                        "'Astuto demônio!', rosnei, cerrando os punhos diante do corredor escuro. 'O infame §4Jodevil§0 comprou botas iguais às minhas só para confundir minha perseguição! Mas esse truque infantil não o salvará!'"
+                        "Se o vampiro vinha à despensa todas as noites beber sua gororoba cor-de-rosa, eu o pegaria em flagrante: espalhei uma camada fina de cinzas da lareira por todo o corredor central e apaguei os archotes.",
+                        "À meia-noite em ponto, ouvi o som nítido de botas pisando na cinza logo à frente, dobrando a esquina da galeria de colunas!",
+                        "Acendi a lanterna furta-fogo e avancei em passo de carga, seguindo o rastro fresco que se desenhava no pó cinzento: o inimigo usava botas de couro tamanho quarenta e dois, com o salto esquerdo gasto e a ponta do pé direito chamuscada.",
+                        "'Agora és meu, §4Jodevil§0!', gritei, correndo atrás dos passos que ecoavam cada vez mais perto à medida que eu contornava a grande coluna central do salão.",
+                        "Dei um salto mortal ao redor do pilar com a espada erguida para decapitar o vulto — mas encontrei apenas o corredor vazio!",
+                        "Baixei a lanterna para o chão e meu sangue congelou nas veias: o rastro de pegadas na cinza dava a volta completa na coluna e terminava exatamente debaixo dos meus próprios calcanhares!"
                 }));
 
         // LIVRO 9 (Volume XXXVI)
         list.add(new FutureChapterSpec(9, 36, "IX", "XXXVI",
-                "Ato I: A Saudade sem Nome",
-                "Vozes na Ventania",
-                "O encerramento do primeiro ato sob a tempestade e a promessa de vasculhar os jardins.",
+                "Ato I: O Cerco Solitário",
+                "O Eco na Capela",
+                "Onde uma tempestade marítima revela sussurros e empurra a caçada para o exterior.",
                 new String[]{
-                        "A nona noite trouxe uma tempestade furiosa sobre o oceano morno. Os relâmpagos iluminavam os vitrais partidos da capela, projetando sombras dançantes que pareciam guerreiros, damas e magos de um tempo perdido.",
-                        "Caminhei entre os pilares sentindo uma febre romântica crescer em minha alma. Quanto mais tempo passo neste castelo, menos sinto ódio pelo lugar e mais sinto uma ternura desesperada por cada pedra destas muralhas.",
-                        "Às vezes, quando o trovão cessa, tenho a impressão de ouvir meu próprio timbre de voz ecoando nas abóbadas, declamando juramentos de proteção eterna aos habitantes desta cidadela.",
-                        "Como pode o covil de um monstro transmitir tamanha nobreza? Será possível que §4Jodevil§0 tenha roubado este santuário de um antigo herói que caiu no esquecimento?",
-                        "Amanhã à noite deixarei os salões internos e levarei minha busca aos terraços externos, à antiga adega alquímica e aos telhados da vila.",
-                        "Pela saudade sem nome que me consome o peito, desmascararei cada fantasma deste labirinto de espelhos!"
+                        "Recusando-me a acreditar no truque de ilusionismo das pegadas, corri até a capela abandonada no final da galeria, onde uma tempestade violenta açoitava os vitrais quebrados sobre o mar.",
+                        "Subi ao púlpito de pedra e desafiei o senhor do castelo aos berros: 'Aparece, farsante! Onde escondeste §9Lorde Asminn§0 e a nobre corte deste reino?!'",
+                        "O trovão sacudiu as abóbadas, mas o eco que voltou do teto acústico não repetiu a minha pergunta: no meio do uivo do vento, ouvi minha própria voz responder num sussurro partido de dor: §o'Eles se foram... e o tempo levou a todos, menos a ti...'§0",
+                        "Disparei uma adaga de prata na direção do coro alto, mas a lâmina cravou-se apenas na madeira podre, derrubando um ninho vazio.",
+                        "Percebi então o plano diabólico de §4Jodevil§0: ele havia preparado os corredores internos com tubos acústicos, espelhos ocultos e poeira alucinógena para destruir a sanidade de qualquer inquisidor!",
+                        "Se eu quisesse vencer o monstro, precisava sair das galerias internas e vasculhar os terraços abertos, a adega alquímica e os telhados da fortaleza a partir da décima noite."
                 }));
     }
 
     // =========================================================================
-    // ATO II — LIVROS 10 A 18: O LABIRINTO DE ESPELHOS E OS DESASTRES RECORRENTES
+    // ATO II — LIVROS 10 A 18: A SOMBRA NO CORREDOR
     // =========================================================================
     private static void addAct2Chapters(List<FutureChapterSpec> list) {
-
         // LIVRO 10 (Volume XXXVII)
         list.add(new FutureChapterSpec(10, 37, "X", "XXXVII",
-                "Ato II: Labirinto de Espelhos",
-                "O Fantasma das Roseiras",
-                "Onde o caçador ouve os risos de Kikkawa e Luwuana e despenca nas mesmas roseiras.",
+                "Ato II: A Sombra no Corredor",
+                "A Emboscada das Roseiras",
+                "No qual o Inquisidor persegue vozes femininas no terraço e despenca do parapeito.",
                 new String[]{
-                        "Na décima noite, segui o perfume das flores noturnas até os terraços orientais, onde uma escultura do peixe místico §bPipira§0 guardava a varanda em que §dLady Kikkawa§0 e §dDama Luwuana§0 costumavam tomar chá.",
-                        "O luar banhava o parapeito de pedra com uma luz tão romântica e prateada que a brisa parecia sussurrar risos femininos atrás de leques de seda invisíveis.",
-                        "Dominado por uma súbita embriaguez poética — e querendo mostrar às sombras daquelas nobres damas que ainda existia cavalheirismo no mundo —, subi ao parapeito, abri minha capa de veludo contra o vento e inclinei-me sobre o jardim.",
-                        "'Contemplai a majestade de quem domina a meia-noite!', exclamei de olhos fechados, dando um passo dramático no ar com a inexplicável convicção de que meu corpo planaria como um morcego sobre o pátio.",
-                        "Não planei. Minha bota enroscou na barra da capa e desabei como chumbo diretamente de cara sobre o mesmo arbusto de roseiras espinhosas lá embaixo!",
-                        "Saí dos galhos mancando, com três espinhos no queixo e uma rosa presa atrás da orelha, apontando o dedo trêmulo para a varanda: 'Maldito sejas, §4Jodevil§0! Espalhaste óleo invisível no parapeito para emboscar-me com uma armadilha vampírica!'"
+                        "Na décima noite, subi ao terraço do jardim de inverno de besta armada, onde um sino de vento enferrujado trazia gravados os nomes de §dLady Kikkawa§0, da fiel §dPipira§0 e de §dDama Luwuana§0.",
+                        "O luar banhava as balaustradas quando ouvi, vindo exatamente do pátio abaixo do parapeito, o som inconfundível de duas damas rindo e cochichando!",
+                        "'Prisioneiras da corte!', pensei com o coração aos saltos. Embainhei a arma, subi na mureta de pedra para enxergar melhor o jardim e, tomado por um impulso inexplicável de galanteria, abri os braços como se pudesse planar até lá embaixo bradando: §o'Não temais, eu sou a tormenta!'§0",
+                        "No exato segundo em que pronunciei aquela frase absurda, a pedra frouxa do parapeito virou sob meu calcanhar e eu despenquei de cabeça no escuro como um saco de batatas!",
+                        "Não planei um centímetro sequer: aterrissei de cara no meio do mesmo canteiro de roseiras bravas lá embaixo, ficando de pernas para o ar enquanto os espinhos rasgavam meu casaco e minha dignidade.",
+                        "Enquanto arrancava espinhos das orelhas, notei que os galhos quebrados tinham cicatrizes antigas exatamente no formato do meu corpo — prova cabal de que §4Jodevil§0 serrara aquela pedra do parapeito para emboscar caçadores!"
                 }));
 
         // LIVRO 11 (Volume XXXVIII)
         list.add(new FutureChapterSpec(11, 38, "XI", "XXXVIII",
-                "Ato II: Labirinto de Espelhos",
-                "A Adega do Alquimista",
-                "As relíquias de ArzanLion, Vitória e AsterZZZz, e o espirro arcano na poeira.",
+                "Ato II: A Sombra no Corredor",
+                "Explosão na Adega",
+                "Onde Valerius invade o laboratório de ArzanLion e derruba o covil com um espirro.",
                 new String[]{
-                        "Ainda tirando folhas de roseira do colarinho, desci na décima primeira noite às profundezas da antiga adega do §6Grão-Alquimista ArzanLion§0.",
-                        "Junto à porta de carvalho, encontrei uma pequena coleira tricolor cuidadosamente guardada num pedestal de honra, dedicada à leal cadelinha guardiã §eVitória§0, cujo espírito fiel parecia ainda proteger a entrada.",
-                        "No centro do laboratório subterrâneo repousava o famigerado caldeirão enferrujado sobre um círculo de giz torto como um ovo amassado, cercado de anotações de receitas que misturavam pimenta-do-reino, banha e beterraba.",
-                        "Sobre o atril lateral, vi um pergaminho aramaico chamuscado, cuja metade das runas fora dissolvida há décadas pela baba ancestral do adormecido acólito §5AsterZZZz§0.",
-                        "Ao inclinar-me para cheirar o fundo do caldeirão em busca de pistas alquímicas, uma nuvem secular de pimenta e pó cor-de-rosa subiu direto às minhas narinas. Tentei segurar, ergui os braços e bradei sem querer: §o'Sanguis Noctis... ATCHIM!'§0",
-                        "O espirro sacudiu as teias do teto! 'Por todos os santos!', resmunguei limpando o nariz no lenço. 'Até a poeira desta adega está amaldiçoada com feitiços de rinite!'"
+                        "Mancando e cheio de arranhões de roseira, desci na décima primeira noite à adega subterrânea do antigo ocultista §6ArzanLion§0, certo de que o vampiro usava aquele antro para fabricar seus venenos.",
+                        "Junto à porta, sobre uma almofada de veludo intacta, encontrei a coleira da leal cadelinha §eVitória§0; fiz uma reverência silenciosa à pequena guardiã e avancei de espada em riste até o caldeirão central.",
+                        "O caldeirão ainda exalava um cheiro forte de cebola e pimenta-rosa! Convencido de que §4Jodevil§0 estava escondido atrás dos barris de carvalho, saltei sobre a bancada e puxei o pergaminho em aramaico manchado pela baba seca do monge §5AsterZZZz§0.",
+                        "Tentei ler as runas borradas em voz alta para quebrar o encantamento da sala, mas uma nuvem de pimenta-rosa e poeira ancestral subiu do pergaminho direto para minhas narinas!",
+                        "Tentei segurar, prendi a respiração, mas foi inútil: §o'Sanguis Noctis... ATCHIM!'§0 — soltei um espirro tão colossal que meu cotovelo bateu na estante e derrubou trinta frascos alquímicos em cima da minha própria cabeça!",
+                        "Quando saí debaixo dos cacos tossindo numa nuvem de fumaça cor-de-rosa, percebi que o líquido derramado no meu casaco era idêntico ao das garrafas da despensa."
                 }));
 
         // LIVRO 12 (Volume XXXIX)
         list.add(new FutureChapterSpec(12, 39, "XII", "XXXIX",
-                "Ato II: Labirinto de Espelhos",
-                "A Colher Torta e o Leão",
-                "As relíquias de Azarasquel, Javidizineo e Reznozada e a coceira da prata.",
+                "Ato II: A Sombra no Corredor",
+                "A Relíquia da Inquisição",
+                "O teste da colher de prata de Azarasquel e Reznozada e uma reação alérgica suspeita.",
                 new String[]{
-                        "Na décima segunda noite, minha busca levou-me ao antigo salão da guarda, onde os bravos inquisidores §2Azarasquel§0 e §2Reznozada§0 costumavam reunir-se após as patrulhas.",
-                        "Ao pé de um estandarte dourado, vi a estatueta esculpida do pequeno leão guardião §6Javidizineo§0, retratado sentado em sua pose serena de quem aguarda carinho eterno.",
-                        "Sobre a mesa de armas, dentro de um estojo de veludo aberto, repousava um objeto inusitado ao lado de um frasco vazio de água benta: uma velha colher de sobremesa feita de prata pura, com uma inscrição de §2Reznozada§0 que dizia §o'Teste Oficial de Nosferatu'§0.",
-                        "Distraído enquanto lia o bilhete, cocei o pescoço com a ponta daquela colher de prata. No mesmo instante, uma coceira alérgica e um formigamento ardente espalharam-se pela minha pele pálida!",
-                        "Soltei a colher na mesa, coçando o colarinho furiosamente. 'Ora veja só!', disse para mim mesmo em voz alta, tentando manter a compostura científica. 'Essa prata velha oxidada no ar marinho causa dermatite de contato em qualquer caçador de sangue nobre!'",
-                        "'Que bom que não sou um vampiro de meia-tigela como §4Jodevil§0, senão pensariam que tenho alergia a talheres de sobremesa!'"
+                        "Para provar a mim mesmo que a fumaça cor-de-rosa da adega não havia me contaminado com bruxaria, corri à sala de troféus onde os antigos inquisidores §2Azarasquel§0 e §2Reznozada§0 guardavam suas armas sagradas, sob a estátua do leão §6Javidizineo§0.",
+                        "Forcei o cadeado do relicário de vidro e retirei de lá o artefato que ambos usavam para desmascarar criaturas das trevas: uma velha colher de sobremesa de prata torta com a etiqueta §o'Teste Oficial de Nosferatu'§0.",
+                        "'Excelente!', comentei sozinho. 'Quando eu encostar esta prata sagrada na testa de §4Jodevil§0, o monstro se contorcerá em chamas!'",
+                        "Enquanto caminhava pela sala planejando a emboscada, passei distraído o cabo da colher de prata no meu próprio pescoço para coçar uma picada de mosquito.",
+                        "No mesmo instante, minha pele ardeu como fogo e uma coceira alucinante espalhou-se pela minha nuca, fazendo-me dançar pelo salão enquanto me coçava com as duas mãos!",
+                        "Joguei a colher longe, indignado: 'Aquele vampiro imundo nem sequer limpa os talheres do castelo! Deixou a prata oxidar no ar salgado até criar uma dermatite marítima capaz de empolar até o pescoço de um santo inquisidor!'"
                 }));
 
         // LIVRO 13 (Volume XL)
         list.add(new FutureChapterSpec(13, 40, "XIII", "XL",
-                "Ato II: Labirinto de Espelhos",
-                "Apostas no Telhado",
-                "O caderno de Corvo ao amanhecer e a bota chiando como toucinho na chapa.",
+                "Ato II: A Sombra no Corredor",
+                "Fogo no Telhado",
+                "No qual Valerius encontra o livro de apostas de Corvo e foge da aurora em chamas.",
                 new String[]{
-                        "Pouco antes do amanhecer do décimo terceiro dia, escalei o telhado da antiga taverna da praça, onde diziam que o astuto vigia §8Corvo§0 observava todos os segredos da cidadela.",
-                        "Escondido sob uma telha solta, envolto em couro impermeável, encontrei o lendário caderno de apostas de §8Corvo§0! Abri as páginas desbotadas com um sorriso triunfante.",
-                        "Ali estavam registradas as moedas apostadas por toda a corte sobre quantos segundos o recém-transformado §4Conde Jodevil§0 duraria sob o primeiro raio de sol sem explodir ou passar vergonha.",
-                        "'Hahaha!', gargalhei sozinho no alto do telhado, batendo no joelho. 'Que criatura patética! Imaginem só um vampiro que teme tomar sol como uma donzela de porcelana!'",
-                        "Distraído pela minha própria risada, não percebi que o sol acabara de despontar no horizonte e que o minuto fatal corria. De repente, um cheiro forte de couro queimado subiu no ar e meu tornozelo começou a chiar alto — §o'tsssss!'§0 — exatamente como toucinho na frigideira!",
-                        "'Fogo! Brasa invisível no telhado!', berrei em pânico, pulando de um pé só e atirando-me pela chaminé adentro para fugir da luz, convencido de que o telhado da taverna estava em combustão espontânea!"
+                        "Na décima terceira noite, escalei o telhado da antiga taverna do porto usando um arpéu, buscando o posto de observação onde o lendário vigia §8Corvo§0 costumava espreitar a corte.",
+                        "Debaixo de uma telha solta, encontrei uma caixa de ferro contendo o caderno de couro de §8Corvo§0, intitulado: §o'Bolão Oficial — Quantos minutos o Conde dura ao Sol antes da Centésima Centelha?'§0.",
+                        "Abri o livro à luz da lanterna e soltei uma gargalhada debochada ao ler as apostas de §2Reznozada§0, §6ArzanLion§0 e §dLuwuana§0: 'Hahaha! Que criatura patética é esse §4Jodevil§0! Um vampiro que vira toucinho frito sob o sol!'",
+                        "Enquanto eu ria de barriga cheia no alto da cumeeira, porém, não percebi que o horizonte leste acabara de ficar dourado e o primeiro raio da aurora subia sobre o mar.",
+                        "O feixe de sol atingiu em cheio o meu tornozelo esquerdo: no mesmo segundo, um chiado ensurdecedor de banha na frigideira (§o'TSSSSS!'§0) subiu da minha bota, acompanhado de uma fumaça negra e uma dor lancinante!",
+                        "Atirei-me telhado abaixo num rolamento desesperado, caindo dentro de uma carroça de feno na sombra do beco, convicto de que §4Jodevil§0 havia instalado lentes de aumento invisíveis nas chaminés para queimar meu pé!"
                 }));
 
         // LIVRO 14 (Volume XLI)
         list.add(new FutureChapterSpec(14, 41, "XIV", "XLI",
-                "Ato II: Labirinto de Espelhos",
+                "Ato II: A Sombra no Corredor",
                 "O Guardião do Martelo",
-                "O confronto humilhante com Jacinto e o 'por favorzinho' que escapa da boca.",
+                "O confronto humilhante com o imortal Jacinto nos corredores dos cofres.",
                 new String[]{
-                        "Na décima quarta noite, decidido a alcançar a ala trancada dos cofres reais, dei de cara no corredor estreito com a figura implacável do servo imortal §6Jacinto§0.",
-                        "Lá estava ele, de braços cruzados, bloqueando a passagem enquanto o poderoso martelo §bMjölnir§0 brilhava em sua cintura com uma inscrição gravada no cabo: §o'Mjölnir que não volta'§0.",
-                        "'Afasta-te, guardião!', ordenei com minha voz mais cavernosa e imperial. 'Sou o Caçador das Sombras! Entrega-me esse martelo que teu mestre §4Jodevil§0 perdeu por burrice, ou serei forçado a incendiar este corredor!'",
-                        "Risquei minha pederneira e lancei uma chama aos pés dele. §6Jacinto§0 sequer piscou; o fogo apagou-se contra sua bota como se tivesse vergonha de queimá-lo. Ele suspirou e disse: 'Patrão, a gente passa por isso toda semana. Tacar fogo não aumenta os dez por cento de chance!'",
-                        "Senti uma frustração tão antiga e familiar subir-me à garganta que minha pose de caçador desmoronou. Sem entender por quê, juntei as mãos diante do peito, fiz beicinho e supliquei: 'Ah, vai, §6Jacinto§0, por favorzinho, devolve o meu martelo...'",
-                        "Estaquei gelado no mesmo segundo, levando a mão à boca em choque: por que chamei aquela arma de §o'meu martelo'§0?! E por que aquela súplica humilhante saiu tão treinada da minha língua?!"
+                        "Precisando de armas mais poderosas após quase perder o pé no telhado, desci na décima quarta noite à galeria dos cofres, onde dei de cara com o único habitante vivo da fortaleza: o servo imortal §6Jacinto§0.",
+                        "Ele estava parado diante da porta blindada segurando, como se fosse um espanador qualquer, uma arma divina que fez meus olhos brilharem: o lendário martelo §bMjölnir que não volta§0!",
+                        "Estufei o peito e avancei com voz de trovão: 'Em nome da Inquisição, servo §6Jacinto§0, ordeno que me entregues esse martelo sagrado agora mesmo para que eu esmague o crânio do teu mestre §4Jodevil§0!'",
+                        "§6Jacinto§0 sequer piscou; tentei então intimidá-lo encostando minha tocha acesa em sua túnica, mas o fogo apagou-se sozinho contra o couro dele, e o guardião murmurou: §o'Patrão, tacar fogo não adianta nada... pede com jeitinho que quem sabe eu devolvo.'§0",
+                        "Abri a boca para proferir uma ameaça terrível de excomunhão, mas minha língua traiu meu cérebro e, por puro reflexo muscular, juntei as mãos e choraminguei com voz fina: §o'Ah, vai, Jacinto, por favorzinho, devolve o meu martelo, foi sem querer que eu te dei!'§0",
+                        "Tapando a própria boca em horror absoluto diante daquela frase humilhante, saí correndo pelo corredor enquanto §6Jacinto§0 abanava a cabeça e voltava a limpar as unhas com o cabo do §bMjölnir§0."
                 }));
 
         // LIVRO 15 (Volume XLII)
         list.add(new FutureChapterSpec(15, 42, "XV", "XLII",
-                "Ato II: Labirinto de Espelhos",
-                "Os Olhos de Cummins",
-                "O diálogo filosófico na torre onde o gato místico empurra um espelho quebrado.",
+                "Ato II: A Sombra no Corredor",
+                "O Espelho Quebrado",
+                "Onde o gato Senhor Cummins tenta revelar a verdade na torre do observatório.",
                 new String[]{
-                        "Perturbado pelo incidente no corredor, refugiei-me na torre alta durante a décima quinta noite. Lá me aguardavam o gato místico §6Senhor Cummins§0 e o velho morcego §8Juninho§0, que pairava silencioso perto da minha cintura.",
-                        "Sentei-me no chão ao lado do felino e acariciei seu pelo macio. §6Senhor Cummins§0 fechou os olhos, soltou um ronronado profundo que fez vibrar o ar da sala e permaneceu imóvel por doze segundos inteiros, olhando-me com uma ternura infinita.",
-                        "'Tu que tudo vês através das eras, pequeno oráculo', murmurei com melancolia, 'dize-me: por que sinto que perdi o amor de toda uma corte que jamais conheci? E onde se esconde esse fantasma chamado §4Jodevil§0?'",
-                        "Sem dizer palavra, §6Senhor Cummins§0 caminhou até o canto da lareira e, com a pata de veludo, empurrou um fragmento de espelho quebrado até encostá-lo na minha bota.",
-                        "Apanhei o caco de vidro, mas a camada de fuligem e poeira sobre a superfície prateada mostrava apenas um vulto pálido e borrado na escuridão da câmara.",
-                        "'Compreendo teu enigma poético, sábio felino!', suspirei emocionado, deixando o espelho de lado sem limpá-lo. 'Queres dizer que minha alma está partida como este vidro até que eu cumpra minha missão!'"
+                        "Ainda rubro de vergonha pelo vexame diante de §6Jacinto§0, refugiei-me na décima quinta noite na torre do observatório para recompor minha mente abalada.",
+                        "Lá no alto, sentado sobre o astrolábio de bronze, aguardava-me o gato místico §bSenhor Cummins§0, enquanto o velho morcego §8Juninho§0 dormia pendurado de cabeça para baixo na viga.",
+                        "'Até tu me olhas com essa cara de pena, felino?', resmunguei, sentando-me no degrau de pedra. 'Este castelo está enfeitiçado! Minha boca fala coisas que não pensei e meu corpo lembra de dores que não vivi!'",
+                        "Em resposta, §bSenhor Cummins§0 desceu silenciosamente do astrolábio e, usando a pata dianteira, empurrou pelo chão um grande caco de espelho quebrado até encostá-lo na ponta da minha bota.",
+                        "O gato miou duas vezes, batendo a unha no vidro prateado e olhando fixamente para o meu rosto, como se implorasse para que eu abaixasse a cabeça e encarasse o que havia no cristal.",
+                        "Recusei-me a olhar: 'Não cairei em feitiços de hipnose óptica, bichano!', declarei, virando o caco de espelho para baixo com a bainha da espada antes de descer as escadas."
                 }));
 
         // LIVRO 16 (Volume XLIII)
         list.add(new FutureChapterSpec(16, 43, "XVI", "XLIII",
-                "Ato II: Labirinto de Espelhos",
-                "Cartas na Escuridão",
-                "A descoberta de elegias românticas dedicadas a Asminn e aos amigos perdidos.",
+                "Ato II: A Sombra no Corredor",
+                "O Sonambulismo Macabro",
+                "O terror de despertar em pé escrevendo cartas de amor e saudade para a corte.",
                 new String[]{
-                        "Na décima sexta noite, ao abrir uma gaveta secreta no escritório superior, encontrei um maço de cartas inacabadas que fizeram meu coração estremecer de assombro e beleza.",
-                        "Eram poemas e confissões noturnas de um lirismo dilacerante, dirigidas a §9Lorde Asminn§0, a §6ArzanLion§0, a §dKikkawa§0, a §dLuwuana§0, a §2Azarasquel§0, a §2Reznozada§0, a §5AsterZZZz§0 e a §8Corvo§0.",
-                        "Li em voz baixa: §o'Ó meus irmãos da alvorada perdida! O tempo levou vossos passos para longe destas muralhas, e deixou-me apenas a eternidade fria de um castelo onde ninguém mais ri das minhas quedas...'§0",
-                        "Cada palavra daquelas cartas ressoava dentro do meu próprio peito como se tivesse sido arrancada das minhas veias. Nunca li declaração de amor fraterno mais pura e desesperada do que aquela.",
-                        "Mas quando aproximei a vela do rodapé da última folha para ver a data, um calafrio de puro terror percorreu minha espinha dorsal.",
-                        "A tinta carmesim daquelas cartas não era de décadas atrás. Estava fresca. Tão fresca que, ao tocá-la, tingiu a ponta do meu dedo indicador exatamente sobre a mancha que eu já trazia na pele!"
+                        "Na décima sexta noite, o terror deixou de ser externo e invadiu a minha própria carne: não acordei na poltrona da antecâmara, mas em pé, no meio do salão de armas, segurando uma pena gotejante!",
+                        "Sobre o aparador à minha frente, havia três cartas recém-escritas em tinta carmesim, dedicadas a §9Lorde Asminn§0, §6ArzanLion§0, §dLady Kikkawa§0, §dDama Luwuana§0 e §2Azarasquel§0, implorando que voltassem para casa porque 'a eternidade sem vocês é um túmulo frio'.",
+                        "Comparei a letra daquelas cartas com os meus próprios relatórios de Inquisidor: cada curva, cada traço, cada gota de tinta era rigorosamente a minha própria caligrafia!",
+                        "Deixei a pena cair como se fosse uma víbora em brasa e recuei até bater as costas na armadura da parede, sentindo o ar faltar nos pulmões.",
+                        "'Possessão!', gritei para o salão vazio. 'O demônio §4Jodevil§0 não se esconde nos corredores — ele é um espírito parasita que invade o meu corpo enquanto durmo e usa a minha própria mão para escrever suas lamentações!'",
+                        "Essa era a única explicação lógica: durante o dia ou nos meus apagões, o espírito do Conde assumia o controle da minha carcaça!"
                 }));
 
         // LIVRO 17 (Volume XLIV)
         list.add(new FutureChapterSpec(17, 44, "XVII", "XLIV",
-                "Ato II: Labirinto de Espelhos",
-                "A Mesma Caligrafia",
-                "O choque ao perceber que a letra do vampiro é idêntica à do próprio caçador.",
+                "Ato II: A Sombra no Corredor",
+                "O Interrogatório do Gato",
+                "Onde Valerius prende os animais do castelo para arrancar a confissão do complô.",
                 new String[]{
-                        "Com as mãos trêmulas, puxei do bolso os pergaminhos que eu mesmo viera escrevendo ao longo destas dezessete noites e coloquei-os lado a lado com as cartas deixadas pelo monstro.",
-                        "A luz do candelabro revelou o impossível: a inclinação das letras, a curva exagerada e dramática dos 'J's e dos 'A's, até mesmo o pingo em forma de gota de sangue sobre os 'i's... a caligrafia era rigorosamente a mesma!",
-                        "Recuei dois passos, derrubando a cadeira no tapete. 'Isto é bruxaria mental!', exclamei para as paredes de pedra, sentindo o suor frio escorrer pela minha fronte pálida.",
-                        "'O demônio §4Jodevil§0 está me espionando pelas passagens secretas enquanto durmo! Ele estuda meus diários e falsifica a minha própria letra em suas cartas só para me fazer duvidar do meu juízo!'",
-                        "Sim, só podia ser isso! Que outra explicação existiria para que dois homens distintos tivessem a mesma letra, o mesmo número de bota, a mesma alergia à prata e o mesmo gosto de beterraba na boca?",
-                        "Aquele vampiro covarde estava travando uma guerra psicológica contra mim — mas ele não contava com a astúcia implacável deste caçador!"
+                        "Convencido de que era vítima de possessão noturna, tomei uma medida digna dos manuais da Inquisição na décima sétima noite: fechei a porta da biblioteca e coloquei §bSenhor Cummins§0 e o morcego §8Juninho§0 sentados diante de uma vela acesa para um interrogatório formal.",
+                        "'Confessem, cúmplices das trevas!', bradei, andando de um lado para o outro com o dedo em riste para o gato e o morcego. 'Vocês dois servem ao §4Conde Jodevil§0 há décadas! Por que então vivem atrás de mim o tempo todo?!'",
+                        "Apontei a acusação suprema para §bSenhor Cummins§0: 'Ontem à noite, quando tirei as botas, tu trouxeste um par de chinelos de veludo bordados com a letra J e os colocaste nos meus pés! E tu, §8Juninho§0, pousaste no meu chapéu de palha para tirar uma soneca!'",
+                        "O morcego abriu um olho preguiçoso, bocejou e voltou a dormir; já §bSenhor Cummins§0 apenas subiu no meu colo, amassou meu casaco com as patas e começou a ronronar alto.",
+                        "'Estão vendo?!', exclamei, embora não houvesse ninguém na sala além de nós três. 'Os animais sentem o cheiro ectoplásmico do Conde impregnado no meu corpo! Eles acham que eu sou o dono deles!'",
+                        "Havia apenas um jeito de impedir que o espírito de §4Jodevil§0 assumisse o controle do meu corpo na noite seguinte: construir uma jaula de contenção perfeita."
                 }));
 
         // LIVRO 18 (Volume XLV)
         list.add(new FutureChapterSpec(18, 45, "XVIII", "XLV",
-                "Ato II: Labirinto de Espelhos",
-                "A Emboscada a Si Mesmo",
-                "Onde o caçador tranca todas as portas por dentro para capturar o intruso.",
+                "Ato II: A Sombra no Corredor",
+                "A Jaula de Ferro",
+                "No qual o Inquisidor engole a chave e amarra fios de prata no próprio corpo.",
                 new String[]{
-                        "Na décima oitava noite, tomei uma decisão drástica: se §4Conde Jodevil§0 visitava meus aposentos durante o meu sono diurno para falsificar cartas e sujar meus dedos de tinta carmesim, eu o prenderia em uma armadilha perfeita.",
-                        "Antes que o sol nascesse, tranquei todas as janelas com barras de ferro, selei a porta de carvalho por dentro com três voltas de chave e engoli a chave junto com um gole de água para que ninguém pudesse roubá-la.",
-                        "Amarrei um cordel no meu próprio pulso preso ao candelabro: se qualquer criatura se aproximasse da escrivaninha enquanto eu dormisse, o candelabro cairia e eu despertaria com a espada em punho!",
-                        "Adormeci sorrindo, certo de que na noite seguinte teria a cabeça do farsante em minhas mãos.",
-                        "Porém, quando acordei ao cair do crepúsculo, a porta continuava trancada por dentro, as janelas seguiam lacradas... mas o candelabro fora cuidadosamente desamarrado do meu pulso e sobre a mesa havia uma nova frase escrita em tinta fresca:",
-                        "§o'Não procures lá fora quem chora cá dentro.'§0 O monstro já estava dentro do quarto comigo!"
+                        "Na décima oitava noite, preparei a armadilha definitiva contra a possessão: tranquei a porta de carvalho por dentro com três voltas, fechei as janelas com barras de ferro e engoli a chave pesada com um gole de água.",
+                        "Não satisfeito, amarrei meus próprios tornozelos ao pé da poltrona com fios de prata trançada da sala de §2Azarasquel§0 e espalhei alho ao redor do tapete: se o espírito de §4Jodevil§0 tentasse mover minhas pernas durante o sono, a prata o queimaria vivo!",
+                        "Adormeci com a espada cruzada sobre o peito, certo de que vencera a batalha espiritual.",
+                        "Quando despertei no crepúsculo seguinte, porém, senti uma coceira infernal nos tornozelos: os fios de prata tinham sido cuidadosamente desamarrados, minha garganta arranhava e a chave que eu engolira estava limpa em cima da mesa!",
+                        "Corri até uma bacia d'água para lavar o rosto suado e recuei com um grito de pavor ao ver o reflexo turvo na água:",
+                        "Alguém havia usado o meu próprio dedo sujo de tinta carmesim para escrever, de trás para a frente na minha própria testa, uma única palavra: §4§lCOVARDE§0!"
                 }));
     }
 
     // =========================================================================
-    // ATO III — LIVROS 19 A 27: A REVELAÇÃO DO SANGUE DUVIDOSO E O CICLO ETERNO
+    // ATO III — LIVROS 19 A 27: A HORA DO JULGAMENTO
     // =========================================================================
     private static void addAct3Chapters(List<FutureChapterSpec> list) {
         // LIVRO 19 (Volume XLVI)
         list.add(new FutureChapterSpec(19, 46, "XIX", "XLVI",
-                "Ato III: O Espelho do Uroboro",
-                "As Muralhas do Eclipse",
-                "Onde os músculos do caçador recordam uma batalha que sua mente esqueceu.",
+                "Ato III: A Hora do Julgamento",
+                "Duelo nas Sombras",
+                "O combate feroz de espadas no corredor das muralhas sob os relâmpagos.",
                 new String[]{
-                        "Fugindo do quarto trancado em busca de ar puro, subi às ameias exteriores do Castelo sobre o Mar, onde as pedras negras ainda exibiam cicatrizes profundas de garras e lâminas antigas.",
-                        "Ao apoiar a mão sobre o parapeito da muralha leste, um arrepio percorreu minha espinha: meus dedos fecharam-se no vazio como se empunhassem uma espada invisível, e meu ombro esquerdo girou num golpe de defesa que ninguém jamais me ensinara.",
-                        "Fechei os olhos e, por um lampejo vertiginoso, vi o céu tingido pelo antigo §4Eclipse de Sangue§0! Vi §2Azarasquel§0, §2Reznozada§0 e §6Javidizineo§0 mantendo a linha de frente, ouvi os sinos de §dLady Kikkawa§0 e §dDama Luwuana§0 e os gritos de §8Corvo§0 nas torres.",
-                        "Mais do que isso: senti em meu próprio peito o orgulho ardente de quem lutara ao lado de §9Asminn§0 e §6ArzanLion§0 não como um monstro temido, mas como um irmão de armas amado por sua corte.",
-                        "Quando abri os olhos, apenas o vento marinho soprava sobre as ameias vazias, e uma lágrima solitária escorria pelo meu rosto pálido.",
-                        "'Que feitiçaria é esta?', sussurrei, apertando o peito. 'Por que sinto saudade de uma guerra que não lutei e de amigos cujo sangue jamais vi correr?'"
+                        "Limpando a testa com fúria homicida, chutei a porta e corri para a galeria fechada das muralhas leste, jurando que naquela décima nona noite um de nós dois morreria pelo aço.",
+                        "Foi então que o vi! No fundo do corredor escuro, iluminado pelos relâmpagos da tempestade, erguia-se finalmente o vulto pálido de capa negra, olhos febris e um chapéu de palha torto na cabeça!",
+                        "'Morre, §4Conde Jodevil§0!', rugi, sacando minha espada — mas no mesmo milésimo de segundo o vampiro sacou a lâmina dele na exata mesma postura de guarda!",
+                        "Avancei num ataque furioso, desferindo a sequência secreta de estocadas que fora usada para defender a cidadela no antigo §4Eclipse de Sangue§0 ao lado de §2Azarasquel§0, §2Reznozada§0 e §6Javidizineo§0.",
+                        "Para meu espanto, o monstro conhecia cada movimento da minha alma: quando eu girava à esquerda, ele girava; quando eu fintava por baixo, a espada dele subia no mesmo compasso, como se lutássemos com um único cérebro!",
+                        "Reunindo todas as minhas forças, saltei num bote mortal direto no peito do Conde — e um estrondo ensurdecedor de vidro partido cobriu-me de cacos: não havia ninguém lá; eu acabara de estilhaçar a grande janela de cristal espelhado do fundo do corredor, lutando contra o meu próprio reflexo na tempestade!"
                 }));
 
         // LIVRO 20 (Volume XLVII)
         list.add(new FutureChapterSpec(20, 47, "XX", "XLVII",
-                "Ato III: O Espelho do Uroboro",
-                "Compaixão pelo Monstro",
-                "No qual o ódio do caçador se dissolve em uma estranha piedade pelo vampiro.",
+                "Ato III: A Hora do Julgamento",
+                "A Fuga Impossível",
+                "Onde o Inquisidor tenta abandonar o castelo e é barrado por suas próprias ordens.",
                 new String[]{
-                        "Vaguei pelas galerias superiores na vigésima noite, mas já não carregava a estaca de madeira em punho; meus passos eram lentos, pesados pela melancolia que transbordava de cada canto da fortaleza.",
-                        "Ao ler mais uma das cartas espalhadas pelos aparadores, compreendi enfim a tragédia daquele a quem eu jurara destruir: §4Conde Jodevil§0 não era um tirano sanguinário, mas uma alma partida pela imortalidade.",
-                        "Os mortais da corte tinham partido, seguido seus destinos ou adormecido nas eras, enquanto ele permanecera preso entre estas paredes, vigiado apenas por um guardião com um martelo divino, um gato místico e um morcego cansado.",
-                        "Percebi, com um nó na garganta, que eu já não odiava o vampiro. Pelo contrário: doía-me o peito com uma compaixão tão funda que era como se a alma de §4Jodevil§0 e a minha própria alma fossem feitas da mesma substância.",
-                        "Se eu o encontrasse naquela noite, pensei, não lhe cravaria ferro no coração; sentar-me-ia ao seu lado no salão vazio e choraria com ele a falta de §9Asminn§0 e dos dias que não voltam mais.",
-                        "Assustado com tamanha fraqueza poética, sacudi a cabeça: 'Recomponha-te, caçador! O demônio está usando teu próprio coração romântico como escudo!'"
+                        "Sangrando pelos pequenos cortes do vidro estilhaçado, fui tomado por um terror que nenhum inquisidor jamais admitiria: a loucura deste castelo estava devorando minha razão, e se eu ficasse mais uma noite, acabaria matando a mim mesmo!",
+                        "'Que o diabo carregue §4Jodevil§0!', arfei, guardando os diários na bolsa e descendo as escadas de quatro em quatro degraus rumo ao portão principal para fugir daquela fortaleza maldita.",
+                        "Quando cheguei ao pátio da ponte levadiça, porém, encontrei as correntes recolhidas e presas por um cadeado gigantesco cujo ferrolho fora soldado pelo lado de dentro!",
+                        "Mais do que isso: sentado num caixote bem na frente do portão, apoiado no §bMjölnir que não volta§0, estava o implacável §6Jacinto§0.",
+                        "'Abre este portão agora, §6Jacinto§0!', gritei com a voz trêmula. 'Estou abandonando a missão! Preciso sair deste hospício antes que o vampiro destrua minha mente!'",
+                        "§6Jacinto§0 coçou o queixo e respondeu com uma calma aterradora: §o'Negativo, patrão. Há vinte dias o senhor mesmo engoliu a chave da ponte e me deu ordem expressa de quebrar suas duas pernas se o senhor tentasse fugir antes de terminar os vinte e sete livros!'§0"
                 }));
 
         // LIVRO 21 (Volume XLVIII)
         list.add(new FutureChapterSpec(21, 48, "XXI", "XLVIII",
-                "Ato III: O Espelho do Uroboro",
-                "A Fresta na Cortina",
-                "Onde o pavor absurdo de um por cento de cinzas quebra a solenidade gótica.",
+                "Ato III: A Hora do Julgamento",
+                "Emboscada Solar no Corredor",
+                "Uma manobra de vida ou morte atrás do vaso seco quando a aurora rasga a cortina.",
                 new String[]{
-                        "Estava eu imerso nessas reflexões sublimes e dignas dos maiores poetas trágicos quando o alvorecer do vigésimo primeiro dia surpreendeu-me no corredor das tapeçarias.",
-                        "Uma única fresta de um dedo de largura abriu-se entre duas pesadas cortinas de veludo, projetando um filete de sol matinal exatamente no tapete à minha frente.",
-                        "Todo o meu porte aristocrático desapareceu num segundo: soltei um grito agudo digno de uma donzela assustada e atirei-me de bruços atrás de um vaso de samambaia seca, puxando o chapéu de palha até cobrir o nariz!",
-                        "'Misericórdia!', arfei, abraçado ao vaso enquanto meu coração batia na garganta. 'E se hoje for o dia?! E se aquele maldito §4um por cento de chance§0 resolver funcionar justo agora e eu virar um montinho de cinzas antes do almoço?!'",
-                        "Fiquei encolhido atrás do vaso por meia hora, empurrando a cortina com a ponta da bainha da espada para fechar a fresta sem expor sequer a unha do dedo mindinho à luz.",
-                        "Quando a escuridão voltou a reinar no corredor, levantei-me, limpei a poeira do casaco e tossi solenemente, fingindo que aquela manobra tática atrás da samambaia fazia parte do treinamento avançado dos caçadores do norte."
+                        "Impedido por §6Jacinto§0 de sair pelo portão, tentei escapar na manhã do vigésimo primeiro dia escalando a janela lateral da galeria das tapeçarias.",
+                        "Puxei a corda da cortina pesada para abrir passagem, mas o tecido podre rasgou-se de alto a baixo — e uma torrente brutal de sol matinal inundou o corredor inteiro!",
+                        "O impacto da luz foi como cair dentro de uma fornalha: meu casaco começou a fumegar instantaneamente, o cheiro de toucinho frito subiu da minha bota e senti as garras da §4Centésima Centelha§0 prestes a explodir meu coração em cinzas!",
+                        "Soltei um grito agudo completamente indigno da minha patente e atirei-me de bruços no único palmo de sombra que restava no corredor: atrás de um pequeno vaso com um arbusto seco!",
+                        "Encolhido como um tatu atrás do vaso e usando o chapéu de palha como escudo tático para proteger o nariz do sol, rastejei milímetro a milímetro empurrando o vaso à minha frente pelo tapete.",
+                        "Levei quarenta minutos rastejando atrás daquela planta morta até alcançar a porta escura da copa; quando finalmente caí na sombra, abracei o vaso seco jurando levá-lo comigo para os aposentos reais como amuleto de guerra!"
                 }));
 
         // LIVRO 22 (Volume XLIX)
         list.add(new FutureChapterSpec(22, 49, "XXII", "XLIX",
-                "Ato III: O Espelho do Uroboro",
-                "O Peso da Eternidade",
-                "Onde o silêncio dos corredores revela que o tempo parou para um único morador.",
+                "Ato III: A Hora do Julgamento",
+                "O Alquimista Fantasma",
+                "A descoberta do elixir recém-preparado para a vigésima sétima noite.",
                 new String[]{
-                        "Na vigésima segunda noite, reparei em um detalhe que até então escapara aos meus olhos de investigador: em todo o castelo, não havia sinais de uma segunda pessoa vivendo nas sombras.",
-                        "Havia apenas uma taça usada na copa, apenas uma cadeira puxada diante da lareira, apenas um par de botas — as que estavam nos meus próprios pés — e apenas um tinteiro de tinta carmesim que diminuía a cada noite.",
-                        "Todas as portas levavam de volta aos mesmos corredores que eu já percorrera, e o morcego §8Juninho§0 voava atrás de mim não como quem espiona um intruso, mas como um cão fiel que acompanha o único dono que lhe resta.",
-                        "Subi a grande escadaria helicoidal que conduzia ao ponto mais alto da cidadela: os aposentos reais onde, segundo as lendas, o próprio §4Conde Jodevil§0 mantinha seu leito perpétuo.",
-                        "A cada degrau vencido, o cheiro agridoce de vinho tinto de terceira, beterraba cozida e cera de vela tornava-se mais forte, misturado a um perfume antigo de saudade que me fazia tremer os joelhos.",
-                        "Diante da porta dupla de carvalho negro no topo da torre, levei a mão ao trinco: a caçada chegara ao seu último reduto."
+                        "Caído no chão escuro da copa real após o resgate heroico do vaso seco, ouvi o gotejar lento de um alambique atrás do armário de cristais.",
+                        "Forcei a porta secreta com o ombro e descobri um pequeno laboratório improvisado onde uma espiriteira a óleo ainda mantinha morno um balão de vidro borbulhante!",
+                        "Dentro do frasco brilhava um elixir cor-de-rosa muito mais concentrado do que o das garrafas da despensa, exalando vapores densos de papoula, beterraba, vinho velho e ervas de esquecimento.",
+                        "Ao lado do alambique, preso com uma adaga na madeira, havia um rótulo escrito há pouquíssimos dias: §o'Dose Única para a Meia-Noite do 27º Dia — Receita de ArzanLion e AsterZZZz contra a Dor da Eternidade. Levar à cabeceira da Torre Real.'§0",
+                        "Meu coração disparou de triunfo: ali estava o segredo da imortalidade de §4Conde Jodevil§0! A cada vinte e sete dias, o monstro precisava beber aquela poção na Torre Real para renovar seu pacto sombrio!",
+                        "Peguei o cálice preparado na bandeja: se eu invadisse a Torre Real no topo do castelo antes da meia-noite do vigésimo sétimo dia, pegaria o Conde no exato momento do seu ritual!"
                 }));
 
         // LIVRO 23 (Volume L)
         list.add(new FutureChapterSpec(23, 50, "XXIII", "L",
-                "Ato III: O Espelho do Uroboro",
-                "No Limiar do Quarto Real",
-                "No qual a porta do santuário se abre sem resistência para aquele que sempre teve a chave.",
+                "Ato III: A Hora do Julgamento",
+                "A Invasão da Torre Real",
+                "Onde Valerius usa um aríete contra uma porta que estava destrancada.",
                 new String[]{
-                        "Empurrei os batentes de carvalho esperando encontrar correntes, cadeados arcanos ou armadilhas mortais, mas a fechadura girou com um clique suave, como se reconhecesse o toque da minha mão.",
-                        "O quarto real do Castelo sobre o Mar abriu-se diante de mim em toda a sua majestade gótica: candelabros de prata iluminavam o piso de pedra fria, cortinas rubras protegiam as janelas e, no centro, erguia-se o leito de dossel escuro.",
-                        "Ao lado da cabeceira, uma escrivaninha de mogno exibia penas de ganso, um tinteiro carmesim idêntico ao meu e um cálice de prata onde repousava um líquido cor-de-rosa que exalava vapores sonolentos.",
-                        "Na parede oposta ao leito, um grande espelho de moldura dourada encontrava-se inteiramente coberto por um pano de veludo negro, e ao pé do espelho estava sentado o gato §bSenhor Cummins§0, imóvel como uma esfinge.",
-                        "Mas o que realmente capturou meu olhar foi o que repousava no piso de pedra firme, a poucos passos ao lado da cama: um imponente baú entalhado em madeira escura e ferragens rubras.",
-                        "Aproximei-me devagar, sentindo que dentro daquela arca repousava toda a verdade sobre o vampiro e sobre a ferida sem nome que sangrava em meu peito."
+                        "Na vigésima terceira noite, subi a grande escadaria helicoidal até o ponto mais alto do Castelo sobre o Mar, carregando minha espada, o vaso com o arbusto seco de escudo e um pesado banco de carvalho como aríete.",
+                        "Diante da porta dupla dos aposentos reais, respirei fundo: 'Prepara-te para o inferno, §4Jodevil§0!', bradei, tomando distância no corredor para arrombar a fortaleza do monstro.",
+                        "Corri com toda a velocidade das minhas pernas gritando um brado de guerra e lancei o banco contra os batentes — mas a porta não tinha tranca nenhuma e abriu-se sozinha com o vento um segundo antes do impacto!",
+                        "Atravessei o vão aberto voando igual a um projétil desgovernado, tropecei na bainha da minha própria capa, rolei por cima do tapete persa e bati com a testa direto no pé da cama de dossel!",
+                        "Fiquei estatelado no piso de pedra por cinco minutos vendo estrelas, enquanto o gato §bSenhor Cummins§0 me olhava de cima do travesseiro com uma expressão de profundo desapontamento profissional.",
+                        "Quando finalmente me levantei massageando o galo na testa, olhei ao redor do santuário: o quarto estava silencioso, iluminado por candelabros, e ao lado da cama repousava um imenso Baú Duplo."
                 }));
 
         // LIVRO 24 (Volume LI)
         list.add(new FutureChapterSpec(24, 51, "XXIV", "LI",
-                "Ato III: O Espelho do Uroboro",
-                "O Baú ao Lado do Leito",
-                "Onde o caçador abre a arca de relíquias e encontra os vinte e sete tomos do primeiro ciclo.",
+                "Ato III: A Hora do Julgamento",
+                "O Cofre de Sangue",
+                "As anotações recentes nas margens dos tomos de Asminn e a lágrima ainda fresca.",
                 new String[]{
-                        "Ajoelhei-me no chão de pedra ao lado do leito e ergui a tampa pesada do baú: lá dentro, alinhados com devoção sagrada, brilhavam vinte e sete tomos encadernados em couro carmesim.",
-                        "Retirei o primeiro volume com mãos reverentes e li o título gravado a ouro na capa: §o'Crônicas do Sangue Duvidoso — Escrito por Conde Jodevil & Asminn'§0.",
-                        "Abri as páginas banhadas pela luz trêmula das velas e comecei a ler: ali estava a história completa da era de ouro da corte! Li sobre a ambição poética de §4Jodevil§0 e sobre como §9Asminn§0 trouxera a pena e o tinteiro para eternizar sua confissão.",
-                        "Li sobre a adega torta de §6ArzanLion§0, o vinho de terceira categoria misturado com beterraba e alho vencido, a baba de §5AsterZZZz§0 borrando o pergaminho em aramaico e o espirro colossal que selou a maldição.",
-                        "Minhas mãos começaram a tremer violentamente: cada frase daquelas crônicas ressoava dentro do meu crânio não como uma história alheia, mas como uma lembrança arrancada das profundezas da minha própria carne!",
-                        "Sem conseguir parar, puxei o tomo seguinte, e depois outro, devorando os capítulos no chão frio do quarto enquanto as horas da vigésima quarta noite escorriam como areia."
+                        "Empunhando a estaca de freixo, aproximei-me do Baú Duplo no piso de pedra ao lado do leito, certo de que encontraria ossos ou ouro amaldiçoado — mas ao erguer a tampa, vi fileiras perfeitas de tomos carmesins.",
+                        "Eram os vinte e sete volumes originais das §oCrônicas do Sangue Duvidoso§0, redigidos décadas atrás pelo lendário cronista §9Lorde Asminn§0!",
+                        "Puxei os livros com mãos trêmulas, mas não foi o texto antigo que me fez perder o fôlego: foram as dezenas de notas desesperadas rabiscadas nas margens das páginas com tinta fresca!",
+                        "No capítulo das roseiras, alguém escrevera ontem mesmo: §o'Que saudade da risada de Kikkawa, Pipira e Luwuana... o jardim ficou mudo sem elas.'§0 Na página da adega, lia-se: §o'ArzanLion e AsterZZZz me deram um vampirismo de meia-tigela, mas eu daria tudo para ouvir aquele espirro outra vez.'§0",
+                        "E no vigésimo sétimo tomo de §9Asminn§0, sobre a frase em que o cronista prometia jamais abandonar o amigo, havia uma gota de lágrima que acabara de cair — ainda molhada sobre o pergaminho!",
+                        "Olhei para o meu próprio rosto e toquei minha face: minhas bochechas estavam secas, mas o choro silencioso parecia ecoar dentro da minha própria caixa torácica."
                 }));
 
         // LIVRO 25 (Volume LII)
         list.add(new FutureChapterSpec(25, 52, "XXV", "LII",
-                "Ato III: O Espelho do Uroboro",
-                "As Crônicas de Asminn",
-                "No qual a leitura dos tomos antigos abala todas as certezas do caçador.",
+                "Ato III: A Hora do Julgamento",
+                "O Cerco Final",
+                "No qual o Inquisidor descobre o único esconderijo possível dentro do quarto real.",
                 new String[]{
-                        "Na vigésima quinta noite, ainda sentado diante do baú aberto ao lado da cama, concluí a leitura dos vinte e sete volumes originais deixados pelo cronista §9Asminn§0.",
-                        "Ali estavam todos os desastres que eu julgara ridículos: o salto do parapeito direto nas roseiras diante de §dLady Kikkawa§0, §dPipira§0 e §dDama Luwuana§0; a colher de prata de §2Azarasquel§0 e §2Reznozada§0 que dava coceira no pescoço; o livro de apostas de §8Corvo§0 no telhado.",
-                        "Ali estava até mesmo o relato humilhante de como §4Jodevil§0 entregara o martelo divino por acidente ao guardião §6Jacinto§0 e fora condenado a pedir §o'por favorzinho'§0 sem jamais usar fogo!",
-                        "E, no último daqueles vinte e sete tomos, li o juramento final de §9Asminn§0 prometendo que, enquanto aquelas páginas existissem no baú ao lado do leito, §4Jodevil§0 jamais estaria verdadeiramente sozinho na eternidade.",
-                        "Fechei o vigésimo sétimo livro com o rosto lavado em lágrimas: 'Se tudo isto aconteceu há tantas décadas...', sussurrei com a voz embargada, '...por que minhas costas têm os mesmos espinhos de roseira, meu pescoço tem a mesma coceira e minha boca repete as mesmas súplicas a §6Jacinto§0?'",
-                        "Um terror gelado e sublime tomou conta de mim: faltava apenas uma noite para que o mistério se revelasse por inteiro."
+                        "Fechei o Baú Duplo com um estrondo na vigésima quinta noite e passei a tranca interna na porta do quarto: se a lágrima sobre o livro de §9Asminn§0 estava fresca, §4Conde Jodevil§0 nunca saíra deste aposento!",
+                        "Vasculhei debaixo do leito com a lâmina da espada, golpeei as cortinas da janela — onde posicionei meu fiel vaso de arbusto seco por precaução contra o sol — e examinei o suporte de poções na cabeceira, onde o cálice cor-de-rosa já fumegava esperando a meia-noite.",
+                        "Não havia alçapões no piso de pedra nem passagens no teto, mas meus olhos cravaram-se no único lugar da parede oeste onde um homem alto poderia esconder-se em pé.",
+                        "Ali, entre dois candelabros acesos, havia uma moldura vertical inteiramente coberta por um longo estandarte de veludo negro, diante do qual o gato §bSenhor Cummins§0 montava guarda imóvel.",
+                        "No alto do dossel da cama, o morcego §8Juninho§0 abriu as asas e guinchou baixinho, olhando diretamente para o pano negro.",
+                        "Aproximei-me pé ante pé, sentindo o cheiro de vinho azedo e beterraba ficar mais forte a cada passo: o Conde estava parado exatamente atrás daquele véu escuro!"
                 }));
 
         // LIVRO 26 (Volume LIII)
         list.add(new FutureChapterSpec(26, 53, "XXVI", "LIII",
-                "Ato III: O Espelho do Uroboro",
-                "A Emboscada à Meia-Noite",
-                "Onde o caçador aguarda o Conde no quarto trancado e puxa o véu negro do espelho.",
+                "Ato III: A Hora do Julgamento",
+                "Doze Badaladas",
+                "A contagem regressiva para a meia-noite diante do véu negro.",
                 new String[]{
-                        "Na vigésima sexta noite, tranquei a porta dos aposentos reais, coloquei os vinte e sete volumes de volta no baú e postei-me no centro do quarto, aguardando as doze badaladas da meia-noite.",
-                        "'Aparece, §4Conde Jodevil§0!', bradei sob a luz do candelabro. 'Sei que estás neste quarto! Sei que choras por §9Asminn§0 e pela corte perdida tanto quanto eu! Mostra a tua face!'",
-                        "Ninguém respondeu além do som da minha própria respiração ofegante e do cheiro inconfundível de beterraba e vinho azedo que vinha das minhas próprias vestes.",
-                        "No alto do dossel da cama, o velho morcego §8Juninho§0 pousou silenciosamente, olhando para mim com seus olhinhos escuros cheios de pena; no chão, §bSenhor Cummins§0 ergueu-se e miou, batendo com a pata no pano negro que cobria o grande espelho.",
-                        "Caminhei até o espelho com o coração prestes a explodir. Se o monstro se escondia atrás daquele véu ou se usava o espelho como passagem secreta, nosso duelo terminaria agora.",
-                        "Segurei a borda do veludo negro com a mão manchada de tinta carmesim e, num único golpe, arranquei o pano da frente do espelho!"
+                        "Faltavam segundos para a meia-noite da última noite; posicionei-me a um passo do estandarte negro na parede, com a estaca erguida na mão direita e os dedos manchados de carmesim da mão esquerda agarrando a borda do tecido.",
+                        "Na torre acima de nós, o grande sino de bronze começou a soar a meia-noite: §oBADALADA UM!§0 — e um choque lancinante atravessou meu crânio com a voz de §9Asminn§0 perguntando se eu queria confessar minha história.",
+                        "§oBADALADA QUATRO!§0 — senti na garganta o gosto quente do caldeirão de §6ArzanLion§0, ouvi o ronco de §5AsterZZZz§0 e o latido alegre de §eVitória§0 na adega!",
+                        "§oBADALADA OITO!§0 — minhas costas arderam com os espinhos das roseiras sob o riso de §dLady Kikkawa§0 e §dDama Luwuana§0, e meu pescoço queimou com a colher de prata de §2Azarasquel§0, §2Reznozada§0 e §6Javidizineo§0!",
+                        "§oBADALADA ONZE!§0 — ouvi §8Corvo§0 gritando as apostas no telhado e minha própria voz implorando §o'por favorzinho'§0 ao imortal §6Jacinto§0 pelo §bMjölnir§0!",
+                        "§oBADALADA DOZE!§0 — 'Acabou a tua farsa, §4Jodevil§0!', urrei com a alma partida ao meio e, num golpe violento, arranquei o pano negro da parede para cravar a estaca!"
                 }));
 
-        // LIVRO 27 (Volume LIV — O FIM QUE É O INÍCIO)
+        // LIVRO 27 (Volume LIV — O PLOT TWIST SUPREMO)
         list.add(new FutureChapterSpec(27, 54, "XXVII", "LIV",
-                "Ato III: O Espelho do Uroboro",
-                "O Fim que é o Início",
-                "A revelação suprema diante do espelho e o cálice que reinicia o primeiro capítulo.",
+                "Ato III: A Hora do Julgamento",
+                "A Sentença da Meia-Noite",
+                "Onde a lâmina do inquisidor encontra finalmente o pescoço do Conde.",
                 new String[]{
-                        "O pano negro caiu ao chão e, no cristal do espelho — pois minha maldição de meia-tigela nem sequer me negara o reflexo —, não vi um caçador estrangeiro: vi a mim mesmo, §4Conde Jodevil§0, pálido, de capa de veludo puída, e ao lado do cálice na cabeceira li o bilhete com a minha própria letra: §o'Para quando descobrires quem és, meu pobre amigo.'§0",
-                        "Num único relâmpago, todas as peças se encaixaram com força esmagadora: o chiado na bota sob o sol e o pavor de §41% de virar cinzas§0 eram a minha própria maldição solar; o gosto de beterraba e vinagre na garganta era o feitiço torto de §6ArzanLion§0; o chapéu de palha sem reembolso, a queda nas roseiras de §dKikkawa§0 e §dLuwuana§0, o §o'por favorzinho'§0 para §6Jacinto§0 devolver meu §bMjölnir§0 e as cartas para §9Asminn§0... §4tudo fora feito por mim mesmo!§0",
-                        "Lembrei-me de tudo: décadas após a partida da corte, a saudade dilacerante de §9Asminn§0, §6ArzanLion§0, §5AsterZZZz§0, §2Azarasquel§0, §2Reznozada§0 e §8Corvo§0 quase me enlouqueceu de solidão imortal, e bebi uma poção de esquecimento deixada na adega.",
-                        "Porém, como a receita levava a mesma baba de §5AsterZZZz§0 que borrou as runas em aramaico, o esquecimento saiu tão defeituoso quanto o meu vampirismo: a cada vinte e sete noites, minha memória se apaga, acordo achando que sou um caçador recém-chegado e persigo meus próprios rastros desastrosos pelo castelo!",
-                        "Caí de joelhos diante da arca de relíquias ao lado do meu leito real, chorando de rir e de dor ao compreender a beleza trágica do meu destino; mas o peso de recordar décadas de solidão de uma só vez era insuportável demais para o meu peito, então ergui o cálice cor-de-rosa que eu mesmo preparara na cabeceira e bebi até a última gota: §o'Até daqui a vinte e sete noites, meus amigos...'§0",
-                        "Minha visão escureceu, deixei o chapéu de palha cair ao lado da poltrona, esbarrei no tinteiro sujando as pontas dos dedos de tinta carmesim e apaguei — até que um raio de sol atravessou a fresta da janela fazendo a ponta da minha bota chiar (§o'tsssss'§0), e acordei tonto, com gosto de vinagre e beterraba na boca, puxando este pergaminho para escrever: §o'Despertei com a cabeça pesada e o som de um chiado estranho...'§0"
+                        "O veludo negro caiu aos meus pés, mas não havia nicho secreto nem monstro escondido atrás dele: era apenas um grande espelho de cristal. E porque minha maldição pífia de beterraba e vinagre jamais teve poder sequer para apagar minha imagem, o homem que me encarou de volta no vidro — pálido, de estaca erguida, chapéu de palha torto e olhos banhados em lágrimas — §4era eu mesmo, o Conde Jodevil!§0",
+                        "A estaca escapou dos meus dedos e rolou pelo chão de pedra enquanto a mentira do 'Inquisidor Valerius' desmoronava num único soluço: nunca houve caçador algum! Anos após o fim do primeiro ciclo, quando o tempo levou meus amigos e deixou este castelo imenso mergulhado num silêncio insuportável, a saudade dilacerante de §9Asminn§0 e de toda a nossa corte partiu o meu coração imortal.",
+                        "Lembrei-me de tudo com clareza devastadora: incapaz de suportar a eternidade sozinho, desci à adega de §6ArzanLion§0 e preparei o §oVinho do Esquecimento§0; mas, como usei o mesmo grimório borrado pela baba de §5AsterZZZz§0, o feitiço condenou-me a um ciclo de vinte e sete noites!",
+                        "A cada ciclo, minha mente apaga quem sou e inventa um inquisidor implacável apenas para que eu não morra de solidão — fazendo-me perseguir meus próprios desastres pelo castelo para reviver, pista por pista, o calor das risadas de §dKikkawa§0, §dLuwuana§0, §2Azarasquel§0, §2Reznozada§0, §8Corvo§0, §6ArzanLion§0 e do meu irmão §9Asminn§0!",
+                        "Caí de joelhos abraçando §bSenhor Cummins§0 enquanto §8Juninho§0 pousava em meu ombro, chorando e rindo da minha própria comédia trágica; mas a dor de lembrar que estou sozinho era esmagadora demais para aguentar acordado, então caminhei até o suporte na cabeceira, ergui o cálice cor-de-rosa em brinde aos amigos eternos e bebi até a última gota: §o'Até amanhã, minha querida corte...'§0",
+                        "Minha visão escureceu, deixei o chapéu de palha cair ao lado da poltrona, esbarrei no tinteiro carmesim sujando as pontas dos dedos e apaguei — até que o primeiro raio da manhã atravessou a fresta da cortina e puxei um tomo em branco para escrever: §o'Despertei com um sobressalto, o coração lento batendo como um sino submerso, enquanto um chiado agudo — tsssss — subia da ponta da minha bota...'§0"
                 }));
     }
 }

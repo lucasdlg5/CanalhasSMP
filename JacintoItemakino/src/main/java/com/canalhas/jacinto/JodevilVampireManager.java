@@ -3,7 +3,10 @@ package com.canalhas.jacinto;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
+import net.minecraft.block.WallBannerBlock;
+import net.minecraft.block.entity.BannerBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BrewingStandBlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -309,7 +312,7 @@ public class JodevilVampireManager {
         // Se estava salvo na posição antiga em cima da cama (Y=95), força relocação para o piso (Y=94)
         boolean wasBuggedAboveBed = (data.jodevilLoreChestY == 95 && data.jodevilLoreChestZ == -271);
 
-        // Verifica se o Baú Duplo atual já possui os 54 capítulos completos
+        // Verifica se o Baú Duplo atual já possui os 54 capítulos completos da revisão atual ("Inquisidor Valerius")
         if (data.jodevilLoreChestCreated && !forceRecreate && !wasBuggedAboveBed) {
             BlockPos savedPos = new BlockPos(data.jodevilLoreChestX, data.jodevilLoreChestY, data.jodevilLoreChestZ);
             overworld.getChunk(savedPos.getX() >> 4, savedPos.getZ() >> 4);
@@ -318,12 +321,18 @@ public class JodevilVampireManager {
                 Inventory doubleInv = ChestBlock.getInventory(chestBlock, savedState, overworld, savedPos, true);
                 if (doubleInv != null && doubleInv.size() >= 54) {
                     int bookCount = 0;
+                    boolean hasUpdatedArc2Author = false;
                     for (int i = 0; i < doubleInv.size(); i++) {
-                        if (doubleInv.getStack(i).isOf(Items.WRITTEN_BOOK)) {
+                        ItemStack st = doubleInv.getStack(i);
+                        if (st.isOf(Items.WRITTEN_BOOK)) {
                             bookCount++;
+                            if (i == 27 && st.hasNbt() && "Inquisidor Valerius".equals(st.getNbt().getString("author"))) {
+                                hasUpdatedArc2Author = true;
+                            }
                         }
                     }
-                    if (bookCount >= 54) {
+                    if (bookCount >= 54 && hasUpdatedArc2Author) {
+                        spawnBedroomNarrativeProps(overworld, savedPos);
                         return savedPos;
                     }
                 }
@@ -407,6 +416,12 @@ public class JodevilVampireManager {
             }
         }
 
+        // Adiciona os 3 elementos físicos da narrativa no quarto (apenas em blocos de AR livres):
+        // 1) Estandarte Preto na parede (Espelho Velado)
+        // 2) Vaso com Arbusto Seco perto da janela (Esconderijo do Livro 21)
+        // 3) Suporte de Poções com o Cálice Cor-de-Rosa na cabeceira
+        spawnBedroomNarrativeProps(overworld, chestPos);
+
         // Protege AMBAS as metades do Baú Duplo para que o Jacinto NUNCA retire os livros durante o /organizar!
         String dimKey = overworld.getRegistryKey().getValue().toString();
         data.setChestRule(dimKey, chestPos, false, false);
@@ -419,16 +434,82 @@ public class JodevilVampireManager {
         data.jodevilLoreChestDimension = dimKey;
         data.save();
 
-        LOG.info("[JodevilVampire] Baú Duplo de Lore Vampírica (54 Volumes: Arco 1 + Arco 2) posicionado ao lado da cama em ({}, {}, {}) e ({}, {}, {})!",
+        LOG.info("[JodevilVampire] Baú Duplo de Lore Vampírica (54 Volumes) e decoração narrativa posicionados ao lado da cama em ({}, {}, {}) e ({}, {}, {})!",
                 chestPos.getX(), chestPos.getY(), chestPos.getZ(),
                 secondChestPos.getX(), secondChestPos.getY(), secondChestPos.getZ());
 
         if (onlineJodevil != null) {
-            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um Baú Duplo contendo a coleção épica de §c54 Volumes (Ciclo I: Sangue Duvidoso & Ciclo II: O Uroboro)§7 repousa ao lado do seu leito em §e(" +
+            onlineJodevil.sendMessage(Text.literal("§4🦇 [Crônicas da Noite] §7Um Baú Duplo contendo a coleção épica de §c54 Volumes (Crônicas do Sangue Duvidoso & Autos da Expurgação Noturna)§7 repousa ao lado do seu leito em §e(" +
                     chestPos.getX() + ", " + chestPos.getY() + ", " + chestPos.getZ() + ")§7."), false);
         }
 
         return chestPos;
+    }
+
+    /**
+     * Posiciona de forma segura (apenas em espaços de AR livres, sem substituir cama ou baús)
+     * os 3 elementos físicos do Arco 2 no quarto de Jodevil:
+     * 1. Estandarte Preto na parede ("O Espelho Velado")
+     * 2. Vaso com Arbusto Seco/Samambaia ("Esconderijo Tático do Cap. XXI")
+     * 3. Suporte de Poções com 3 Cálices Cor-de-Rosa ("Dose da Meia-Noite do 27º Dia")
+     */
+    private void spawnBedroomNarrativeProps(ServerWorld world, BlockPos chestPos) {
+        try {
+            // 1. Vaso com Arbusto Seco (a 1 bloco a oeste do Baú Duplo: -677, 94, -273, se estiver livre)
+            BlockPos potPos = chestPos.west();
+            if (world.getBlockState(potPos).isAir() && world.getBlockState(potPos.down()).isSolidBlock(world, potPos.down())) {
+                world.setBlockState(potPos, Blocks.POTTED_DEAD_BUSH.getDefaultState(), 3);
+            }
+
+            // 2. Suporte de Poções com o Cálice Cor-de-Rosa (a leste do Baú Duplo: -674, 94, -273, se estiver livre)
+            BlockPos brewPos = chestPos.east(2);
+            if ((world.getBlockState(brewPos).isAir() || world.getBlockState(brewPos).isOf(Blocks.BREWING_STAND))
+                    && world.getBlockState(brewPos.down()).isSolidBlock(world, brewPos.down())) {
+                world.setBlockState(brewPos, Blocks.BREWING_STAND.getDefaultState(), 3);
+                if (world.getBlockEntity(brewPos) instanceof BrewingStandBlockEntity brewBe) {
+                    brewBe.setCustomName(Text.literal("§d§l⚗️ Cabeceira — Elixir do 27º Dia"));
+                    ItemStack pinkChalice = createPinkElixirBottle();
+                    for (int i = 0; i < 3; i++) {
+                        brewBe.setStack(i, pinkChalice.copy());
+                    }
+                    brewBe.markDirty();
+                }
+            }
+
+            // 3. Estandarte Preto na Parede (O Espelho Velado — acima do vaso ou na parede sul em Y=95)
+            BlockPos bannerPos = chestPos.up();
+            for (Direction dir : new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST}) {
+                BlockPos wallCheck = bannerPos.offset(dir.getOpposite());
+                if (world.getBlockState(bannerPos).isAir() && world.getBlockState(wallCheck).isSolidBlock(world, wallCheck)) {
+                    world.setBlockState(bannerPos, Blocks.BLACK_WALL_BANNER.getDefaultState().with(WallBannerBlock.FACING, dir), 3);
+                    if (world.getBlockEntity(bannerPos) instanceof BannerBlockEntity bannerBe) {
+                        bannerBe.readFrom(new ItemStack(Items.BLACK_BANNER), net.minecraft.util.DyeColor.BLACK);
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn("[JodevilVampire] Aviso ao posicionar elementos narrativos no quarto: {}", e.getMessage());
+        }
+    }
+
+    public static ItemStack createPinkElixirBottle() {
+        ItemStack potion = new ItemStack(Items.POTION);
+        NbtCompound nbt = potion.getOrCreateNbt();
+        nbt.putString("Potion", "minecraft:mundane");
+        nbt.putInt("CustomPotionColor", 16738740); // Cor-de-rosa intenso (beterraba & papoula)
+
+        NbtCompound display = nbt.getCompound("display");
+        display.putString("Name", Text.Serializer.toJson(
+                Text.literal("§d§l🍷 Cálice Cor-de-Rosa (Dose do 27º Dia)")));
+        NbtList lore = new NbtList();
+        lore.add(NbtString.of(Text.Serializer.toJson(
+                Text.literal("§7\"Receita de ArzanLion e AsterZZZz contra a Dor da Eternidade.\""))));
+        lore.add(NbtString.of(Text.Serializer.toJson(
+                Text.literal("§8Cheira fortemente a vinho tinto de terceira, beterraba e alho."))));
+        display.put("Lore", lore);
+        nbt.put("display", display);
+        return potion;
     }
 
     private BlockPos findSafeChestSpotNearSpawn(ServerWorld world, BlockPos spawnPos) {
