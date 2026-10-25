@@ -12,13 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Biblioteca Épica de 27 Volumes (Capítulos I a XXVII) da Lore Vampírica de Conde Jodevil.
- * Cada um dos 27 slots do baú ao lado da cama de Jodevil guarda um livro completo (Tome of Vampiric Knowledge).
- * Escrita inspirada em "Entrevista com o Vampiro", "A Rainha dos Condenados" (Anne Rice) e "Drácula" (Bram Stoker),
- * sem qualquer referência a Minecraft, com começo, meio e fim, e paginação automática sem cortes.
+ * Biblioteca Épica de Lore do Conde Jodevil — 27 Volumes ("Crônicas do Sangue Duvidoso").
+ * Escrita no estilo gótico, romântico, epistolar e cômico de "Entrevista com o Vampiro",
+ * "A Rainha dos Condenados" (Anne Rice) e "Drácula" (Bram Stoker), sem qualquer referência
+ * a mecânicas de jogo ou spoilers nos títulos, tratando o mundo dos Canalhas como um universo real.
  */
 public final class JodevilLoreLibrary {
 
+    // Limites estritos e testados para a interface do livro escrito (14 linhas máx, ~114px largura):
+    // 19 caracteres visíveis por linha e no máximo 12 linhas por página garantem ZERO corte de palavras!
     private static final int MAX_CHARS_PER_LINE = 19;
     private static final int MAX_LINES_PER_PAGE = 12;
 
@@ -34,7 +36,7 @@ public final class JodevilLoreLibrary {
     ) {}
 
     /**
-     * Gera a coleção completa de 27 livros (Capítulos I a XXVII) para preencher os 27 slots do baú.
+     * Gera os 27 Livros (Capítulos I a XXVII) para preencher os slots 0 a 26 do Baú Duplo ao lado da cama de Jodevil.
      */
     public static List<ItemStack> createAll27ChapterBooks() {
         List<ChapterSpec> specs = buildAll27Chapters();
@@ -134,7 +136,6 @@ public final class JodevilLoreLibrary {
 
         List<String> currentPageLines = new ArrayList<>();
         for (String line : allLines) {
-            // Não inicia página nova com linha em branco
             if (currentPageLines.isEmpty() && line.isEmpty()) {
                 continue;
             }
@@ -145,7 +146,6 @@ public final class JodevilLoreLibrary {
             }
         }
         if (!currentPageLines.isEmpty()) {
-            // Remove eventual linha vazia no final da página
             while (!currentPageLines.isEmpty() && currentPageLines.get(currentPageLines.size() - 1).isEmpty()) {
                 currentPageLines.remove(currentPageLines.size() - 1);
             }
@@ -180,8 +180,16 @@ public final class JodevilLoreLibrary {
         for (String word : words) {
             int wordVisibleLen = visibleLength(word);
             if (currentVisibleLen == 0) {
-                current.append(word);
-                currentVisibleLen = wordVisibleLen;
+                if (wordVisibleLen <= maxCharsPerLine) {
+                    current.append(word);
+                    currentVisibleLen = wordVisibleLen;
+                } else {
+                    int splitAt = Math.min(word.length(), maxCharsPerLine - 1);
+                    lines.add(word.substring(0, splitAt) + "-");
+                    String rest = word.substring(splitAt);
+                    current.append(rest);
+                    currentVisibleLen = visibleLength(rest);
+                }
             } else if (currentVisibleLen + 1 + wordVisibleLen <= maxCharsPerLine) {
                 current.append(" ").append(word);
                 currentVisibleLen += 1 + wordVisibleLen;
@@ -202,7 +210,7 @@ public final class JodevilLoreLibrary {
         int len = 0;
         for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) == '§' && i + 1 < s.length()) {
-                i++; // pula código de cor/formatação
+                i++;
             } else {
                 len++;
             }
@@ -217,309 +225,363 @@ public final class JodevilLoreLibrary {
         // ATO I — O COMEÇO: A SEDE DE ETERNIDADE E O CREPÚSCULO MORTAL (Cap. I a IX)
         // =========================================================================
 
+        // CAPÍTULO I
         list.add(new ChapterSpec(1, "I", "Ato I: O Começo",
                 "O Sussurro da Vela",
                 "Onde Conde Jodevil abre sua alma ao cronista Asminn na torre gótica.",
                 new String[]{
-                        "\"Vejo que trouxeste a pena, o pergaminho e o tinteiro, meu caro §9Asminn§0\", murmurou §4Jodevil§0, enquanto a chama trêmula do candelabro de prata desenhava sombras longas sobre sua face pálida.",
-                        "Lá fora, o oceano noturno batia contra os rochedos da cidadela como um coração antigo e inconsolável. O vento de outubro trazia o perfume das folhas mortas e das rosas negras do jardim.",
-                        "\"Tu me perguntas como deixei de ser um homem comum para tornar-me esta criatura que teme o meio-dia\", continuou ele, ajustando o colarinho de veludo carmesim com dedos frios e teatrais.",
-                        "\"Esperas ouvir um conto de terror digno dos antigos lordes da Transilvânia ou dos salões dourados de Paris. Mas acomoda-te na poltrona, §9Asminn§0, e serve-te de vinho — do bom, não do que usaram em mim.\"",
-                        "\"Pois a história da minha imortalidade começa com a mais sublime poesia romântica... e termina na mais absurda tragédia alquímica que estas terras já testemunharam.\""
+                        "\"Vejo que trouxeste a pena, o pergaminho e o tinteiro, meu caro §9Asminn§0\", murmurou §4Conde Jodevil§0, enquanto a chama trêmula do candelabro de prata desenhava sombras longas sobre sua face pálida.",
+                        "Lá fora, o oceano noturno batia contra os rochedos da cidadela como um coração antigo e inconsolável, trazendo pela fresta do vitral o perfume das folhas mortas de outubro.",
+                        "\"Pára de olhar para a minha capa com esse sorriso de canto de boca, §9Asminn§0!\", reclamou o Conde, fechando o semblante num muxoxo aristocrático. \"Se vais registrar a minha tragédia para a posteridade, exijo a solenidade que cabe a um Príncipe das Trevas!\"",
+                        "\"Perdoa-me, §4Jodevil§0\", respondeu §9Asminn§0 mergulhando a pena na tinta carmesim. \"É que ainda há uma folha de roseira presa no teu colarinho de veludo. Mas prossegue: como nasceu tua sede pela meia-noite?\"",
+                        "§4Jodevil§0 arrancou a folha com dignidade ferida, serviu duas taças de vinho — do bom, não da gororoba que usaram nele — e recostou-se na poltrona de espaldar alto.",
+                        "\"Escreve cada palavra, meu irmão de armas. Pois a história da minha condenação começa com o mais sublime orgulho romântico... e desaba no maior crime alquímico que estas terras já testemunharam.\""
                 }));
 
+        // CAPÍTULO II
         list.add(new ChapterSpec(2, "II", "Ato I: O Começo",
                 "A Dor de Ser Mortal",
-                "As memórias da juventude de Jodevil e seu horror ao passar do tempo.",
+                "O baile de outono, o espelho cruel e a primeira ferida do tempo.",
                 new String[]{
-                        "\"Quando eu ainda respirava o ar morno dos mortais\", suspirou §4Jodevil§0, caminhando até a janela em arco, \"cada batida do meu peito parecia um relógio apressado anunciando o fim da beleza.\"",
-                        "\"Eu observava os camponeses e os guerreiros da província. Eles aceitavam o suor da lavoura, as rugas na testa e o esquecimento do túmulo com uma resignação que me causava calafrios.\"",
-                        "\"Eu, porém, nascera com uma fome diferente. Eu amava a arquitetura das sombras, o silêncio solene das catedrais vazias e o brilho prateado da lua cheia sobre o mármore frio.\"",
-                        "\"Por que deveria um espírito tão refinado, tão talhado para o mistério e para a paixão eterna, submeter-se à banalidade de envelhecer e morrer como um simples aldeão?\"",
-                        "\"Foi então que jurei aos céus estrelados: eu não pertenceria ao dia. Eu conquistaria a eternidade da noite, custasse o que custasse à minha alma.\""
+                        "\"Tu te lembras do Grande Baile da Colheita do ano passado, §9Asminn§0?\", indagou §4Jodevil§0, tamborilando os dedos pálidos no braço da cadeira. \"Dizem as más línguas que decidi virar vampiro por mera vaidade literária. Calúnia!\"",
+                        "\"Eu estava me preparando para o baile diante do espelho de bronze quando o vi: um fio de cabelo branco, insolente e brilhante, bem na minha têmpora esquerda! A velhice mortal estava me emboscando antes dos trinta!\"",
+                        "\"Mais tarde, no salão iluminado por tochas, tentei impressionar a corte fazendo uma reverência profunda à moda dos duques antigos... mas meu espadim enroscou na toalha da mesa de queijos.\"",
+                        "Neste ponto da narrativa, §9Asminn§0 precisou morder a ponta da pena e tossir dentro do punho para esconder o riso, lembrando-se perfeitamente do estrondo da prataria.",
+                        "\"Eu vi a tua pena tremer, §9Asminn§0! Não te atrevas a escrever que caí sentado na tigela de ponche!\", bradou §4Jodevil§0 apontando o dedo. \"Escreve que sofri uma vertigem existencial diante da fragilidade da carne humana!\"",
+                        "\"Naquela mesma madrugada, limpando ponche das botas, jurei às estrelas: eu jamais teria rugas nem reumatismo. Eu conquistaria a perfeição imortal da noite, custasse o que custasse!\""
                 }));
 
+        // CAPÍTULO III
         list.add(new ChapterSpec(3, "III", "Ato I: O Começo",
                 "A Rainha Antiga",
-                "A descoberta dos pergaminhos proibidos da Mãe de Todos os Imortais.",
+                "A invasão noturna às catacumbas proibidas da Mãe dos Imortais.",
                 new String[]{
-                        "Nas profundezas das bibliotecas esquecidas da cidadela, sob camadas de poeira que nenhum erudito ousava tocar, §4Jodevil§0 encontrou os fragmentos de couro que mudariam seu destino.",
-                        "Eram códices antigos que narravam a linhagem da primeira Rainha dos Condenados — aquela cujo sangue ancestral transformava homens em semideuses de alabastro e olhos de brasa.",
-                        "\"Li cada linha com as mãos trêmulas de êxtase\", confessou §4Jodevil§0 a §9Asminn§0. \"As crônicas falavam de seres que caminhavam sobre o vento, cuja voz hipnotizava reis e cujo coração jamais conhecia a fraqueza.\"",
-                        "\"Eles bebiam a própria essência da vida em taças de rubi e dançavam sob os séculos enquanto impérios inteiros desmoronavam em pó. Aquilo, §9Asminn§0, era arte! Aquilo era vocação!\"",
-                        "\"Fechei o tomo naquela madrugada com lágrimas nos olhos. Eu já tinha a capa, já tinha o olhar melancólico e já dormia até tarde. Só me faltava o sangue imortal.\""
+                        "Decidido a encontrar o segredo do sangue eterno, §4Jodevil§0 não esperou pela sorte: numa noite de nevoeiro cerrado, arrombou com um pé-de-cabra enferrujado o alçapão das criptas esquecidas sob a antiga capela.",
+                        "Desceu os degraus limosos segurando um único archote, desviando de teias de aranha seculares até alcançar a câmara funerária onde repousavam os arquivos proibidos dos primeiros séculos.",
+                        "Ao empurrar a pesada tampa de um sarcófago de mármore para usar de apoio, porém, a manga de sua capa nova ficou presa na fresta da pedra e a tocha caiu no chão, apagando-se na água fria!",
+                        "\"Fiquei vinte minutos preso no breu puxando o tecido, §9Asminn§0, achando que um esqueleto ancestral estava segurando meu cotovelo!\", confessou §4Jodevil§0 com um calafrio.",
+                        "Quando finalmente rasgou a manga e reacendeu a pederneira, viu brilhar dentro do sarcófago aberto o lendário códice encadernado em couro rubro: os fragmentos da §4Rainha dos Condenados§0.",
+                        "\"Li aquelas páginas ali mesmo, sentado nos ossos antigos: falavam de lordes com pele de alabastro, olhar hipnótico e domínio eterno sobre a meia-noite. Saí da cripta ao alvorecer com a capa rasgada, mas com o destino traçado!\""
                 }));
 
+        // CAPÍTULO IV
         list.add(new ChapterSpec(4, "IV", "Ato I: O Começo",
                 "Serenata ao Luar",
-                "Os ensaios noturnos de Jodevil sob os olhares de Kikkawa e Luwuana.",
+                "As vigílias poéticas nos terraços superiores da fortaleza.",
                 new String[]{
-                        "Muito antes de receber qualquer maldição, §4Jodevil§0 decidiu que precisava agir como um lorde vampiro para atrair a atenção das forças ocultas do universo.",
-                        "Todas as noites, vestia seu manto mais escuro e subia aos terraços de pedra para declamar poemas trágicos para a lua, treinando seu sorriso enigmático diante dos espelhos d'água.",
-                        "Do balcão vizinho, §dLady Kikkawa§0 — acompanhada de seu místico peixe flutuante §bPipira§0 — e a nobre §dDama Luwuana§0 assistiam ao espetáculo tomando chá de ervas.",
-                        "\"Ele está fingindo que conversa com os espíritos do abismo de novo?\", sussurrava §dLuwuana§0, segurando o riso atrás do leque de seda enquanto §4Jodevil§0 fazia poses dramáticas contra o vento.",
-                        "\"Acho que ele prendeu a capa no candelabro\", respondia §dKikkawa§0. E de fato, ao tentar dar uma meia-volta majestosa, §4Jodevil§0 arrancou a cortina inteira, mas manteve a pose como se tudo fizesse parte do ritual."
+                        "Antes mesmo de encontrar quem o transformasse, §4Jodevil§0 concluiu que precisava preparar seu espírito — e seu guarda-roupa — para a majestade sombria que em breve habitaria seu corpo.",
+                        "Durante sete noites seguidas, subiu à balaustrada norte vestindo veludo negro e gola alta, declamando versos melancólicos para a lua cheia enquanto treinava seu olhar penetrante de predador aristocrático.",
+                        "O que ele ignorava era que, na varanda logo acima, §dLady Kikkawa§0 — acompanhada de seu inseparável e místico peixe flutuante §bPipira§0 — e a nobre §dDama Luwuana§0 assistiam a cada ensaio com uma bandeja de biscoitos.",
+                        "\"Repara na mão sobre o peito, §dKikkawa§0\", sussurrava §dLuwuana§0 atrás do leque de seda. \"Será que ele está invocando as legiões do abismo ou está apenas com soluço depois do jantar?\"",
+                        "\"Acho que §bPipira§0 gostou do teatro, mas a fivela da capa dele acabou de prender no candelabro de parede\", observou §dKikkawa§0 apontando discretamente.",
+                        "No segundo seguinte, §4Jodevil§0 deu um giro dramático para encerrar o poema e arrancou o candelabro inteiro com cortina e tudo — saindo do terraço enrolado no pano vermelho de queixo erguido, como se a tapeçaria fizesse parte do traje real."
                 }));
 
+        // CAPÍTULO V
         list.add(new ChapterSpec(5, "V", "Ato I: O Começo",
-                "Em Busca do Beijo",
-                "As peregrinações pelas matas escuras e o encontro com o morcego Juninho.",
+                "O Clamor na Floresta",
+                "A peregrinação solitária sob a névoa em busca do beijo imortal.",
                 new String[]{
-                        "Durante semanas, §4Jodevil§0 vagou sozinho pelas criptas abandonadas e florestas nebulosas da comarca, deixando o pescoço estrategicamente descoberto na esperança de ser mordido por um Nosferatu.",
-                        "\"Ó criaturas da meia-noite!\", clamava ele de braços abertos no meio do cemitério antigo. \"Vinde a mim! Concedei-me o Dote Sombrio e fazei de mim vosso príncipe herdeiro!\"",
-                        "Nenhuma criatura ancestral apareceu. Tudo o que saiu das árvores foi um enxame de pernilongos famintos e um pequeno morcego rechonchudo e simpático que pousou em seu ombro.",
-                        "\"Ao menos tu me compreendes, criatura das trevas\", disse §4Jodevil§0 solenemente, batizando o pequeno morcego de §8Juninho§0 e alimentando-o com frutinhas silvestres.",
-                        "Voltou para casa sem nenhuma mordida vampírica, mas com três picadas de mosquito no queixo e a certeza de que teria de recorrer à ciência proibida dos homens."
+                        "Vendo que os versos no terraço não atraíam nenhum lorde vampiro dos Cárpatos, §4Jodevil§0 tomou uma medida extrema: embrenhou-se sozinho, à meia-noite, na mata fechada além das colinas do cemitério velho.",
+                        "Desabotoou estrategicamente o colarinho da camisa de linho, inclinou o pescoço pálido sobre uma lápide coberta de musgo e abriu os braços para a escuridão das árvores.",
+                        "\"Vinde a mim, filhos da eterna escuridão!\", clamou ele com voz embargada de paixão gótica. \"Cravai vossas presas nesta garganta mortal e concedei-me o Dote Sombrio da meia-noite!\"",
+                        "O silêncio da floresta durou três minutos inteiros — até que um zumbido agudo desceu das copas dos ciprestes e uma nuvem implacável de pernilongos do pântano atacou o pescoço descoberto do futuro conde!",
+                        "Enquanto §4Jodevil§0 se estapeava no escuro fugindo dos insetos, uma única criatura noturna pousou mansamente em seu ombro: um morceguinho gordo, zarolho e extremamente simpático que cheirava a amora silvestre.",
+                        "\"Ao menos tu reconheces a minha nobreza das trevas!\", declarou §4Jodevil§0 coçando quatro calombos de mosquito no queixo e batizando solenemente o pequeno companheiro de §8Juninho§0."
                 }));
 
+        // CAPÍTULO VI
         list.add(new ChapterSpec(6, "VI", "Ato I: O Começo",
                 "Diário de Asminn",
-                "Registros epistolares de estranhos carregamentos chegando à cidadela.",
+                "Registros epistolares de movimentos ocultos nas fronteiras do feudo.",
                 new String[]{
-                        "§8Trecho do Diário de Lorde Asminn — 10 de Outubro.§0 O outono trouxe névoas espessas às nossas muralhas, e com elas uma inquietação peculiar entre os moradores da fortaleza.",
-                        "Hoje pela manhã, o mercador da estrada relatou que o autoproclamado Grão-Alquimista §6ArzanLion§0 comprou todo o estoque de vinho azedo de terceira categoria da taverna local.",
-                        "Mais curioso ainda: §6ArzanLion§0 foi visto colhendo beterrabas passadas na horta comunitária e pedindo dentes de alho mofados sob o pretexto de realizar uma 'transmutação abissal de alta nobreza'.",
-                        "Ao cair da tarde, encontrei §4Jodevil§0 nos corredores. Seus olhos brilhavam com uma febre romântica. Disse-me em segredo: '§9Asminn§0, em três noites deixarei de caminhar sob a lei dos mortais.'",
-                        "Tentei adverti-lo de que a última poção de §6ArzanLion§0 havia apenas tingido as sobrancelhas de §2Reznozada§0 de azul, mas a vaidade imortal de §4Jodevil§0 já estava surda à razão."
+                        "§8Trecho do Diário de Lorde Asminn — 10 de Outubro.§0 A cerração de outono desceu sobre nossas muralhas, e com ela começaram a surgir indícios de que uma grande insensatez está sendo tramada nos subterrâneos.",
+                        "Esta manhã, ao inspecionar as engrenagens do portão leste, interceptei o carroceiro da vila: ele jurava que o autoproclamado Grão-Alquimista §6ArzanLion§0 comprara dezenove garrafões do vinho mais azedo e barato da taverna.",
+                        "Meia hora depois, vi o próprio §6ArzanLion§0 saindo da horta comunitária com um saco de estopa cheio de beterrabas passadas e três tranças de alho mofado, murmurando cálculos em latim macarrônico.",
+                        "Ao cair do crepúsculo, cruzei com §4Jodevil§0 na galeria das armas; ele trazia o morcego §8Juninho§0 empoleirado no chapéu e um brilho febril nos olhos que me deixou genuinamente alarmado.",
+                        "Segurando-me pelos ombros, sussurrou-me como quem revela um segredo de Estado: 'Prepara teus pergaminhos, §9Asminn§0! Em três noites, a morte já não terá domínio sobre o meu nome!'",
+                        "Tentei lembrar-lhe de que a última 'poção de transmutação heroica' de §6ArzanLion§0 havia deixado as sobrancelhas de §2Reznozada§0 azuis por duas semanas, mas §4Jodevil§0 já caminhava nas nuvens."
                 }));
 
+        // CAPÍTULO VII
         list.add(new ChapterSpec(7, "VII", "Ato I: O Começo",
                 "O Pacto na Taverna",
-                "As negociações secretas entre Jodevil e o ocultista ArzanLion.",
+                "O juramento selado à meia-noite sob as abóbadas enfumaçadas.",
                 new String[]{
-                        "Foi no canto mais escuro da taverna, sob o olhar atento da fiel cadelinha §eVitória§0, que §4Jodevil§0 e §6ArzanLion§0 selaram o acordo que mudaria a história da corte.",
-                        "\"Podes mesmo conceder-me a maldição dos antigos Condes da Noite, §6ArzanLion§0?\", perguntou §4Jodevil§0 em voz baixa, inclinando-se sobre a mesa manchada de cera.",
-                        "\"Meu caro §4Jodevil§0\", respondeu §6ArzanLion§0 estufando o peito com absoluta confiança, \"eu domino os mistérios herméticos do Oriente e do Ocidente! Transformar-te em um lorde vampiro é tarefa simples para meu intelecto.\"",
-                        "\"Terás a palidez aristocrática, a comunhão com as sombras e a eterna sensibilidade ao astro-rei, exatamente como nos romances antigos!\", garantiu o alquimista.",
-                        "\"E quanto custará tamanho milagre profano?\", indagou o futuro conde. \"Três moedas de prata, um queijo curado e não contares a ninguém se o caldeirão fizer barulho de chocalho\", respondeu §6ArzanLion§0."
+                        "Na calada da noite seguinte, na mesa mais escura dos fundos da taverna, §4Jodevil§0 reuniu-se em segredo absoluto com §6ArzanLion§0, sob a vigilância atenta da fiel cadelinha §eVitória§0.",
+                        "\"Dize-me a verdade sem rodeios, §6ArzanLion§0\", sussurrou §4Jodevil§0 inclinando-se sobre a vela de sebo. \"Tens mesmo o poder de reescrever o meu sangue segundo o rito dos antigos Condes da Noite?\"",
+                        "\"Ora, por quem me tomas, meu caro §4Jodevil§0?!\", ofendeu-se §6ArzanLion§0 ajeitando o manto manchado de fuligem. \"Para um mestre das artes herméticas como eu, a imortalidade vampírica é procedimento de rotina!\"",
+                        "\"Sairás da minha adega com a palidez dos mármores romanos, a sede rubra dos reis noturnos e a clássica maldição solar que todo vampiro de respeito exibe nas crônicas!\"",
+                        "§4Jodevil§0 sentiu o coração bater de júbilo poético e empurrou a bolsa sobre a mesa: \"Pede o teu preço, mago! Ouro? Relíquias? Um pacto de sangue eterno?\"",
+                        "\"Três moedas de prata, metade daquele queijo curado da tua despensa e um petisco defumado para a §eVitória§0 não latir durante o cântico\", respondeu §6ArzanLion§0 fechando o negócio com um aperto de mão."
                 }));
 
+        // CAPÍTULO VIII
         list.add(new ChapterSpec(8, "VIII", "Ato I: O Começo",
-                "O Sono de AsterZZZz",
-                "Como o acólito adormecido arruinou o pergaminho sagrado dos Cárpatos.",
+                "O Grimório de Aramaico",
+                "A vigília sagrada do acólito sobre as escrituras proibidas da noite.",
                 new String[]{
-                        "Toda grande tragédia gótica depende de um detalhe oculto do destino, e naquela véspera de Lua Sangrenta, o instrumento do caos atendia pelo nome de §5AsterZZZz§0.",
-                        "Encarregado por §6ArzanLion§0 de vigiar o único pergaminho original contendo a pronúncia exata do feitiço vampírico em aramaico antigo, o sábio §5AsterZZZz§0 sentou-se junto à escrivaninha.",
-                        "Passados exatos quatro minutos de vigília, §5AsterZZZz§0 tombou a cabeça diretamente sobre o pergaminho aberto e mergulhou em um sono tão profundo que nem os trovões o despertavam.",
-                        "Durante seis horas, um fio constante e generoso de baba escorreu pelo canto de sua boca, dissolvendo a tinta secular das três estrofes mais importantes da conjuração.",
-                        "Quando §6ArzanLion§0 finalmente o sacudiu, metade das palavras místicas havia virado um borrão violeta. \"Bah\", disse o alquimista limpando a folha na manga, \"eu improviso o resto em latim de taverna!\""
+                        "Para que o rito supremo de transmutação sanguínea não falhasse, era indispensável decifrar o único manuscrito original trazido do Oriente, cujas runas em aramaico antigo guardavam a chave da imortalidade pura.",
+                        "Na véspera da Lua Sangrenta, §6ArzanLion§0 abriu o pergaminho milenar sobre a bancada da adega e confiou sua guarda solene ao mais silencioso e contemplativo dos iniciados da fortaleza: o monge §5AsterZZZz§0.",
+                        "\"Vigia estas letras sagradas com a própria vida, §5AsterZZZz§0, enquanto vou buscar o carvão ritualístico!\", ordenou o alquimista antes de trancar a porta.",
+                        "§5AsterZZZz§0 assumiu uma postura de profunda meditação zen diante do papiro... e, passados exatos três minutos e meio, tombou a testa pesadamente sobre o texto aberto num ronco capaz de rachar barris!",
+                        "Durante seis horas ininterruptas de sono abissal, um fio generoso e constante de baba escorreu pelo canto da boca do acólito, dissolvendo a tinta secular das três estrofes que protegiam o vampiro contra a luz e o ridículo.",
+                        "Quando §6ArzanLion§0 retornou e sacudiu o dorminhoco, metade das runas virara uma mancha roxa ilegível. \"Detalhes técnicos!\", murmurou o mago enxugando a baba do papiro na manga. \"Onde estiver borrado, eu completo com latim de missa!\""
                 }));
 
+        // CAPÍTULO IX
         list.add(new ChapterSpec(9, "IX", "Ato I: O Começo",
                 "A Última Aurora",
-                "O adeus poético de Jodevil ao sol antes de descer às catacumbas.",
+                "A partilha solene dos bens terrenos antes da descida ao abismo.",
                 new String[]{
-                        "No dia 14 de outubro, §4Jodevil§0 subiu à torre mais alta para contemplar aquele que julgava ser o último pôr do sol de sua existência mortal.",
-                        "O céu ardia em tons de púrpura, sangue e ouro velho. O vento agitava seus cabelos enquanto ele recitava um adeus digno dos grandes poetas malditos da antiguidade.",
-                        "\"Adeus, luz efêmera dos homens comuns!\", murmurou ele com a mão sobre o peito. \"Amanhã, quando tornares a brilhar sobre as colinas, eu já serei um soberano do véu noturno!\"",
-                        "Mal sabia o infeliz romântico que o sol ouvira sua provocação — e que, graças à alquimia duvidosa que o aguardava no subsolo, aquele astro tornar-se-ia seu mais lento e sarcástico torturador.",
-                        "Ao soar das doze badaladas do sino da meia-noite, §4Jodevil§0 envolveu-se na capa e desceu os degraus úmidos rumo à adega de §6ArzanLion§0."
+                        "Ao entardecer do dia catorze de outubro, convicto de que morreria para o mundo mortal naquela meia-noite, §4Jodevil§0 convocou os companheiros ao alto da muralha oeste para ler seu Testamento Dramático.",
+                        "Com o vento açoitando a capa e a mão sobre o peito, ele declamou olhando para o pôr do sol: \"Meus irmãos! Quando este astro tornar a erguer-se amanhã, o homem que conhecestes estará morto, e em seu lugar reinará uma criatura do abismo!\"",
+                        "Lá embaixo, porém, a comoção passava longe do esperado: §8Corvo§0 anotava medidas com uma fita métrica, enquanto §2Azarasquel§0 e §2Reznozada§0 examinavam atentamente os pés de §4Jodevil§0.",
+                        "\"Dize-me uma coisa, §4Jodevil§0\", interrompeu §2Reznozada§0 com absoluta seriedade prática, \"se o caldeirão de §6ArzanLion§0 te explodir em pedacinhos hoje à noite, tu já deixaste assinado quem herda essas tuas botas de couro forrado?\"",
+                        "\"Eu pedi as botas primeiro na terça-feira!\", protestou §8Corvo§0, enquanto o leãozinho §6Javidizineo§0 mordiscava a ponta da capa do futuro defunto.",
+                        "Indignado com a falta de reverência fúnebre da corte, §4Jodevil§0 enrolou o pergaminho do testamento, declarou que levaria as botas para a eternidade e desceu marchando rumo à adega de §6ArzanLion§0!"
                 }));
 
         // =========================================================================
         // ATO II — O MEIO: O RITUAL DESASTROSO E AS PROVAÇÕES (Cap. X a XVIII)
         // =========================================================================
 
+        // CAPÍTULO X
         list.add(new ChapterSpec(10, "X", "Ato II: O Meio",
-                "O Caldeirão Torto",
-                "A descida à adega de ArzanLion e a receita profana de beterraba e alho.",
+                "A Câmara do Alquimista",
+                "O descenso aos subterrâneos e o preparo do cálice primordial.",
                 new String[]{
-                        "\"Quando as portas de carvalho da adega se fecharam atrás de mim\", recordou §4Jodevil§0 com um arrepio de desgosto, \"esperei ver um santuário de obsidiana e cálices cravejados de rubis.\"",
-                        "\"Em vez disso, §9Asminn§0, deparei-me com um círculo de giz desenhado no chão que mais parecia uma batata amassada, ladeado por quatro velas tortas pingando sebo sobre barris de picles.\"",
-                        "No centro fumegava o caldeirão de §6ArzanLion§0. Na falta do autêntico Sangue Real dos Cárpatos, o alquimista despejara duas garrafas de vinho tinto azedo e um litro de caldo grosso de beterraba.",
-                        "Para dar \"corpo místico\" à mistura, adicionara três cabeças de alho vencido, pimenta-do-reino, banha de porco derretida e uma folha de louro que encontrara no bolso do colete.",
-                        "\"Tem certeza de que vampiros levam alho e beterraba na fórmula?\", perguntei desconfiado. \"Silêncio, neófito!\", bradou §6ArzanLion§0 mexendo a sopa com uma colher de pau. \"A alquimia moderna transcende tradições!\""
+                        "\"Quando desci o último degrau da adega à meia-noite, §9Asminn§0\", relatou §4Jodevil§0 com um tremor na voz, \"meu coração esperava encontrar um templo de obsidiana digno dos antigos mistérios do Egito.\"",
+                        "\"Em vez disso, encontrei §6ArzanLion§0 usando um avental sujo de farinha no meio de um círculo de giz torto que parecia um ovo estrelado, cercado por quatro tocos de vela colados em tampas de barril!\"",
+                        "No centro do círculo fervia o caldeirão profano: como não possuía uma única gota do Sangue Ancestral da Transilvânia, §6ArzanLion§0 despejara três garrafas daquele vinho tinto azedo de taverna.",
+                        "Para dar a cor rubra e a viscosidade das veias nobres, o alquimista acrescentara dois litros de caldo concentrado de beterraba cozida, três cabeças de alho murcho, banha derretida e pimenta-rosa moída na hora.",
+                        "\"Por todos os demônios, §6ArzanLion§0!\", recuou §4Jodevil§0 tapando o nariz. \"Isto cheira a sopa de quartel estragada! Tens certeza de que o elixir dos imortais leva alho e beterraba?!\"",
+                        "\"Cala-te e entra no círculo, homem de pouca fé!\", bradou §6ArzanLion§0 erguendo a concha fumegante. \"O alho é para criar resistência homeopática desde o berço!\""
                 }));
 
+        // CAPÍTULO XI
         list.add(new ChapterSpec(11, "XI", "Ato II: O Meio",
-                "O Espirro Arcano",
-                "O clímax do ritual em latim improvisado e a fumaça cor-de-rosa.",
+                "A Invocação Suprema",
+                "O momento exato em que o latim ancestral rasga o véu da mortalidade.",
                 new String[]{
-                        "A tempestade rugia lá fora quando §6ArzanLion§0 encheu uma caneca de estanho com aquele líquido espesso e violáceo e entregou-a solenemente às mãos de §4Jodevil§0.",
-                        "\"Bebe até a última gota enquanto invoco os Senhores do Abismo!\", ordenou o mago. Fechando os olhos e pensando na majestade dos imortais, §4Jodevil§0 engoliu a beberagem de uma só vez.",
-                        "§6ArzanLion§0 ergueu o pergaminho babado por §5AsterZZZz§0, estreitou os olhos para tentar ler os borrões e começou a gritar palavras inventadas na hora: \"§oSanguis Noctis... Beterrabus Eternum... Mortis...§0\"",
-                        "Foi então que a pimenta-do-reino subiu do caldeirão direto para o nariz do alquimista. No exato instante da canalização suprema, §6ArzanLion§0 soltou um colossal: \"§oATCHIM!§0\"",
-                        "O espirro lançou o pergaminho dentro do braseiro. Uma explosão ensurdecedora sacudiu a adega, enchendo o salão com uma nuvem de fumaça cor-de-rosa com cheiro de alho frito, e §4Jodevil§0 caiu desacordado."
+                        "Lá fora, um trovão providencial sacudiu os alicerces da cidadela quando §6ArzanLion§0 encheu um cálice de estanho amassado com aquele caldo violáceo e o estendeu solenemente a §4Jodevil§0.",
+                        "\"Bebe até a última gota ao som do meu cântico!\", ordenou o ocultista. Fechando os olhos com devoção heroica e prendendo o fôlego para não sentir o gosto de cebola e vinagre, §4Jodevil§0 virou o cálice de uma só vez.",
+                        "§6ArzanLion§0 abriu os braços, ergueu o pergaminho manchado pela baba de §5AsterZZZz§0 e, estreitando os olhos míopes contra a luz da vela, começou a berrar em latim improvisado:",
+                        "\"§oSanguis Noctis! Tenebras Vampiricus... hã... Beterrabus Perpetuum Mobile!§0\" As sombras da adega pareceram esticar-se nas paredes à medida que a energia arcana se acumulava no teto baixo.",
+                        "Mas, no exato segundo em que a última sílaba deveria selar a perfeição imortal, o vapor de pimenta-rosa do caldeirão entrou direto nas narinas do alquimista — e §6ArzanLion§0 soltou um estrondoso: \"§oATCHIM!§0\"",
+                        "O espirro colossal arremessou o pergaminho babado direto dentro do fogo do braseiro! Uma explosão cor-de-rosa engoliu a adega inteira com cheiro de alho torrado, lançando §4Jodevil§0 desacordado contra os barris!"
                 }));
 
+        // CAPÍTULO XII
         list.add(new ChapterSpec(12, "XII", "Ato II: O Meio",
-                "Renascido pelo Avesso",
-                "O despertar de Jodevil com palidez cadavérica e gosto de vinagre.",
+                "Renascido nas Cinzas",
+                "O lento despertar do coração imortal sob as pedras da adega.",
                 new String[]{
-                        "Três horas antes do amanhecer, §4Jodevil§0 abriu os olhos no chão frio da adega. Seu coração batia num compasso lento, cavernoso e estranhamente oco.",
-                        "Ergueu as mãos diante do rosto: sua pele de fato adquirira a alvura fria do mármore antigo, e suas pupilas dilatadas enxergavam cada grão de poeira na escuridão.",
-                        "Contudo, em vez da força titânica de cem homens, sentia uma enxaqueca monumental, azia de beterraba e um gosto persistente de vinagre barato no céu da boca.",
-                        "Ao seu lado, §6ArzanLion§0 abanava a fumaça rosa com o chapéu, sorrindo amarelo: \"Olha, meu caro §4Jodevil§0... considerando que o livro pegou fogo no meio, diria que foi um sucesso de oitenta por cento!\"",
-                        "\"Oitenta por cento?!\", rugiu o novo Conde das Trevas, sentindo a voz ecoar com um timbre grave, porém falhando num soluço logo em seguida. \"O que fizeste ao meu sangue, charlatão?!\""
+                        "Duas horas antes da alvorada, §4Jodevil§0 abriu os olhos no meio da fuligem cor-de-rosa. Levou a mão ao peito e sentiu um choque de triunfo: seu coração batia agora num compasso lento, grave e glacial.",
+                        "Ergueu os dedos diante da vela: sua pele adquirira a palidez marmórea dos antigos príncipes da noite, e seus olhos enxergavam cada fresta das pedras na escuridão sem esforço algum!",
+                        "Porém, ao tentar levantar-se com a graça sobrenatural de um predador, sentiu uma pontada de azia monumental, um gosto amargo de salada de beterraba na garganta e um estalo seco no joelho esquerdo.",
+                        "Ao seu lado, §6ArzanLion§0 limpava a fuligem das sobrancelhas com um pano de prato, abrindo um sorriso amarelo: \"Meus parabéns, §4Conde Jodevil§0! Tirando o pequeno imprevisto nasal no final, a transmutação foi um sucesso quase absoluto!\"",
+                        "\"Quase absoluto?!\", rugiu §4Jodevil§0, assustando até a cadelinha §eVitória§0 com seu novo timbre cavernoso — que infelizmente falhou num guincho agudo na última sílaba. \"Por que sinto gosto de vinagre nos dentes, charlatão?!\"",
+                        "\"É o buquê aromático da eternidade!\", garantiu §6ArzanLion§0 empurrando-o gentilmente escada acima. \"Vai lá fora testar tuas asas da noite antes que o sol nasça!\""
                 }));
 
+        // CAPÍTULO XIII
         list.add(new ChapterSpec(13, "XIII", "Ato II: O Meio",
-                "O Voo das Roseiras",
-                "Carta de Lady Kikkawa e Dama Luwuana sobre o primeiro teste de voo.",
+                "As Asas da Meia-Noite",
+                "O relato epistolar de Lady Kikkawa e Dama Luwuana sobre o primeiro salto do Conde.",
                 new String[]{
-                        "§8Carta de Lady Kikkawa e Dama Luwuana aos arquivos da Cidadela.§0 \"Escrevemos este relato para que a posteridade jamais esqueça a cena que presenciamos às quatro horas daquela madrugada.\"",
-                        "\"Vimos §4Conde Jodevil§0 emergir das escadarias subterrâneas envolto em sua capa preta, ainda tossindo fumaça cor-de-rosa, mas determinado a provar seus novos poderes sobrenaturais.\"",
-                        "\"Subiu ao parapeito de pedra do jardim superior, abriu os braços contra a ventania e bradou a plenos pulmões: §o'Contemplai a metamorfose do Príncipe da Meia-Noite! Transforma-te, carcaça, em morcego!'§0\"",
-                        "\"Saltou no ar agitando os braços com admirável convicção teatral. Infelizmente, a alquimia de §6ArzanLion§0 não incluía asas no pacote.\"",
-                        "\"§4Jodevil§0 desabou como um saco de batatas diretamente sobre os arbustos de roseiras espinhosas, de onde saiu mancando, com uma rosa presa atrás da orelha, jurando que o vento estava forte demais para voar.\""
+                        "§8Depoimento oficial de Lady Kikkawa e Dama Luwuana arquivado na Torre Real.§0 \"Deixamos registrado este testemunho ocular para que nenhuma geração futura duvide do que ocorreu às quatro da madrugada no jardim de inverno.\"",
+                        "\"Estávamos recolhendo os bules de chá no terraço quando vimos §4Conde Jodevil§0 emergir da porta da adega, ainda soltando pequenos tufos de fumaça cor-de-rosa pela gola da capa.\"",
+                        "\"Ignorando nossa presença, ele subiu com passo imperial sobre a mureta mais alta do parapeito norte, abriu os braços como um condor de veludo e encarou o abismo do pátio.\"",
+                        "\"Bradou então com voz trovejante: §o'Contemplai, ó estrelas, o despertar do Soberano do Abismo! Desfaze-te em névoa e asas, matéria mortal!'§0 — e atirou-se de peito aberto no vazio!\"",
+                        "\"Eu e §dKikkawa§0 corremos até a borda — e até o pequeno §bPipira§0 tapou os olhos com as nadadeiras: pois §4Jodevil§0 não virou morcego nem névoa; caiu reto feito uma bigorna de ferro!\"",
+                        "\"Aterrissou de cabeça no meio do grande canteiro de roseiras bravas do pátio, de onde saiu cinco minutos depois mancando, cheio de espinhos nas costas, dizendo que uma corrente de ar traiçoeira atrapalhara seu pouso.\""
                 }));
 
+        // CAPÍTULO XIV
         list.add(new ChapterSpec(14, "XIV", "Ato II: O Meio",
-                "A Prova da Prata",
-                "O interrogatório inquisitorial conduzido por Azarasquel e Reznozada.",
+                "O Tribunal da Prata",
+                "O ordálio sagrado conduzido pelos inquisidores da fortaleza.",
                 new String[]{
-                        "Na noite seguinte, a notícia de que §4Jodevil§0 declarara-se formalmente um Vampiro Imortal chegou aos ouvidos dos guardiões da fortaleza: §2Azarasquel§0 e §2Reznozada§0.",
-                        "Acompanhado de seu leal leãozinho dourado §6Javidizineo§0, §2Azarasquel§0 cercou o Conde no pátio central, enquanto §2Reznozada§0 trazia um balde de água benta e uma colher de prata.",
-                        "\"Se és mesmo uma abominação nosferatu das trevas\", declarou §2Azarasquel§0 solenemente, \"esta prata sagrada há de queimar-te a carne!\" E encostou a colher de sobremesa na bochecha de §4Jodevil§0.",
-                        "Não houve fumaça nem chamas profanas. A colher apenas deixou uma mancha vermelha que deu a §4Jodevil§0 uma crise de coceira alérgica no pescoço.",
-                        "Quando jogaram a água benta, o Conde apenas espirrou e reclamou que haviam molhado seu veludo novo, fazendo §2Reznozada§0 gargalhar tão alto que acordou metade da guarnição."
+                        "Na noite seguinte, quando §4Conde Jodevil§0 anunciou solenemente no salão principal que não mais comeria pão mortal por ser uma criatura maldita das trevas, os guerreiros §2Azarasquel§0 e §2Reznozada§0 decidiram tirar a história a limpo.",
+                        "Cercando a poltrona do Conde ao lado do fiel leãozinho dourado §6Javidizineo§0, §2Azarasquel§0 puxou um frasco de água benta da capela, enquanto §2Reznozada§0 escondia um objeto brilhante atrás das costas.",
+                        "\"Se tu és mesmo um demônio nosferatu saído das páginas antigas\", declarou §2Azarasquel§0 com solenidade inquisitorial, \"então o toque da prata consagrada reduzirá tua carne imunda a cinzas fumegantes!\"",
+                        "Num golpe rápido, §2Reznozada§0 encostou no pescoço pálido de §4Jodevil§0 uma velha colher de sobremesa de prata que surrupiara da copa.",
+                        "Todos prenderam a respiração esperando o clarão profano — mas não houve fogo nem fumaça: cinco segundos depois, porém, uma mancha vermelha brotou na pele e §4Jodevil§0 começou a se coçar desesperadamente como um cão com pulgas!",
+                        "\"Tira essa colher oxidada de perto de mim!\", gritava o Conde coçando a nuca com as duas mãos enquanto §2Reznozada§0 ria de rolar no tapete. \"O meu vampirismo me deu alergia cutânea a talher mal lavado!\""
                 }));
 
+        // CAPÍTULO XV
         list.add(new ChapterSpec(15, "XV", "Ato II: O Meio",
-                "As Apostas de Corvo",
-                "A alvorada decisiva e a banca de apostas no telhado da taverna.",
+                "O Desafio do Horizonte",
+                "A reunião da corte nos telhados diante do nascer do astro-rei.",
                 new String[]{
-                        "Restava, porém, a prova suprema de todo imortal das trevas: o nascer do sol. E ninguém soube aproveitar melhor a ocasião do que o astuto §8Corvo§0.",
-                        "Antes que os primeiros raios dourados tingissem o horizonte, §8Corvo§0 empoleirou-se no telhado da taverna com um livro de registros e uma bolsa tilintante de moedas.",
-                        "\"Façam suas apostas, senhores da corte!\", anunciava §8Corvo§0. \"Três para um que §4Jodevil§0 explode em cinzas dramáticas ao primeiro raio! Dois para um que é tudo teatro e ele só pega um bronzeado!\"",
-                        "Toda a cidadela reuniu-se à sombra das arcadas enquanto §4Jodevil§0, orgulhoso demais para recuar, deu um passo solene para fora do telhado quando o sol despontou sobre o mar.",
-                        "O silêncio foi absoluto. O raio solar atingiu em cheio a fronte pálida do Conde."
+                        "Ferido em sua honra pelas gargalhadas de §2Reznozada§0, §4Conde Jodevil§0 declarou que provaria a autenticidade de sua maldição enfrentando o juiz supremo de todos os imortais: o sol da manhã.",
+                        "Meia hora antes da alvorada, o engenhoso §8Corvo§0 já havia subido ao telhado da taverna com um caderno de couro debaixo do braço e um saco de moedas tilintantes, abrindo a banca oficial de apostas da corte.",
+                        "\"Façam seu jogo, cavalheiros e damas!\", gritava §8Corvo§0 empoleirado na chaminé. \"Pagando cinco para um se o Conde virar uma bola de fogo dramática! Pagando dois para um se ele só espirrar e pedir um guarda-sol!\"",
+                        "Sob a sombra segura dos arcos de pedra, §9Asminn§0, §6ArzanLion§0, §dKikkawa§0, §dLuwuana§0, §2Azarasquel§0, §2Reznozada§0 e até o sonolento §5AsterZZZz§0 observavam em silêncio tenso.",
+                        "De queixo erguido e manto fechado, §4Jodevil§0 caminhou até a linha exata onde terminava a sombra do telhado, aguardando que o disco dourado emergisse das águas do oceano.",
+                        "Quando o primeiro feixe de luz solar atravessou o pátio e atingiu em cheio a bota e a fronte pálida do Conde, toda a cidadela prendeu o fôlego."
                 }));
 
+        // CAPÍTULO XVI
         list.add(new ChapterSpec(16, "XVI", "Ato II: O Meio",
-                "O Chiado do Sol",
-                "A revelação da queimação lenta de 1 ponto por minuto e o risco de 1%.",
+                "O Julgamento da Aurora",
+                "Onde a luz da manhã revela o verdadeiro preço do sangue imortal.",
                 new String[]{
-                        "\"Ninguém ganhou a aposta de §8Corvo§0 naquela manhã, §9Asminn§0\", gemeu §4Jodevil§0 cobrindo o rosto com as mãos. \"Pois o feitiço torto de §6ArzanLion§0 reservava-me uma humilhação muito mais refinada!\"",
-                        "\"Drácula e os antigos imortais de Anne Rice ardiam em fogueiras majestosas quando tocados pelo sol. Era uma morte rápida, trágica, digna de ópera!\"",
-                        "\"Comigo não! Quando o sol me tocou, ouviu-se apenas um chiado baixo — §o'tsssss'§0 — exatamente como uma fatia de toucinho esquecida numa frigideira morna!\"",
-                        "\"Descobri então a lei cruel da minha Maldição do Sangue Duvidoso: a cada minuto inteiro exposto ao sol aberto, o astro-rei drena lentamente uma gota da minha vitalidade.\"",
-                        "\"Mas há um terror ainda pior: devido ao espirro de §6ArzanLion§0, a cada minuto que o sol me queima, há exatamente uma chance em cem de o feitiço entrar em colapso e reduzir-me a cinzas instantaneamente!\""
+                        "\"Ninguém levou o ouro da banca de §8Corvo§0 naquela manhã, meu caro §9Asminn§0\", lamentou §4Jodevil§0 cobrindo os olhos com o antebraço. \"Pois a receita torta de §6ArzanLion§0 negou-me até mesmo a dignidade de uma morte rápida!\"",
+                        "\"Nos romances de Bram Stoker e nas crônicas de Paris, o sol é um carrasco majestoso que consome o vampiro numa pira de tragédia instantânea. Mas em mim? O sol agiu como um cozinheiro entediado!\"",
+                        "Assim que a claridade tocou a pele do Conde no pátio, subiu de seu colarinho e da ponta de sua bota um chiado lento e gorduroso — §o'tsssss'§0 — idêntico ao de uma tira de toucinho jogada numa frigideira morna.",
+                        "\"Compreendi naquele instante a lei cruel do meu §4Sangue Duvidoso§0\", suspirou o Conde. \"A cada minuto inteiro que permaneço sob o sol aberto, o astro-rei cozinha minha dignidade e arranca uma fração exata da minha força vital!\"",
+                        "\"Mas o verdadeiro horror que me fez saltar de volta para a sombra como um gato escaldado foi sentir no peito o tic-tac da §4Centésima Centelha§0!\"",
+                        "\"Pois a cada minuto que o sol me drena, as runas borradas por §5AsterZZZz§0 rolam os dados invisíveis do abismo: há sempre uma chance em cem de o feitiço entrar em curto-circuito e explodir meu corpo em cinzas na mesma hora!\""
                 }));
 
+        // CAPÍTULO XVII
         list.add(new ChapterSpec(17, "XVII", "Ato II: O Meio",
-                "O Servo Jacinto",
-                "O encontro fatídico com o guardião dos cofres e a perda do Mjölnir.",
+                "O Guardião dos Cofres",
+                "O confronto de autoridade entre o Senhor das Sombras e seu servo eterno.",
                 new String[]{
-                        "Humilhado pelo sol e caçoado pelos inquisidores, §4Conde Jodevil§0 decidiu na noite seguinte que imporia sua autoridade vampírica sobre o funcionário mais obstinado da cidadela: §6Jacinto§0.",
-                        "§6Jacinto§0, o servo imortal de pele ressecada pelo deserto que organizava incansavelmente os cofres e armazéns do reino, caminhava entre as arcas de madeira com sua prancheta invisível.",
-                        "\"Ouve-me bem, criatura subalterna!\", bradou §4Jodevil§0 fazendo sua capa esvoaçar e sacando sua arma mais lendária e preciosa — o martelo ancestral §bMjölnir§0, forjado com o poder das tempestades.",
-                        "\"Diante de ti está o Senhor da Noite! Curva-te perante o meu poder!\", declarou o Conde, gesticulando com tanta ênfase teatral que, num descuido inexplicável, estendeu o martelo diretamente para as mãos do servo.",
-                        "Instintivamente treinado para receber equipamentos para a firma, §6Jacinto§0 segurou o §bMjölnir§0, guardou-o no cinturão, bateu continência e disse: \"Muito obrigado pela doação, patrão! Já está registrado no patrimônio!\""
+                        "Ao cair da noite seguinte, ainda sentindo o cheiro de couro chamuscado nas botas, §4Conde Jodevil§0 desceu ao salão dos baús decidido a restaurar seu prestígio diante do único ser que não rira dele no pátio: o guardião §6Jacinto§0.",
+                        "Imortal, calado e dotado daquela paciência mineral de quem passa a eternidade separando minérios e organizando estoques, §6Jacinto§0 limpava metodicamente a fileira central de arcas.",
+                        "\"Detém-te, autômato das areias!\", trovoou §4Jodevil§0 abrindo a capa e sacando do cinturão sua relíquia mais sagrada e devastadora: o martelo das tempestades, o lendário §bMjölnir que não volta§0!",
+                        "\"Olha bem para esta arma divina e reconhece o teu soberano noturno!\", bradou o Conde, fazendo um floreio teatral tão exagerado com o braço que acabou estendendo o cabo do martelo bem na frente do peito do guardião.",
+                        "Treinado pelos séculos para receber ferramentas de trabalho entregues pelos patrões, §6Jacinto§0 fechou a mão calejada no cabo do §bMjölnir§0 num reflexo infalível, prendeu-o no cinto e bateu continência!",
+                        "\"Agradecido pelo equipamento novo, patrão §4Jodevil§0!\", declarou §6Jacinto§0 com voz solene. \"Já dei entrada no almoxarifado da firma sob minha guarda pessoal!\""
                 }));
 
+        // CAPÍTULO XVIII
         list.add(new ChapterSpec(18, "XVIII", "Ato II: O Meio",
-                "Chamas e Súplicas",
-                "A fúria impotente de Jodevil tentando queimar Jacinto para reaver a arma.",
+                "A Vontade Inabalável",
+                "O duelo de fogo e orgulho nos corredores da tesouraria.",
                 new String[]{
-                        "O sangue duvidoso de §4Jodevil§0 ferveu como nunca antes. \"Devolve-me o martelo imediatamente, servo insolente! Foi um gesto dramático, não uma doação!\"",
-                        "Mas §6Jacinto§0 apenas ajeitou o capacete de couro e continuou organizando os baús. Furioso, §4Jodevil§0 tentou golpeá-lo, tentou empurrá-lo em poços de fogo e até conjurou labaredas aos pés do guardião.",
-                        "Para desespero do Conde, §6Jacinto§0 caminhava entre as chamas sem que um único fio de sua túnica chamuscasse, olhando para §4Jodevil§0 com a serenidade implacável de um burocrata imortal.",
-                        "\"Ei patrão\", dizia §6Jacinto§0 enquanto toda a corte se aglomerava para rir da cena, \"tacar fogo em mim não vai fazer o martelo cair! Se pedir com carinho e educação, quem sabe eu te devolvo!\"",
-                        "E assim viu-se o temível Príncipe das Trevas seguindo um organizador de baús corredor abaixo, implorando: \"Por favorzinho, §6Jacinto§0, devolve o meu martelo...\""
+                        "Um silêncio sepulcral caiu sobre os cofres antes que §4Jodevil§0 perdesse completamente a compostura aristocrática: \"Devolve-me esse martelo agora mesmo, §6Jacinto§0! Eu estava apontando para ti, não te presenteando!\"",
+                        "§6Jacinto§0 apenas deu meia-volta e continuou guardando pedras nos baús com o §bMjölnir§0 pendurado na cintura. Fora de si, §4Jodevil§0 puxou a espada, mas o golpe resvalou como brisa na carcaça imortal do funcionário.",
+                        "Em desespero, o Conde derramou óleo de lanterna no chão e ateou fogo aos pés do guardião para forçá-lo a soltar a arma — mas §6Jacinto§0 caminhou tranquilamente no meio das labaredas sem chamuscar um único fio da roupa!",
+                        "\"Ei, patrão\", repreendeu §6Jacinto§0 sacudindo a cinza do ombro enquanto §9Asminn§0, §2Reznozada§0 e §8Corvo§0 já espiavam da porta segurando o riso, \"me bater ou tacar fogo não vai ajudar nada no processo!\"",
+                        "\"Se o senhor quiser um presente do meu inventário\", completou o guardião cruzando os braços, \"vai ter que pedir no diálogo, com muita educação e carinho, e contar com a minha boa vontade!\"",
+                        "E assim as pedras da cidadela testemunharam o temível Conde das Trevas seguindo o organizador de baús corredor afora, de mãos postas, implorando: \"Ah, vai, §6Jacinto§0, por favorzinho, devolve o meu §bMjölnir§0...\""
                 }));
 
         // =========================================================================
         // ATO III — O FIM: A REDENÇÃO NOTURNA E O REINADO IMORTAL (Cap. XIX a XXVII)
         // =========================================================================
 
+        // CAPÍTULO XIX
         list.add(new ChapterSpec(19, "XIX", "Ato III: O Fim",
-                "O Oráculo Felino",
-                "A noite de melancolia na torre com o Senhor Cummins e o morcego Juninho.",
+                "O Oráculo da Torre",
+                "O conselho silencioso das criaturas da noite sob a tempestade.",
                 new String[]{
-                        "Naquela madrugada chuvosa, após recuperar seu orgulho (e depois de muito implorar no salão), §4Jodevil§0 recolheu-se ao topo de sua torre, sentindo o peso agridoce de sua condição.",
-                        "Sentado junto à lareira apagada, perguntava-se se era apenas uma piada entre os vivos e os mortos. Foi quando um miado suave quebrou o silêncio da câmara.",
-                        "O místico gato §6Senhor Cummins§0 saltou para o braço de sua poltrona, ronronando com aquela sabedoria cósmica que só os felinos imortais possuem, enquanto o morcego §8Juninho§0 pousava no candelabro trazendo um frasco de §fBat Leite§0.",
-                        "Ao acariciar a cabeça do gato sob a luz prateada da lua, §4Jodevil§0 compreendeu algo profundo: mesmo que seu vampirismo tivesse nascido de um espirro e de caldo de beterraba, sua ligação com a noite era real.",
-                        "\"Talvez\", sussurrou o Conde para §6Senhor Cummins§0, \"não seja a pureza do feitiço que faz um soberano da noite, mas a grandeza com que ele habita a própria escuridão.\""
+                        "Depois de trinta e duas súplicas humilhantes no corredor, §4Conde Jodevil§0 finalmente ouviu o tilintar metálico do §bMjölnir§0 sendo devolvido por §6Jacinto§0 e recolheu-se, exausto, ao alto de sua torre.",
+                        "Atirou-se na poltrona diante da janela aberta para a chuva, perguntando-se se valera a pena trocar a mortalidade por uma existência de alergia a talheres, insolação chiante e sermões de almoxarifado.",
+                        "Antes que a melancolia o vencesse, porém, um baque suave ecoou sobre a escrivaninha: o gato místico §bSenhor Cummins§0 saltara do peitoril e, com um olhar de sabedoria ancestral, empurrou o tinteiro com a pata até encostá-lo na mão do Conde.",
+                        "Ao mesmo tempo, o pequeno morcego §8Juninho§0 desceu do teto voando torto e depositou sobre o colo de §4Jodevil§0 um frasquinho morno de §fBat Leite§0.",
+                        "§4Jodevil§0 olhou para os olhos dourados de §bSenhor Cummins§0 e para as orelhas peludas de §8Juninho§0, e um sorriso genuíno substituiu sua carranca dramática.",
+                        "\"Tendes razão, meus pequenos irmãos da sombra\", murmurou o Conde acariciando o gato que ronronava alto. \"Um verdadeiro lorde não se mede pela perfeição do feitiço, mas pela lealdade daqueles que dividem a noite com ele.\""
                 }));
 
+        // CAPÍTULO XX
         list.add(new ChapterSpec(20, "XX", "Ato III: O Fim",
-                "Carta Sem Reembolso",
-                "A resposta oficial de ArzanLion e o presente do chapéu de palha.",
+                "O Édito do Alquimista",
+                "O parecer hermético de ArzanLion acerca das cláusulas do ritual.",
                 new String[]{
-                        "§8Correspondência deixada sob a porta do quarto de Conde Jodevil por ArzanLion.§0 \"Prezado cliente e amigo §4Conde Jodevil§0, venho por meio desta responder às tuas trinta e sete reclamações formais.\"",
-                        "\"Alegas que meu ritual não te concedeu a transformação em névoa nem o domínio sobre alcateias, e que em vez disso sofres de insolação vampírica de um ponto por minuto com risco de combustão.\"",
-                        "\"Ora, meu caro! Na cláusula quarta do nosso acordo verbal na taverna, pediste expressamente para 'viver como um autêntico vampiro que teme a luz do sol'. E hoje não há na província quem tema mais o meio-dia do que tu!\"",
-                        "\"Portanto, declaro o serviço integralmente cumprido e informo que o laboratório de §6ArzanLion§0 não trabalha com devoluções de moedas nem de queijos já degustados.\"",
-                        "\"Como gesto de boa vontade, deixo-te em anexo um chapéu de palha de aba larga para os dias de verão. Com estima alquímica, §6Grão-Mago ArzanLion§0.\""
+                        "§8Documento selado deixado sob a porta de Conde Jodevil pelo Grão-Alquimista ArzanLion.§0 \"Ilustríssimo cliente §4Conde Jodevil§0, acuso o recebimento das tuas trinta e sete cartas exigindo reparação moral e material.\"",
+                        "\"Reclamas no item doze que não consegues atravessar fechaduras em forma de neblina, e no item vinte e quatro que tua bota solta fumaça com cheiro de toucinho sempre que pisas no sol do meio-dia.\"",
+                        "\"Cumpre-me recordar-te os termos exatos do nosso contrato verbal celebrado perante a testemunha canina §eVitória§0: pediste para tornar-te um imortal pálido que jamais envelhece e que teme a luz do sol como nos livros!\"",
+                        "\"Ora, estás pálido como cal, não terás mais fios brancos e tens tanto pavor da §4Centésima Centelha§0 solar que atravessas o pátio correndo debaixo das marquises! O contrato foi cumprido com louvor!\"",
+                        "\"Isto posto, comunico que o gabinete de §6ArzanLion§0 opera sob a cláusula irrevogável de §oSem Reembolso§0 — especialmente porque o queijo curado do pagamento já foi inteiramente digerido.\"",
+                        "\"Como brinde de cortesia ao nosso primeiro vampiro oficial, deixo-te esta caixa contendo um elegante chapéu de palha camponês de aba larga. Usa-o com garbo nos dias de verão! — §6ArzanLion§0.\""
                 }));
 
+        // CAPÍTULO XXI
         list.add(new ChapterSpec(21, "XXI", "Ato III: O Fim",
                 "O Eclipse de Sangue",
                 "Quando as hordas da calada cercaram a cidadela e o medo tomou os mortais.",
                 new String[]{
-                        "O destino, porém, guardava para §4Conde Jodevil§0 a oportunidade de provar que sob sua capa teatral batia o coração de um verdadeiro lorde imortal.",
-                        "Na última noite da estação, um eclipse tingiu a lua de vermelho-sangue e uma névoa gélida subiu das ravinas, trazendo consigo legiões de criaturas famintas das profundezas.",
-                        "As tochas das muralhas apagaram-se sob o vendaval. Sem a luz do dia e cegos pela cerração noturna, até os mais bravos guerreiros da cidadela recuaram diante dos uivos que vinham da escuridão.",
-                        "Mas para §4Jodevil§0, aquela noite sem sol não era um obstáculo — era o seu reino. Sem o astro-rei no céu para drenar-lhe o sangue ou ameaçá-lo com cinzas, sua maldição calava-se perante a majestade da meia-noite.",
-                        "No alto do baluarte norte, sua silhueta destacou-se contra a lua escarlate."
+                        "As piadas da corte sobre o chapéu de palha de §4Jodevil§0 cessaram abruptamente na última sexta-feira do mês, quando o céu ao entardecer não ficou dourado, mas tingiu-se de um púrpura espesso e sufocante.",
+                        "Um antigo Eclipse de Sangue engoliu os astros e, das fendas abissais além da costa, subiu uma maré de criaturas famintas da escuridão que cercou todas as muralhas da cidadela.",
+                        "O vendaval apagou os archotes das torres de vigia. No breu absoluto, os olhos dos mortais não conseguiam enxergar um palmo à frente, e o som de garras escalando a pedra fez soar o sino de alarme.",
+                        "Na praça d'armas, §9Asminn§0, §2Azarasquel§0, §2Reznozada§0, §dKikkawa§0, §dLuwuana§0, §8Corvo§0 e §6ArzanLion§0 formaram um círculo defensivo, mas precisavam de alguém que enxergasse através daquela treva espessa.",
+                        "Foi então que os passos firmes de botas ecoaram na escadaria central: sem o sol no céu para drenar seu sangue ou ameaçá-lo com a §4Centésima Centelha§0, a meia-noite eterna do eclipse era o território natural de §4Conde Jodevil§0!",
+                        "No alto do parapeito norte, com a capa negra esvoaçando na tempestade e as pupilas acesas no escuro, o Conde ergueu sua voz sobre o rugido dos monstros."
                 }));
 
+        // CAPÍTULO XXII
         list.add(new ChapterSpec(22, "XXII", "Ato III: O Fim",
                 "A Dança nas Muralhas",
                 "O triunfo épico de Conde Jodevil liderando a defesa sob a meia-noite.",
                 new String[]{
-                        "\"Erguei vossos olhos, filhos da cidadela!\", ecoou a voz de §4Conde Jodevil§0 sobre o estrondo dos trovões, desta vez sem tropeçar na capa e empunhando com glória seu reluzente §bMjölnir§0.",
-                        "\"Enquanto o sol dorme no abismo do horizonte, esta noite pertence a mim!\"",
-                        "Saltando das ameias para o campo de batalha — desta vez aterrissando de pé sobre a pedra úmida —, §4Jodevil§0 avançou como um espectro carmesim entre as fileiras de monstros.",
-                        "Ao seu lado, os feitiços de §6ArzanLion§0 iluminavam o breu, as lâminas de §2Azarasquel§0 e §2Reznozada§0 abriam caminho, as engrenagens de §9Asminn§0 e §dKikkawa§0 rugiam e até §6Jacinto§0 defendia o perímetro dos cofres.",
-                        "Durante horas a fio, o Conde lutou na vanguarda da escuridão, inspirando cada alma presente com a bravura romântica e indomável que sempre sonhara possuir."
+                        "\"Firmes na linha, meus irmãos!\", trovoou §4Conde Jodevil§0 no alto das ameias, empunhando com glória o reconquistado §bMjölnir§0 enquanto os relâmpagos escarlates desenhavam sua silhueta.",
+                        "\"Eles vieram achando que a escuridão lhes pertence — mas esqueceram que esta fortaleza já tem o seu Príncipe da Noite!\"",
+                        "Desta vez sem escorregar em nenhuma pedra e passando longe das roseiras, §4Jodevil§0 saltou para a vanguarda da muralha leste, enxergando no breu cada investida inimiga e cantando as posições para a corte!",
+                        "Guiados pela visão noturna do Conde, as lâminas de §2Azarasquel§0 e §2Reznozada§0 — ladeados pelo feroz §6Javidizineo§0 — cortavam a primeira fila, enquanto §9Asminn§0, §dKikkawa§0 e §dLuwuana§0 disparavam das torres e §8Corvo§0 cobria os flancos.",
+                        "Mais atrás, §6ArzanLion§0 arremessava frascos explosivos ao lado de §eVitória§0, e na porta da tesouraria o implacável §6Jacinto§0 barrava qualquer monstro que tentasse chegar perto dos baús da firma!",
+                        "Durante seis horas de treva cerrada, §4Conde Jodevil§0 lutou sem recuar um único passo, transformando sua maldição torta no escudo invencível que salvou todas as almas da cidadela."
                 }));
 
+        // CAPÍTULO XXIII
         list.add(new ChapterSpec(23, "XXIII", "Ato III: O Fim",
-                "O Brinde da Corte",
-                "O reconhecimento solene de todos os companheiros ao Conde da Meia-Noite.",
+                "O Banquete do Eclipse",
+                "A celebração triunfal dos defensores no grande salão de inverno.",
                 new String[]{
-                        "Quando a última criatura das sombras foi banida das muralhas e a calmaria retornou aos pátios de pedra, toda a irmandade da fortaleza reuniu-se no grande salão.",
-                        "§9Lorde Asminn§0 ergueu sua taça primeiro, seguido por §6ArzanLion§0, §dKikkawa§0, §dLuwuana§0, §2Azarasquel§0, §2Reznozada§0, §8Corvo§0 e até §5AsterZZZz§0, que acordara exatamente na hora do banquete.",
-                        "\"Ao §4Conde Jodevil§0!\", proclamou §9Asminn§0 com um sorriso. \"Que pode ter nascido do ritual mais duvidoso da história da alquimia, mas provou ser o mais nobre guardião das nossas madrugadas!\"",
-                        "\"Eu sempre disse que a receita de beterraba era genial!\", gabou-se §6ArzanLion§0, enquanto §4Jodevil§0 agradecia com uma reverência impecável, enxugando discretamente uma lágrima de emoção gótica.",
-                        "Naquela noite, ninguém riu por escárnio; riram juntos como irmãos de armas que compartilhavam o mesmo mundo e a mesma lenda."
+                        "Quando a última criatura foi arremessada de volta ao mar e as tochas do grande salão foram reacendidas, a corte inteira reuniu-se em torno da mesa de carvalho para celebrar a vitória — num verdadeiro caos digno da irmandade.",
+                        "Antes mesmo do primeiro discurso, §6ArzanLion§0 já puxava um pergaminho tentando cobrar de §4Jodevil§0 uma 'taxa adicional de eficiência em combate noturno', sendo imediatamente vaiado por todos os presentes.",
+                        "Debaixo da mesa, a cadelinha §eVitória§0 e o leãozinho §6Javidizineo§0 travavam uma operação conjunta perfeitamente coordenada para furtar uma travessa inteira de pernil assado sem que §2Azarasquel§0 percebesse.",
+                        "Na outra ponta, o monge §5AsterZZZz§0 — que dormira durante metade do Eclipse de Sangue — acabara de despertar apenas para apoiar a cabeça dentro da fruteira de prata e voltar a roncar entre as maçãs.",
+                        "§9Lorde Asminn§0 bateu na taça pedindo silêncio, enquanto §dLady Kikkawa§0 (com §bPipira§0 dando piruetas no ar), §dDama Luwuana§0, §2Reznozada§0 e §8Corvo§0 enchiam o cálice do Conde com o melhor suco de beterraba da safra.",
+                        "\"Ao §4Conde Jodevil§0!\", proclamou §9Asminn§0 sob aplausos ensurdecedores. \"Que entrou na adega buscando a vaidade dos vampiros antigos e saiu dela como o maior herói das nossas madrugadas!\""
                 }));
 
+        // CAPÍTULO XXIV
         list.add(new ChapterSpec(24, "XXIV", "Ato III: O Fim",
                 "O Castelo sobre o Mar",
-                "O refúgio gótico de Jodevil nas alturas e seu leito eterno.",
+                "A grande procissão noturna rumo à nova fortaleza nas falésias.",
                 new String[]{
-                        "Com a paz restaurada, §4Conde Jodevil§0 ergueu seu santuário definitivo no alto das muralhas banhadas pelo oceano morno, onde as nuvens tocam as torres de pedra.",
-                        "Ali dispôs seu leito real — guardado pela vigília silenciosa das estátuas e visitado pelos ventos marinhos — onde repousa sempre que o sol ameaça subir ao zênite.",
-                        "Aprendera a amar até mesmo as idiossincrasias de sua maldição: a necessidade de caminhar pelas sombras das árvores ao meio-dia, os guarda-sóis elegantes e a adrenalina poética de desafiar o sol.",
-                        "Pois que graça teria a imortalidade se não houvesse nela um toque de perigo — aquela uma chance em cem de virar lenda e cinzas a qualquer minuto de descuido?",
-                        "Seu castelo tornou-se o farol noturno da província: silencioso sob o sol, mas vibrante e imponente assim que a primeira estrela desponta no firmamento."
+                        "Para honrar seu título definitivo de Senhor das Sombras, §4Conde Jodevil§0 decidiu transferir seus aposentos para o ponto mais alto do Castelo sobre o Mar — mas a mudança na madrugada seguinte foi mais difícil que a própria guerra.",
+                        "O novo leito gótico do Conde, entalhado em madeira maciça com dossel rubro, simplesmente entalou na curva da escadaria helicoidal do segundo andar!",
+                        "\"Empurra pela esquerda, §2Reznozada§0! Cuidado com o verniz da minha cabeceira, §8Corvo§0!\", gritava §4Jodevil§0 de cima do corrimão, usando o chapéu de palha para abanar o suor enquanto coordenava a manobra.",
+                        "Lá embaixo, quando pediram ajuda ao forte §6Jacinto§0 para erguer as caixas de livros, o guardião recusou solenemente: disse que suas mãos estavam ocupadas segurando o §bMjölnir§0 de prontidão e que mudança não constava no comando de organização!",
+                        "Quando finalmente conseguiram levar o leito e a grande arca até o quarto real no topo da torre, encontraram o gato §bSenhor Cummins§0 já deitado bem no centro do travesseiro principal, recusando-se a ceder lugar até ganhar carinho.",
+                        "Exausto, mas radiante em seu novo santuário cercado pelas ondas do mar, §4Jodevil§0 fechou as pesadas cortinas contra a brisa da manhã: finalmente tinha um castelo à altura da sua lenda."
                 }));
 
+        // CAPÍTULO XXV
         list.add(new ChapterSpec(25, "XXV", "Ato III: O Fim",
-                "Filosofia do Sangue",
-                "As reflexões finais de Jodevil sobre perfeição, amizade e imortalidade.",
+                "A Confissão a Asminn",
+                "O diálogo íntimo entre o imortal e seu cronista ao findar das velas.",
                 new String[]{
-                        "A vela de sebo já estava quase no fim quando §4Jodevil§0 concluiu sua narrativa, olhando serenamente para os vinte e sete tomos que §9Asminn§0 ia preenchendo sobre a mesa.",
-                        "\"Sabes o que compreendi após tudo isso, meu caro §9Asminn§0?\", perguntou o Conde com voz suave e inspiradora. \"Quando eu lia os livros antigos, julgava que ser imortal era afastar-se dos outros em fria perfeição.\"",
-                        "\"Mas os antigos vampiros das lendas eram solitários e amargos. A minha maldição torta, por obra do acaso e da incompetência de §6ArzanLion§0, deu-me algo muito mais precioso.\"",
-                        "\"Deu-me histórias para rir ao redor do fogo, companheiros que guardam minhas costas quando o sol nasce e uma corte inteira que celebra cada uma das minhas noites.\"",
-                        "\"Não troco meu vampirismo de meia-tigela por nenhum trono de alabastro dos Cárpatos. Pois nesta terra, sou único.\""
+                        "A última vela do candelabro já derretia sobre a prata quando o barulho da festa lá embaixo silenciou, deixando apenas §4Conde Jodevil§0 e §9Lorde Asminn§0 na câmara alta da torre.",
+                        "Por um longo momento, §4Jodevil§0 não fez poses teatrais nem ajeitou a capa; caminhou até a janela entreaberta e olhou para o pátio silencioso com uma expressão de tristeza tão profunda que fez §9Asminn§0 pousar a pena.",
+                        "\"Sabes qual é o único peso verdadeiro desta minha maldição torta, §9Asminn§0?\", sussurrou o Conde com a voz embargada. \"Não é o chiado na bota sob o sol, nem o gosto de beterraba, nem o medo da §4Centésima Centelha§0.\"",
+                        "\"Hoje todos vocês estão aqui comigo: tu escreves minhas crônicas, §6ArzanLion§0 reclama do queijo, §dKikkawa§0 e §dLuwuana§0 riem no jardim, §2Azarasquel§0, §2Reznozada§0 e §8Corvo§0 brindam no salão...\"",
+                        "\"Mas o feitiço me tornou imortal, meu irmão. O que será de mim daqui a cinquenta ou cem anos, quando o tempo levar a corte e este Castelo sobre o Mar ficar mergulhado num silêncio eterno?\"",
+                        "Uma lágrima escorreu pela face pálida de §4Jodevil§0: \"Juro-te, §9Asminn§0: no dia em que eu ficar sozinho nestes corredores, a saudade de vocês doerá tanto no meu peito que serei capaz de beber qualquer veneno da adega apenas para esquecer quem sou!\""
                 }));
 
+        // CAPÍTULO XXVI
         list.add(new ChapterSpec(26, "XXVI", "Ato III: O Fim",
                 "A Alvorada se Aproxima",
                 "As últimas anotações do cronista Asminn antes do nascer do sol.",
                 new String[]{
-                        "§8Nota Final do Cronista Lorde Asminn — Alvorada de 25 de Outubro.§0 Minha mão dói de tanto escrever, mas o vigésimo sexto volume destas crônicas chega ao fim exatamente quando o céu a leste começa a clarear.",
-                        "Observo §4Conde Jodevil§0 levantar-se da poltrona. Uma réstia de luz matinal acaba de atravessar a fresta da janela, tocando a ponta de sua bota.",
-                        "Imediatamente ouve-se um leve §o'tsssss'§0 e um fiozinho de fumaça sobe do couro. \"Por todos os ancestrais!\", exclama §4Jodevil§0 puxando o pé para a sombra. \"Já está começando a contagem do minuto!\"",
-                        "Com a dignidade apressada que lhe é característica, o Conde fecha as cortinas pesadas, ajeita a capa e dirige-se ao seu leito real enquanto o dia desperta lá fora.",
-                        "Deixo estes vinte e sete volumes guardados na arca sagrada ao lado de seu repouso, para que todo viajante conheça a verdade sobre o nosso Príncipe da Noite."
+                        "§8Nota Final do Cronista Lorde Asminn — Alvorada de 25 de Outubro.§0 Engoli o nó na garganta diante daquelas palavras proféticas do meu amigo e ergui-me da escrivaninha para tocar-lhe o ombro frio.",
+                        "\"Enquanto estas palavras existirem, §4Jodevil§0\", prometi-lhe solenemente, \"tu jamais estarás sozinho. Guardarei estes vinte e sete tomos na arca ao lado do teu leito para que, mesmo que os séculos passem, nossa voz sempre te responda no escuro.\"",
+                        "Nesse exato instante, a primeira fresta de sol da manhã atravessou a cortina da janela e tocou a ponta da bota direita do Conde.",
+                        "Imediatamente subiu do couro um chiado agudo — §o'tsssss'§0 — acompanhado de um fiozinho de fumaça branca! \"Por todos os abismos!\", saltou §4Jodevil§0 puxando o pé para trás da poltrona. \"Fecha essa cortina antes que a §4Centésima Centelha§0 me pegue!\"",
+                        "Rindo juntos do susto matinal, ajudei-o a lacrar o veludo da janela enquanto o morcego §8Juninho§0 se acomodava no dossel e §bSenhor Cummins§0 subia aos pés do leito real.",
+                        "Recolho agora meus tinteiros e fecho a tampa desta arca ao lado da cama: a noite terminou, e o Conde da Meia-Noite precisa descansar."
                 }));
 
+        // CAPÍTULO XXVII
         list.add(new ChapterSpec(27, "XXVII", "Ato III: O Fim",
                 "Epílogo: O Imortal",
-                "O juramento eterno de Conde Jodevil que encerra os 27 volumes.",
+                "O juramento eterno de Conde Jodevil que encerra o primeiro ciclo.",
                 new String[]{
-                        "\"Aos que abrirem este último tomo das minhas crônicas\", escreveu o próprio §4Conde Jodevil§0 com tinta carmesim na página final, \"deixo minha bênção noturna.\"",
-                        "\"Se me virdes caminhando sob a lua cheia, saudai-me como o Soberano das Sombras. Se me virdes correndo debaixo das árvores ao meio-dia fugindo do sol, fingi que não vistes a fumaça.\"",
-                        "\"Que §6ArzanLion§0 guarde suas receitas longe da cozinha, que §6Jacinto§0 cuide bem dos cofres sem roubar meu martelo, e que a noite seja sempre generosa com os nossos sonhos.\"",
-                        "\"Pois enquanto houver estrelas sobre estas terras e amigos para rir das nossas desventuras, o sangue de §4Conde Jodevil§0 jamais deixará de pulsar.\"",
-                        "§4§l— FIM DO VIGÉSIMO SÉTIMO E ÚLTIMO VOLUME DAS CRÔNICAS DO SANGUE DUVIDOSO —"
+                        "\"Aos que abrirem este vigésimo sétimo tomo na arca ao lado do meu leito\", escreveu o próprio §4Conde Jodevil§0 com tinta carmesim na última página, \"deixo a minha bênção das sombras.\"",
+                        "\"Se caminhardes por estas galerias quando a lua estiver alta, erguei uma taça à nossa corte: a §9Lorde Asminn§0, §6ArzanLion§0, §5AsterZZZz§0, §dLady Kikkawa§0, §dDama Luwuana§0, §2Azarasquel§0, §2Reznozada§0 e §8Corvo§0.\"",
+                        "\"Se cruzardes com o imortal §6Jacinto§0 nos corredores, nunca lhe entregueis vossa arma favorita por engano — e, se o fizerdes, lembrai-vos de que o fogo não funciona e só o carinho devolve o que é vosso.\"",
+                        "\"E se algum dia, num futuro distante, encontrardes este castelo silencioso e virdes um vulto de chapéu de palha fugindo de uma réstia de sol atrás dos vasos... sabei que o meu coração ainda bate por aqueles que amei.\"",
+                        "\"Pois a eternidade pode ser longa e o sangue pode ser duvidoso, mas a lenda que escrevemos juntos jamais conhecerá o fim.\"",
+                        "§4§l— FIM DO PRIMEIRO CICLO: CRÔNICAS DO SANGUE DUVIDOSO —"
                 }));
 
         return list;

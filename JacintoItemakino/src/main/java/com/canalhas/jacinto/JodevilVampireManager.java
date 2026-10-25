@@ -321,17 +321,21 @@ public class JodevilVampireManager {
                 Inventory doubleInv = ChestBlock.getInventory(chestBlock, savedState, overworld, savedPos, true);
                 if (doubleInv != null && doubleInv.size() >= 54) {
                     int bookCount = 0;
+                    boolean hasUpdatedArc1Title = false;
                     boolean hasUpdatedArc2Author = false;
                     for (int i = 0; i < doubleInv.size(); i++) {
                         ItemStack st = doubleInv.getStack(i);
                         if (st.isOf(Items.WRITTEN_BOOK)) {
                             bookCount++;
+                            if (i == 4 && st.hasNbt() && "Tomo V - O Clamor na Floresta".equals(st.getNbt().getString("title"))) {
+                                hasUpdatedArc1Title = true;
+                            }
                             if (i == 27 && st.hasNbt() && "Inquisidor Valerius".equals(st.getNbt().getString("author"))) {
                                 hasUpdatedArc2Author = true;
                             }
                         }
                     }
-                    if (bookCount >= 54 && hasUpdatedArc2Author) {
+                    if (bookCount >= 54 && hasUpdatedArc1Title && hasUpdatedArc2Author) {
                         spawnBedroomNarrativeProps(overworld, savedPos);
                         return savedPos;
                     }
